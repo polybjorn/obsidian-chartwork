@@ -7,6 +7,7 @@ const SPEC_KEYS = [
   "kind", "labels", "series", "title", "horizontal", "stacked", "valueLabels", "sort", "order",
   "topN", "other", "categoryColors", "labelColors", "valueTitle", "beginAtZero", "tension", "legend",
   "barThickness", "axes", "spanGaps", "referenceLines", "average",
+  "bestFit", "bestFitTitle", "bestFitNumber",
 ] as const;
 const SERIES_KEYS = ["name", "values", "color", "fill", "stepped", "hidden", "pointRadius"] as const;
 const AXIS_KEYS = ["min", "max", "reverse", "display", "ticks", "tickPadding"] as const;
@@ -158,6 +159,12 @@ export function validateSpec(input: unknown): ChartSpec {
   optBool(input, "spanGaps");
   optBool(input, "labelColors");
   optBool(input, "average");
+  optBool(input, "bestFit");
+  optStr(input, "bestFitTitle");
+  const fitted = input.bestFitNumber;
+  if (fitted !== undefined && (typeof fitted !== "number" || !Number.isInteger(fitted) || fitted < 0 || fitted >= allSeries.length)) {
+    fail("bestFitNumber", `a series index from 0 to ${allSeries.length - 1}`, fitted);
+  }
   if (input.tension !== undefined && (typeof input.tension !== "number" || input.tension < 0 || input.tension > 1)) {
     fail("tension", "a number from 0 to 1", input.tension);
   }

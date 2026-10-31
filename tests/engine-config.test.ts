@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildConfig, chartHeight, fillThemeDefaults, withAlpha } from "../src/engine/config.ts";
+import { bestFitValues, buildConfig, chartHeight, fillThemeDefaults, withAlpha } from "../src/engine/config.ts";
 import type { Theme } from "../src/engine/theme.ts";
 import { parseVarRef, resolveConfigColors } from "../src/engine/theme.ts";
 import type { ChartSpec } from "../src/engine/spec.ts";
@@ -353,4 +353,23 @@ void test("average draws each series' mean in its color, on the value axis", () 
   assert.deepEqual(lines.map((l) => [l.scaleID, l.value, l.borderColor]), [["x", 3, "#p1"], ["x", 3, "red"]]);
   const hidden = { chart: { isDatasetVisible: (i: number) => i !== 1 } };
   assert.deepEqual(lines.map((l) => (l.display as (c: typeof hidden) => boolean)(hidden)), [true, false]);
+});
+
+void test("bestFitValues fits a straight line by position, skipping gaps", () => {
+  assert.deepEqual(bestFitValues([1, 3, 5, 7]), [1, 3, 5, 7]);
+  assert.deepEqual(bestFitValues([1, null, 2, 6]), [0.5, 2, 3.5, 5]);
+  assert.deepEqual(bestFitValues([1, 2, 2]), [1.16667, 1.66667, 2.16667]);
+  assert.equal(bestFitValues([4, null]), undefined);
+});
+
+void test("bestFit adds a dashed trend line for the chosen series, on line charts only", () => {
+  const line: ChartSpec = { kind: "line", labels: ["Jan", "Feb", "Mar"], bestFit: true, bestFitNumber: 1, bestFitTitle: "Trend",
+    series: [{ name: "n", values: [5, 5, 5] }, { name: "m", values: [1, 2, 3] }] };
+  const config = buildConfig(line, theme);
+  const fit = config.data.datasets[2] as unknown as Record<string, unknown>;
+  assert.deepEqual([fit.label, fit.data, fit.borderColor, fit.pointRadius], ["Trend", [1, 2, 3], "#p3", 0]);
+  assert.equal(buildConfig({ ...line, bestFitTitle: undefined }, theme).data.datasets[2]!.label, "Line of Best Fit");
+  assert.equal(buildConfig({ ...line, kind: "bar" }, theme).data.datasets.length, 2);
+  const one: ChartSpec = { kind: "line", labels: ["a", "b"], bestFit: true, series: [{ name: "n", values: [1, 2] }] };
+  assert.equal(at(opts(one), "plugins.legend.display"), true);
 });

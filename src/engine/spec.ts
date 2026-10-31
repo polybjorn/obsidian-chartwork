@@ -89,6 +89,12 @@ export interface ChartSpec {
   referenceLines?: Partial<Record<"x" | "y", (number | string)[]>>;
   /** Bar, line: a dashed line at each series' mean, in its color. */
   average?: boolean;
+  /** Line: a straight trend line fitted to one series by least squares. */
+  bestFit?: boolean;
+  /** Legend name of the trend line. Default "Line of Best Fit". */
+  bestFitTitle?: string;
+  /** Which series the trend line fits, counting from 0. Default 0. */
+  bestFitNumber?: number;
 }
 
 export interface RenderContext {

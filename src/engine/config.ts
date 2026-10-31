@@ -1,4 +1,4 @@
-import type { ArcElement, BarElement, ChartConfiguration, Plugin } from "chart.js";
+import type { ArcElement, BarElement, ChartConfiguration, ChartDataset, Plugin } from "chart.js";
 import { allIntegers, prepareData } from "./data.ts";
 import type { PreparedData, PreparedSeries } from "./data.ts";
 import { isPlain } from "./guards.ts";
@@ -95,6 +95,8 @@ interface LabelStyle {
   stacked: boolean;
   /** The value axis runs backwards, so a label sits past the other end of its bar, or under its point. */
   reversed: boolean;
+  /** Datasets past the chart's own series, such as a trend line, carry no labels. */
+  seriesCount: number;
 }
 
 // Below this angle a slice is too thin to hold its value
@@ -121,7 +123,7 @@ function valueLabelsPlugin(style: LabelStyle): Plugin {
       ctx.lineWidth = 3;
       ctx.lineJoin = "round";
       chart.data.datasets.forEach((ds, i) => {
-        if (!chart.isDatasetVisible(i)) return;
+        if (i >= style.seriesCount || !chart.isDatasetVisible(i)) return;
         chart.getDatasetMeta(i).data.forEach((el, j) => {
           const v = ds.data[j];
           if (typeof v !== "number") return;
@@ -193,6 +195,21 @@ function lineExtras(s: PreparedSeries): { stepped?: Stepped; hidden?: boolean; p
 
 const REFERENCE_DASH = [4, 4];
 
+/**
+ * Least squares against each value's position, so text labels such as month
+ * names fit as well as numbers. Gaps are skipped; fewer than two values give
+ * no line.
+ */
+export function bestFitValues(values: (number | null)[]): number[] | undefined {
+  const points = values.flatMap((v, i) => (v === null ? [] : [[i, v] as const]));
+  if (points.length < 2) return undefined;
+  const meanX = points.reduce((sum, [x]) => sum + x, 0) / points.length;
+  const meanY = points.reduce((sum, [, y]) => sum + y, 0) / points.length;
+  const slope = points.reduce((sum, [x, y]) => sum + (x - meanX) * (y - meanY), 0) /
+    points.reduce((sum, [x]) => sum + (x - meanX) ** 2, 0);
+  return values.map((_, i) => Number((meanY + slope * (i - meanX)).toPrecision(6)));
+}
+
 // The annotation plugin places a line by scale id and a value on that scale.
 // The label axis reads a bare number as a position, so a number that is also a
 // label, such as a year, goes in as the label. An average follows its series:
@@ -233,7 +250,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     : spec.kind === "pie" || spec.kind === "doughnut" || spec.kind === "polarArea" ? "arc" : undefined;
   const labelsOn = labelShape !== undefined && wantsValueLabels(spec);
 
-  const datasets = data.series.map((s, si) => {
+  const datasets: ChartDataset[] = data.series.map((s, si) => {
     const color = colorFor(spec, theme, data, si);
     if (spec.kind === "line") {
       const c = Array.isArray(color) ? color[0] : color;
@@ -267,6 +284,24 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     return { label: s.name, data: s.values, backgroundColor: color, borderColor: theme.background, borderWidth: 2 };
   });
 
+  const fitIndex = spec.bestFitNumber ?? 0;
+  const fit = spec.kind === "line" && spec.bestFit === true ? bestFitValues(data.series[fitIndex]?.values ?? []) : undefined;
+  if (fit) {
+    datasets.push({
+      label: spec.bestFitTitle ?? "Line of Best Fit",
+      data: fit,
+      borderColor: theme.palette[data.series.length % theme.palette.length] ?? FALLBACK_COLOR,
+      backgroundColor: theme.palette[data.series.length % theme.palette.length] ?? FALLBACK_COLOR,
+      // Dashed per segment: the legend copies a dataset's borderDash onto its key
+      segment: { borderDash: () => REFERENCE_DASH },
+      pointRadius: 0,
+      fill: false,
+      tension: 0,
+      // Its own stack, so a stacked chart draws the fit at the series' values
+      stack: "chartworkBestFit",
+    });
+  }
+
   const maxLabel = Math.max(0, ...data.series.flatMap((s) => s.values.map((v) => (v === null ? 0 : String(v).length))));
   const padding = labelsOn && labelShape !== "arc"
     ? horizontal ? { right: 12 + maxLabel * Math.ceil(smallSize(theme) * 0.65) } : { top: smallSize(theme) + 8 }
@@ -275,7 +310,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
   const plugins: Obj = {
     legend: {
       display: spec.legend === undefined
-        ? spec.kind === "pie" || spec.kind === "doughnut" || spec.kind === "polarArea" || data.series.length > 1
+        ? spec.kind === "pie" || spec.kind === "doughnut" || spec.kind === "polarArea" || datasets.length > 1
         : spec.legend !== false,
       ...(typeof spec.legend === "string" ? { position: spec.legend } : {}),
       labels: legendLabels(theme),
@@ -334,7 +369,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     plugins: labelsOn && labelShape
       ? [valueLabelsPlugin({
         shape: labelShape, color: theme.text, size: smallSize(theme), halo: theme.background, font: theme.font, horizontal, stacked,
-        reversed: spec.axes?.[horizontal ? "x" : "y"]?.reverse === true,
+        reversed: spec.axes?.[horizontal ? "x" : "y"]?.reverse === true, seriesCount: data.series.length,
       })]
       : [],
   };

@@ -249,3 +249,10 @@ void test("xLine and yLine take a value or a label, or a list, and average a boo
   assert.equal(pie.referenceLines, undefined);
   assert.equal(pie.average, undefined);
 });
+
+void test("bestFit keys apply to line charts, bestFitNumber counting from 0", () => {
+  const { spec } = ok({ ...base, type: "line", bestFit: true, bestFitTitle: "Trend", bestFitNumber: 0 });
+  assert.deepEqual([spec.bestFit, spec.bestFitTitle, spec.bestFitNumber], [true, "Trend", 0]);
+  assert.match(err({ ...base, type: "line", bestFit: true, bestFitNumber: "first" }), /bestFitNumber must be a series number/);
+  assert.equal(ok({ ...base, bestFit: true }).spec.bestFit, undefined);
+});
