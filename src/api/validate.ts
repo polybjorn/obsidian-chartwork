@@ -7,7 +7,7 @@ const SPEC_KEYS = [
   "kind", "labels", "series", "title", "horizontal", "stacked", "valueLabels", "sort", "order",
   "topN", "other", "categoryColors", "labelColors", "valueTitle", "beginAtZero", "tension", "legend",
   "barThickness", "axes", "spanGaps", "referenceLines", "average", "dateUnit",
-  "bestFit", "bestFitTitle", "bestFitNumber",
+  "bestFit", "bestFitTitle", "bestFitNumber", "height", "width",
 ] as const;
 const SERIES_KEYS = ["name", "values", "color", "fill", "stepped", "hidden", "pointRadius"] as const;
 const AXIS_KEYS = ["min", "max", "reverse", "display", "ticks", "tickPadding"] as const;
@@ -172,6 +172,10 @@ export function validateSpec(input: unknown): ChartSpec {
     throw new Error(`chartwork: legend must be true, false or one of ${LEGEND_SIDES.join(", ")}, got ${JSON.stringify(input.legend)}`);
   }
   optNum(input, "barThickness");
+  optNum(input, "height");
+  if (typeof input.width === "string") {
+    if (!input.width.trim()) fail("width", "a CSS width such as \"60%\" or a positive number of pixels", input.width);
+  } else optNum(input, "width");
   optNum(input, "topN");
   if (input.topN !== undefined && !Number.isInteger(input.topN)) fail("topN", "a whole number", input.topN);
   if (input.sort !== undefined && !isOneOf(SORTS, input.sort)) {

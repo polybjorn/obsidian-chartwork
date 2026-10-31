@@ -484,17 +484,18 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
   };
 }
 
-/** Wrapper height in pixels. Horizontal bars get one fixed slot per bar. */
 function legendShown(spec: ChartSpec, datasetCount: number): boolean {
   if (spec.legend !== undefined) return spec.legend !== false;
   return spec.kind === "pie" || spec.kind === "doughnut" || spec.kind === "polarArea" || datasetCount > 1;
 }
 
-// Unstacked series sit side by side within a label, so each takes a bar's
-// room. A legend above or below the plot takes height from it.
+/** Wrapper height in pixels. An explicit height wins; horizontal bars otherwise get one fixed slot per bar. */
 export function chartHeight(spec: ChartSpec): number {
+  if (spec.height !== undefined) return spec.height;
   if (!(spec.kind === "bar" && spec.horizontal === true)) return DEFAULT_HEIGHT;
   const data = prepareData(spec);
+  // Unstacked series sit side by side within a label, so each takes a bar's
+  // room. A legend above or below the plot takes height from it.
   const bars = data.labels.length * (spec.stacked === true ? 1 : Math.max(1, data.series.length));
   const sideLegend = spec.legend === "left" || spec.legend === "right";
   const legend = legendShown(spec, data.series.length) && !sideLegend ? 32 : 0;

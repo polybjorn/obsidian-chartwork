@@ -42,6 +42,7 @@ series:
 | `valueLabels` | bar, line, pie, doughnut, polarArea | `true` prints each value on its bar, slice or point. `false` hides them on a single-series bar chart, where they show by default. Values use the same number format as the axis ticks. A zero bar, a point outside the axis range and a stacked segment too short for its value get no label |
 | `legend` | all | `false` hides the legend, `true` shows it |
 | `legendPosition` | all | `top`, `bottom`, `left` or `right` |
+| `height` | all but scatter and sankey | Chart height in pixels, like `400`. The chart keeps it while the width follows the pane. Wins over the height a horizontal bar chart grows to |
 | `width` | all | Chart width, as CSS (`60%`) or pixels (`400`) |
 
 Colors come from the theme, or from the list under Series colors in Chartwork's settings. A radar chart takes its spokes from `labels` and draws one shape per series. A `polarArea` chart draws one segment per label, sized by the first series. A bar chart with one series prints each value on its bar, and a horizontal one grows taller with each label so bars keep one thickness.

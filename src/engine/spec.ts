@@ -89,6 +89,10 @@ export interface ChartSpec {
   legend?: boolean | LegendSide;
   /** Range, direction and visibility per axis. */
   axes?: Partial<Record<AxisId, AxisSpec>>;
+  /** Chart height in pixels. Wins over the default and over the height horizontal bars grow to. */
+  height?: number;
+  /** Chart width, as CSS (`"60%"`) or a number of pixels. Default is the full width. */
+  width?: string | number;
   /** Horizontal bars: pixels per bar, so height follows the bar count. */
   barThickness?: number;
   /** Bar, line: dashed lines across the chart where an axis reads these values, or these labels on the label axis. */

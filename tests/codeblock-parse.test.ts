@@ -95,6 +95,12 @@ void test("polarArea is read in any case", () => {
   for (const t of ["polarArea", "polararea", "PolarArea"]) assert.equal(ok({ ...base, type: t }).spec.kind, "polarArea");
 });
 
+void test("height is a positive number of pixels on the spec", () => {
+  assert.equal(ok({ ...base, height: 420 }).spec.height, 420);
+  assert.equal(ok(base).spec.height, undefined);
+  for (const bad of [0, -3, "tall"]) assert.equal(parseChartBlock({ ...base, height: bad }).ok, false);
+});
+
 void test("width accepts a string or a number of pixels", () => {
   assert.equal(ok({ ...base, width: "40%" }).width, "40%");
   assert.equal(ok({ ...base, width: 300 }).width, "300px");

@@ -44,7 +44,7 @@ const KIND_LIST = "bar, line, pie, doughnut, radar, polarArea, scatter or sankey
 /** Every key the parser reads; any other key in a block is ignored. */
 export const BLOCK_KEYS: readonly string[] = [
   "type", "labels", "series", "indexAxis", "stacked", "fill", "tension",
-  "beginAtZero", "xTitle", "yTitle", "legend", "legendPosition", "width",
+  "beginAtZero", "xTitle", "yTitle", "legend", "legendPosition", "width", "height",
   "id", "file", "csv", "layout", "select", "labelColors",
   "xMin", "xMax", "xReverse", "xDisplay", "xTickDisplay", "xTickPadding",
   "yMin", "yMax", "yReverse", "yDisplay", "yTickDisplay", "yTickPadding",
@@ -329,6 +329,11 @@ export function parseChartBlock(input: unknown): ParseResult {
 
   if (kind === "line" && typeof input["tension"] === "number") spec.tension = input["tension"];
   if ((kind === "line" || kind === "radar") && bool(input["spanGaps"]) === true) spec.spanGaps = true;
+  const height = input["height"];
+  if (height !== undefined) {
+    if (typeof height !== "number" || !Number.isFinite(height) || height <= 0) return fail("height must be a positive number of pixels, like height: 400.");
+    spec.height = height;
+  }
   const zero = bool(input["beginAtZero"]);
   if (zero !== undefined) spec.beginAtZero = zero;
   const legend = bool(input["legend"]);

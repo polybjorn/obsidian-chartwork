@@ -128,6 +128,8 @@ void test("horizontal height scales with bar count", () => {
     chartHeight({ ...spec, horizontal: true, labels: Array.from({ length: n }, String), series: [{ name: "n", values: Array<number>(n).fill(1) }] });
   assert.equal(h(10) - h(5), 5 * 28);
   assert.equal(chartHeight({ ...spec, horizontal: true, barThickness: 40 }), 2 * 40 + 56);
+  assert.equal(chartHeight({ ...spec, horizontal: true, height: 500 }), 500);
+  assert.equal(chartHeight({ ...spec, height: 180 }), 180);
   assert.equal(chartHeight(spec), 300);
 });
 

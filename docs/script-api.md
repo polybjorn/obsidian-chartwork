@@ -53,7 +53,7 @@ A config has `type` and `data`, and a spec has `kind`. An object with both `kind
 
 A config gets the same treatment as in `renderChart` below: theme colors and square legend keys wherever it sets none, `var(--color-red)` as a color, and time axes. If Chart.js rejects the config, `render` shows the error in the note instead of throwing. A config in the wrong shape, such as both `kind` and `type`, still throws.
 
-The handle's `update` takes the shape the chart was made with: a spec for a spec, a config for a config. The other shape throws `chartwork: update needs the same shape the chart was made with`. A `width` in an updated wrapper is ignored.
+The handle's `update` takes the shape the chart was made with: a spec for a spec, a config for a config. The other shape throws `chartwork: update needs the same shape the chart was made with`. A `width` in an updated wrapper is ignored; a spec's `width` is read again on each update.
 
 ## Spec
 
@@ -79,6 +79,8 @@ The handle's `update` takes the shape the chart was made with: a spec for a spec
 | `spanGaps` | boolean | A line or radar joins across a `null` value instead of leaving a gap |
 | `legend` | boolean, `"top"`, `"bottom"`, `"left"`, `"right"` | Default shown for pie, doughnut, polar area and multi-series charts |
 | `barThickness` | number | Pixels per bar on a horizontal chart. Default 28 |
+| `height` | number | Chart height in pixels, default 300. The chart keeps it while the width follows the pane. Wins over the height a horizontal bar chart grows to from `barThickness` |
+| `width` | string or number | Chart width, as CSS (`"60%"`) or pixels (`400`). Default is the full width. An update can change it |
 | `referenceLines` | `{x?, y?}` | Bar and line charts: dashed lines across the chart at these values, or at labels on the label axis |
 | `average` | boolean | Bar and line charts: a dashed line at each series' average, in the series color; stacked, at the height the series is drawn |
 | `bestFit` | boolean | Line charts: a dashed straight trend line fitted to one series |

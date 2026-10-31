@@ -59,6 +59,8 @@ interface Built {
   config: ChartConfiguration;
   /** Pixels; absent when the caller's own config sizes the chart. */
   height?: number;
+  /** CSS width from a spec, applied at each draw so an update can change or clear it; "" is the full width. */
+  width?: string;
 }
 
 type Build = (theme: Theme, wrapper: HTMLElement) => Built;
@@ -108,13 +110,14 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
     try {
       // Built before the old chart goes, so a spec that fails to build
       // leaves nothing half drawn
-      const { config, height } = build(readTheme(wrapper, ctx.seriesColors?.()), wrapper);
+      const { config, height, width: builtWidth } = build(readTheme(wrapper, ctx.seriesColors?.()), wrapper);
       chart?.destroy();
       chart = null;
       error?.remove();
       error = null;
       canvas.show();
       if (height !== undefined) wrapper.setCssProps({ height: `${height}px` });
+      if (builtWidth !== undefined) wrapper.setCssProps({ width: builtWidth, "margin-inline": builtWidth ? "auto" : "" });
       // Export to PDF draws the note into a print container and prints it
       // moments later, which would catch each chart part way through its
       // opening animation
@@ -172,7 +175,8 @@ export function renderSpec(el: HTMLElement, spec: ChartSpec, ctx: RenderContext)
   let current = spec;
   const view = mount(el, ctx, (theme, wrapper) => {
     const resolved = resolveSpecColors(current, wrapper);
-    return { config: buildConfig(resolved, theme), height: chartHeight(resolved) };
+    const width = typeof resolved.width === "number" ? `${resolved.width}px` : resolved.width?.trim();
+    return { config: buildConfig(resolved, theme), height: chartHeight(resolved), width: width ?? "" };
   });
   return {
     update: (next) => {
