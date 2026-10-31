@@ -197,7 +197,10 @@ export function fillDefaults<T>(target: T, defaults: unknown): T {
   return out as T;
 }
 
-const CARTESIAN = new Set(["bar", "line"]);
+const CARTESIAN = new Set(["bar", "line", "scatter", "bubble"]);
+const RADIAL = new Set(["radar", "polarArea"]);
+// One colour per data point rather than per dataset
+const PER_POINT = new Set(["pie", "doughnut", "polarArea"]);
 
 /** Theme colours for a raw Chart.js config, without touching anything it already sets. */
 export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): ChartConfiguration {
@@ -217,15 +220,32 @@ export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): Cha
   };
   const options: Obj = config.options ?? {};
   if (CARTESIAN.has(type)) {
+    // Only axes that exist: an option block for an unused id would add an
+    // empty axis. A config that names one axis still draws the other.
     const scales = isPlain(options.scales) ? options.scales : {};
-    const names = Object.keys(scales).length > 0 ? Object.keys(scales) : ["x", "y"];
-    defaults.scales = Object.fromEntries(names.map((n) => [n, axis]));
+    const names = new Set(Object.keys(scales));
+    for (const d of config.data.datasets as unknown as Obj[]) {
+      names.add(typeof d.xAxisID === "string" ? d.xAxisID : "x");
+      names.add(typeof d.yAxisID === "string" ? d.yAxisID : "y");
+    }
+    if (names.size === 0) ["x", "y"].forEach((n) => names.add(n));
+    defaults.scales = Object.fromEntries([...names].map((n) => [n, axis]));
+  } else if (RADIAL.has(type)) {
+    defaults.scales = {
+      r: {
+        // Chart.js backs radial tick labels with white, which shows on a dark theme
+        ticks: { color: theme.text, backdropColor: "transparent" },
+        grid: { color: theme.grid },
+        angleLines: { color: theme.grid },
+        pointLabels: { color: theme.text },
+      },
+    };
   }
 
   const paint = (i: number): string => theme.palette[i % theme.palette.length] ?? "#888888";
   const datasets = config.data.datasets.map((ds, i) => {
     const d = ds as unknown as Obj;
-    if (type === "pie" || type === "doughnut") {
+    if (PER_POINT.has(type)) {
       const n = Array.isArray(d.data) ? d.data.length : 0;
       return {
         ...d,
@@ -234,9 +254,10 @@ export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): Cha
       };
     }
     if (d.backgroundColor !== undefined || d.borderColor !== undefined) return d;
-    return type === "line"
-      ? { ...d, borderColor: paint(i), backgroundColor: paint(i) }
-      : { ...d, backgroundColor: paint(i) };
+    if (type === "bar") return { ...d, backgroundColor: paint(i) };
+    // A radar or bubble fill covers what lies under it unless it lets it show through
+    const fill = type === "radar" || type === "bubble" ? withAlpha(paint(i), 0.3) : paint(i);
+    return { ...d, borderColor: paint(i), backgroundColor: fill };
   });
 
   return {

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { validateSpec } from "../src/api/validate.ts";
 import { shouldInstallRenderChart, shouldRemoveRenderChart } from "../src/api/coexist.ts";
+import { unwrapRaw } from "../src/api/raw.ts";
 
 const good = () => ({
   kind: "bar",
@@ -41,6 +42,8 @@ const bad: [string, (s: Record<string, unknown>) => void, RegExp][] = [
   ["barThickness", (s) => { s.barThickness = -1; }, /barThickness/],
   ["order", (s) => { s.order = [1]; }, /order\[0\]/],
   ["categoryColors", (s) => { s.categoryColors = { a: 1 }; }, /categoryColors\.a/],
+  ["top-level field", (s) => { s.colour = "red"; }, /unknown field colour/],
+  ["series field", (s) => { s.series = [{ name: "n", values: [1, 2], colour: "red" }]; }, /unknown field series\[0\]\.colour/],
 ];
 for (const [name, mutate, re] of bad) {
   void test(`rejects bad ${name}`, () => {
@@ -49,6 +52,33 @@ for (const [name, mutate, re] of bad) {
     assert.throws(() => validateSpec(s), re);
   });
 }
+
+void test("returns a copy the caller can change afterwards", () => {
+  const values = [1, 2];
+  const color = ["#fff", "red"];
+  const input = { ...good(), series: [{ name: "n", values, color }], order: ["b"], categoryColors: { a: "red" } };
+  const out = validateSpec(input);
+  input.labels.push("c");
+  values.push(3);
+  color.push("blue");
+  input.order.push("a");
+  input.categoryColors.a = "green";
+  assert.deepEqual(out.labels, ["a", "b"]);
+  assert.deepEqual(out.series, [{ name: "n", values: [1, 2], color: ["#fff", "red"] }]);
+  assert.deepEqual(out.order, ["b"]);
+  assert.deepEqual(out.categoryColors, { a: "red" });
+});
+
+void test("renderChart takes a config as is or wrapped with a width", () => {
+  const config = { type: "bar", data: { datasets: [] } };
+  assert.deepEqual(unwrapRaw(config), { config });
+  assert.deepEqual(unwrapRaw({ chartOptions: config }), { config });
+  assert.deepEqual(unwrapRaw({ chartOptions: config, width: "60%" }), { config, width: "60%" });
+  assert.deepEqual(unwrapRaw({ chartOptions: config, width: 400 }), { config, width: "400px" });
+  assert.deepEqual(unwrapRaw({ chartOptions: config, width: "" }), { config });
+  assert.throws(() => unwrapRaw(null), /needs a Chart\.js config/);
+  assert.throws(() => unwrapRaw({ chartOptions: 5 }), /chartOptions must be/);
+});
 
 void test("accepts null as a gap", () => {
   assert.doesNotThrow(() => validateSpec({ ...good(), series: [{ name: "n", values: [1, null] }] }));

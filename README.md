@@ -20,7 +20,7 @@ Charts in Obsidian, made from your notes. Point a Bases view at a property, type
 
 ## Requirements
 
-Obsidian 1.10 or later. Chart.js 4 is bundled, so Bases views and code blocks need nothing else installed. The plugin is about 220 KB, almost all of it Chart.js.
+Obsidian 1.10.2 or later. Chart.js 4 is bundled, so Bases views and code blocks need nothing else installed. The plugin is about 230 KB, almost all of it Chart.js.
 
 ## What Chartwork takes care of
 

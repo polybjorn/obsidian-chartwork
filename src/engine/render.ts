@@ -1,22 +1,7 @@
-import {
-  ArcElement,
-  BarController,
-  BarElement,
-  CategoryScale,
-  Chart,
-  DoughnutController,
-  Filler,
-  Legend,
-  LineController,
-  LineElement,
-  LinearScale,
-  PieController,
-  PointElement,
-  Title,
-  Tooltip,
-} from "chart.js";
+import { Chart, registerables } from "chart.js";
 import type { ChartConfiguration } from "chart.js";
 import { buildConfig, chartHeight, fillThemeDefaults } from "./config.ts";
+import { installDateAdapter } from "./date-adapter.ts";
 import type { ChartHandle, ChartSpec, RenderContext } from "./spec.ts";
 import { readTheme, resolveSpecColors } from "./theme.ts";
 import type { Theme } from "./theme.ts";
@@ -25,12 +10,9 @@ let registered = false;
 function registerOnce(): void {
   if (registered) return;
   registered = true;
-  Chart.register(
-    BarController, LineController, PieController, DoughnutController,
-    BarElement, LineElement, PointElement, ArcElement,
-    CategoryScale, LinearScale,
-    Legend, Title, Tooltip, Filler,
-  );
+  // Every chart type and axis, since a config written for Charts may use any
+  Chart.register(...registerables);
+  installDateAdapter();
 }
 
 interface Built {
@@ -41,9 +23,10 @@ interface Built {
 
 type Build = (theme: Theme, wrapper: HTMLElement) => Built;
 
-function mount(el: HTMLElement, ctx: RenderContext, build: Build): { redraw: () => void; destroy: () => void } {
+function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string): { redraw: () => void; destroy: () => void } {
   registerOnce();
   const wrapper = el.createDiv({ cls: "chartwork-chart" });
+  if (width) wrapper.setCssProps({ width, "margin-inline": "auto" });
   const canvas = wrapper.createEl("canvas");
   let chart: Chart | null = null;
   let destroyed = false;
@@ -52,11 +35,7 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build): { redraw: () 
     if (destroyed) return;
     chart?.destroy();
     const { config, height } = build(readTheme(wrapper), wrapper);
-    wrapper.setCssProps({
-      position: "relative",
-      width: "100%",
-      ...(height !== undefined ? { height: `${height}px` } : {}),
-    });
+    if (height !== undefined) wrapper.setCssProps({ height: `${height}px` });
     chart = new Chart(canvas, config);
   };
 
@@ -110,7 +89,7 @@ export function renderSpec(el: HTMLElement, spec: ChartSpec, ctx: RenderContext)
  * them unset. `update` ignores its spec: a raw config has no spec to apply, so
  * it only redraws the same config in the current theme.
  */
-export function renderConfig(el: HTMLElement, config: ChartConfiguration, ctx: RenderContext): ChartHandle {
-  const view = mount(el, ctx, (theme) => ({ config: fillThemeDefaults(config, theme) }));
+export function renderConfig(el: HTMLElement, config: ChartConfiguration, ctx: RenderContext, width?: string): ChartHandle {
+  const view = mount(el, ctx, (theme) => ({ config: fillThemeDefaults(config, theme) }), width);
   return { update: () => view.redraw(), destroy: () => view.destroy() };
 }

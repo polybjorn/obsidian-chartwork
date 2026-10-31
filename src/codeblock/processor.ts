@@ -1,6 +1,6 @@
 import { MarkdownRenderChild, parseYaml } from "obsidian";
 import type { MarkdownPostProcessorContext, Plugin } from "obsidian";
-import { renderSpec } from "../engine/index.ts";
+import { renderSpec, showError } from "../engine/index.ts";
 import { parseChartBlock } from "./parse.ts";
 
 interface PluginsHost {
@@ -12,12 +12,6 @@ interface PluginsHost {
 export function chartsEnabled(plugin: Plugin): boolean {
   const host = plugin.app as unknown as PluginsHost;
   return host.plugins?.enabledPlugins?.has("obsidian-charts") === true;
-}
-
-function showError(el: HTMLElement, message: string): void {
-  const box = el.createDiv({ cls: "chartwork-error" });
-  box.createEl("strong", { text: "Chartwork can't draw this chart" });
-  box.createEl("p", { text: message });
 }
 
 export function registerChartBlock(plugin: Plugin): void {

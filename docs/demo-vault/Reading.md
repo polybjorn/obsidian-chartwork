@@ -10,7 +10,7 @@ views:
     x: note.status
     title: Books by status
     categoryOrder: reading, read, to read, dropped
-    colors:
+    categoryColors:
       - "reading: var(--color-green)"
       - "read: var(--color-blue)"
       - "to read: var(--color-yellow)"

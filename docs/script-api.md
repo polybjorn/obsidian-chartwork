@@ -12,7 +12,7 @@ window.chartwork.render(dv.container, {
 
 ![The pie chart this script draws](images/script.png)
 
-Usually the script works the numbers out first, here notes created this month counted by tag:
+A script usually counts first, here this month's notes by tag:
 
 ```js
 const counts = {};
@@ -29,9 +29,11 @@ window.chartwork.render(dv.container, {
 }, dv.component);
 ```
 
-`render(element, spec, owner)` draws into `element` and returns a handle with `update(spec)` and `destroy()`. Pass the note's component as `owner` (`dv.component` in Dataview) so the chart is removed when the note closes; without it the chart lives until the plugin unloads.
+`render(element, spec, owner)` draws into `element` and returns a handle with `update(spec)` and `destroy()`. Pass the note's component as `owner` (`dv.component` in Dataview) so the chart goes when the note closes.
 
-An invalid spec throws an error that names the field, such as `chartwork: series[0].values has 3 entries but labels has 4`.
+A bad or unknown field throws an error naming it, such as `chartwork: series[0].values has 3 entries but labels has 4`; `update` checks the same way. The spec is copied, so changing it afterwards does nothing.
+
+`window.chartwork.version` tells a script which fields it can use.
 
 ## Spec
 
@@ -43,20 +45,20 @@ An invalid spec throws an error that names the field, such as `chartwork: series
 | `title` | string | Shown above the chart |
 | `horizontal` | boolean | Bars run sideways |
 | `stacked` | boolean | Stack the series |
-| `valueLabels` | boolean | Print each value on its bar. Default on for a bar chart with one series |
+| `valueLabels` | boolean | Print each value on its bar. Default on for single-series bars |
 | `sort` | `"none"`, `"value"`, `"label"` | Category order. Default `"none"`, as given |
 | `order` | string[] | Labels to place first; the rest follow by `sort` |
 | `topN` | number | Keep the N largest categories by the first series |
-| `other` | string | With `topN`, add the dropped categories together under this label |
+| `other` | string | With `topN`, sums the dropped categories under this label |
 | `categoryColors` | `{label: colour}` | Colour per category, for single-series bar, pie and doughnut charts |
 | `valueTitle` | string | Title for the value axis |
 | `beginAtZero` | boolean | Default `true` |
 | `tension` | number | Line curve from 0 to 1. Default 0.2 |
-| `legend` | boolean, `"top"`, `"bottom"`, `"left"`, `"right"` | Default shown for pie and doughnut and for more than one series |
+| `legend` | boolean, `"top"`, `"bottom"`, `"left"`, `"right"` | Default shown for pie, doughnut and multi-series charts |
 | `barThickness` | number | Pixels per bar on a horizontal chart. Default 28 |
 
-Colours can be any CSS colour, including `var(--color-red)`. Without one, series take `--chart-color-1`, `--chart-color-2` and so on when a CSS snippet sets them, and the theme's own colours otherwise.
+Colours can be any CSS colour, including `var(--color-red)`. Without one, series take `--chart-color-1`, `--chart-color-2` and on from a CSS snippet, else the theme's colours.
 
 ## Charts' `renderChart`
 
-Scripts written for the Charts plugin call `window.renderChart(config, element)` with a raw Chart.js config. Chartwork provides the same function when Charts is not installed, so those scripts keep drawing. It draws the config as given, filling in theme colours for text and grid lines the config leaves unset. Unlike `render`, it can't tell when a note closes, so prefer `render` for new scripts.
+Scripts for the Charts plugin call `window.renderChart(config, element)` with a raw Chart.js config, or `{chartOptions: config, width: "60%"}`. Without Charts installed, Chartwork provides it: any Chart.js chart type, time axes included, with theme colours wherever the config sets none. A failing config shows its error and returns `null`. Charts' annotation and sankey plugins are not bundled. New scripts should use `render`, which knows when a note closes.

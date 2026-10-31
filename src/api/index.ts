@@ -1,8 +1,8 @@
 import type { Component, Plugin } from "obsidian";
-import type { ChartConfiguration } from "chart.js";
-import { renderConfig, renderSpec } from "../engine/index.ts";
+import { renderConfig, renderSpec, showError, errorText } from "../engine/index.ts";
 import type { ChartHandle, ChartSpec } from "../engine/index.ts";
 import { shouldInstallRenderChart, shouldRemoveRenderChart } from "./coexist.ts";
+import { unwrapRaw } from "./raw.ts";
 import { validateSpec } from "./validate.ts";
 
 export interface ChartworkApi {
@@ -13,7 +13,7 @@ export interface ChartworkApi {
 declare global {
   interface Window {
     chartwork?: ChartworkApi;
-    renderChart?: (config: ChartConfiguration, el: HTMLElement) => ChartHandle;
+    renderChart?: (data: unknown, el: HTMLElement) => ChartHandle | null;
   }
 }
 
@@ -22,15 +22,27 @@ export function installApi(plugin: Plugin): void {
 
   const api: ChartworkApi = {
     version: plugin.manifest.version,
-    render: (el, spec, owner = plugin) => renderSpec(el, validateSpec(spec), ctx(owner)),
+    render: (el, spec, owner = plugin) => {
+      const handle = renderSpec(el, validateSpec(spec), ctx(owner));
+      return { update: (next) => handle.update(validateSpec(next)), destroy: () => handle.destroy() };
+    },
   };
   window.chartwork = api;
   plugin.register(() => {
     if (window.chartwork === api) delete window.chartwork;
   });
 
-  const renderChart = (config: ChartConfiguration, el: HTMLElement): ChartHandle =>
-    renderConfig(el, config, ctx(plugin));
+  // Charts draws a failed config's error in the note and returns null, so a
+  // script written for it never sees an exception
+  const renderChart = (data: unknown, el: HTMLElement): ChartHandle | null => {
+    try {
+      const { config, width } = unwrapRaw(data);
+      return renderConfig(el, config, ctx(plugin), width);
+    } catch (e) {
+      showError(el, errorText(e));
+      return null;
+    }
+  };
   if (shouldInstallRenderChart(window.renderChart)) {
     window.renderChart = renderChart;
     plugin.register(() => {

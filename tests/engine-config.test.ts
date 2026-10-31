@@ -102,9 +102,39 @@ void test("theme fill keeps what the caller set and does not mutate the input", 
   assert.equal(at(o, "color"), "orange");
   assert.equal(at(o, "scales.y.ticks.color"), "lime");
   assert.equal(at(o, "scales.y.grid.color"), "#ddd");
-  assert.equal(at(o, "scales.x"), undefined);
+  assert.equal(at(o, "scales.x.ticks.color"), "#111");
   assert.equal(at(o, "plugins.title.color"), "#111");
   assert.deepEqual(ds.map((d) => d.backgroundColor), ["#p1", "hotpink"]);
+});
+
+void test("theme fill reaches radial scales and colours each chart type", () => {
+  const raw = (type: string) =>
+    fillThemeDefaults({ type, data: { labels: ["a", "b"], datasets: [{ data: [1, 2] }] } } as unknown as ChartConfiguration, theme);
+  const radar = raw("radar");
+  assert.equal(at(radar.options, "scales.r.ticks.color"), "#111");
+  assert.equal(at(radar.options, "scales.r.ticks.backdropColor"), "transparent");
+  assert.equal(at(radar.options, "scales.r.angleLines.color"), "#ddd");
+  assert.equal(at(radar.options, "scales.r.pointLabels.color"), "#111");
+  assert.equal(at(radar.options, "scales.x"), undefined);
+  assert.equal(at(radar, "data.datasets.0.borderColor"), "#p1");
+  assert.deepEqual(at(raw("polarArea"), "data.datasets.0.backgroundColor"), ["#p1", "#p2"]);
+  assert.equal(at(raw("polarArea").options, "scales.r.grid.color"), "#ddd");
+  assert.equal(at(raw("scatter").options, "scales.x.grid.color"), "#ddd");
+  assert.equal(at(raw("scatter"), "data.datasets.0.backgroundColor"), "#p1");
+  assert.equal(at(raw("line"), "data.datasets.0.borderColor"), "#p1");
+  assert.equal(at(raw("bar"), "data.datasets.0.borderColor"), undefined);
+});
+
+void test("theme fill reaches the axes a config leaves out and no others", () => {
+  const timeOnly = fillThemeDefaults({
+    type: "line",
+    data: { datasets: [{ data: [] }, { data: [], yAxisID: "y2" }] },
+    options: { scales: { x: { type: "time" } } },
+  } as unknown as ChartConfiguration, theme);
+  assert.equal(at(timeOnly.options, "scales.x.type"), "time");
+  assert.equal(at(timeOnly.options, "scales.y.ticks.color"), "#111");
+  assert.equal(at(timeOnly.options, "scales.y2.ticks.color"), "#111");
+  assert.deepEqual(Object.keys(at(timeOnly.options, "scales") as object).sort(), ["x", "y", "y2"]);
 });
 
 void test("parseVarRef reads a variable with and without fallback", () => {
