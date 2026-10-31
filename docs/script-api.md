@@ -37,7 +37,7 @@ A bad or unknown field throws an error naming it, such as `chartwork: series[0].
 
 ## A Chart.js config
 
-For a second axis, a time scale, a bubble chart, floating bars or custom tooltips, pass a raw Chart.js config instead of a spec. Same function, same `owner`:
+For a second axis, a time scale, a bubble chart, floating bars or custom tooltips, pass a raw Chart.js config instead of a spec. Same function, same `owner`. [Beyond the basics](advanced.md) has more, with recipes that start from vault data:
 
 ```js
 window.chartwork.render(dv.container, {

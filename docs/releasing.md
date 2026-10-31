@@ -17,9 +17,11 @@ main checkout).
 CI never runs Obsidian, so run these against the build about to be tagged:
 
 1. `npm run build` is clean and the plugin reloads without a console error.
-2. A Bases chart view, a `chart` block drawn from a table, one from a CSV
-   file and one with inline data, and a script chart through both
-   `chartwork.render` and `window.renderChart` all draw.
+2. Open every note in `docs/demo-vault/Gallery`: every chart draws, and each
+   Mistakes chart shows the error its note names. Then check that a Bases
+   chart view, a `chart` block drawn from a table, one from a CSV file and one
+   with inline data, and a script chart through both `chartwork.render` and
+   `window.renderChart` all draw.
 3. Switching between light and dark recolors every chart without a reload,
    and changing the text size resizes chart text.
 4. Editing the table or CSV file a chart reads redraws it.
