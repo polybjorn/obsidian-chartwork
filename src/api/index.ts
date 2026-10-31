@@ -18,7 +18,8 @@ declare global {
 }
 
 export function installApi(plugin: Plugin): void {
-  const ctx = (owner: Component) => ({ app: plugin.app, owner });
+  // A chart the plugin owns would otherwise stay until the plugin unloads
+  const ctx = (owner: Component) => ({ app: plugin.app, owner, loose: owner === plugin });
 
   const api: ChartworkApi = {
     version: plugin.manifest.version,
@@ -35,13 +36,14 @@ export function installApi(plugin: Plugin): void {
   // Charts draws a failed config's error in the note and returns null, so a
   // script written for it never sees an exception
   const renderChart = (data: unknown, el: HTMLElement): ChartHandle | null => {
+    let raw;
     try {
-      const { config, width } = unwrapRaw(data);
-      return renderConfig(el, config, ctx(plugin), width);
+      raw = unwrapRaw(data);
     } catch (e) {
       showError(el, errorText(e));
       return null;
     }
+    return renderConfig(el, raw.config, ctx(plugin), raw.width);
   };
   if (shouldInstallRenderChart(window.renderChart)) {
     window.renderChart = renderChart;

@@ -49,6 +49,11 @@ export interface RenderContext {
   app: App;
   /** The chart is destroyed when this unloads. */
   owner: Component;
+  /**
+   * The owner outlives the note the chart sits in, so the chart is also
+   * destroyed once its element leaves the document for good.
+   */
+  loose?: boolean;
 }
 
 export interface ChartHandle {

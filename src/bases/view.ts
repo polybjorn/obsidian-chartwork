@@ -12,7 +12,7 @@ import {
   type QueryController,
   type Value,
 } from "obsidian";
-import { renderSpec, type ChartHandle, type ChartKind } from "../engine/index.ts";
+import { errorText, renderSpec, showError, type ChartHandle, type ChartKind } from "../engine/index.ts";
 import {
   aggregateRows,
   parseCategoryColors,
@@ -105,6 +105,15 @@ class ChartView extends BasesView {
   }
 
   onDataUpdated(): void {
+    try {
+      this.draw();
+    } catch (e) {
+      this.clear();
+      showError(this.host, errorText(e));
+    }
+  }
+
+  private draw(): void {
     const x = this.config.getAsPropertyId("x");
     if (!x) return this.showMessage("Choose a category property in the view options.");
 
@@ -153,10 +162,14 @@ class ChartView extends BasesView {
     return { x: plain(entry.getValue(x)), y: y ? plain(entry.getValue(y)) : undefined, group };
   }
 
-  private showMessage(message: string): void {
+  private clear(): void {
     this.handle?.destroy();
     this.handle = null;
     this.host.empty();
+  }
+
+  private showMessage(message: string): void {
+    this.clear();
     this.host.createEl("p", { text: message, cls: "chartwork-empty" });
   }
 }
