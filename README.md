@@ -1,6 +1,6 @@
 # Chartwork
 
-Turn your notes into charts. Make one from a [Bases](https://help.obsidian.md/bases) view, a code block or a script. They match your theme, light or dark, with nothing to set up, and notes written for the [Charts](https://github.com/phibr0/obsidian-charts) plugin draw as they are.
+One plugin for every chart in your vault. Make one from a [Bases](https://help.obsidian.md/bases) view, a code block or a script. They match your theme, light or dark, with nothing to set up, and notes written for the [Charts](https://github.com/phibr0/obsidian-charts) plugin draw as they are.
 
 <img src="docs/images/readme.png" width="560" alt="Four charts in Obsidian's dark theme: a doughnut and a bar chart from Bases, a radar chart and a line chart from code blocks">
 
@@ -42,7 +42,7 @@ Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 
 
 **[Tracker](https://github.com/pyrochlore/obsidian-tracker)** finds values in your notes and plots them by date, but it adds up two values from the same day and can't total by week or month. In Chartwork, Bases or a script finds the values, and a Bases view groups dates by day, week, month or year with a count, sum, average, minimum or maximum. Tracker's month calendar and streak summaries are not in Chartwork.
 
-**[Bases Charts](https://github.com/mProjectsCode/obsidian-bases-charts-plugin)** draws one point per note as a scatter, line or bar chart, so it can't count notes or add them up per category, and it has no pie chart. Chartwork's Bases view does both, keeps the largest few with the rest added up and colors each category. Scatter charts are not in Chartwork yet.
+**[Bases Charts](https://github.com/mProjectsCode/obsidian-bases-charts-plugin)** draws one point per note as a scatter, line or bar chart, so it can't count notes or add them up per category, and it has no pie chart. Chartwork's Bases view does both, keeps the largest few with the rest added up and colors each category. It also draws one point per note as a scatter chart.
 
 ## What the plugin accesses
 
