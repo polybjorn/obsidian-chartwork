@@ -37,7 +37,7 @@ In a git worktree, `npm run preview` builds and copies `main.js` into the main c
 | `npm run preview` | Build, then copy it into the main checkout |
 | `npm run lint` | ESLint with the Obsidian plugin rules |
 | `npm test` | Run the tests |
-| `npm run screenshots` | Render the README and docs images from `docs/demo-vault` in a separate Obsidian instance; name shots after `--` to render only those |
+| `npm run screenshots` | Render the README and docs images from `docs/demo-vault` in a separate Obsidian instance; name shots after `--` to render only those. The README's GIF needs [ffmpeg](https://ffmpeg.org) |
 
 ## Commit messages
 

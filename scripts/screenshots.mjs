@@ -3,9 +3,10 @@
 // keeps it apart from the Obsidian you have open: its own vault list, settings
 // and single-instance lock. An image is the note's charts alone, two to a row,
 // or with `crop`, that part of the page as drawn. Window chrome would double
-// each image's height in the docs. Run with `npm run screenshots`, or name
+// each image's height in the docs. A shot with `record` is a GIF of its steps
+// instead, encoded with ffmpeg, which has to be on the PATH. Run with `npm run screenshots`, or name
 // shots to render only those: `npm run screenshots -- hero themes`.
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -26,12 +27,25 @@ const GRID_LINE_WIDTH = 400;
 const GAP = 32;
 // Less around a crop, which would otherwise take in the text above it
 const CROP_PAD = 12;
+// How long a step's own motion lasts (a toggle sliding, the options
+// scrolling), captured frame by frame before the settled frame is held
+const MOTION_MS = 600;
+// Wide enough to stay sharp at the README's 720 on a high-density screen
+const GIF_WIDTH = 1440;
 
 const SHOTS = [
   // A .base file with its view options open, the chart moved out from under
-  // them. A smaller window keeps the text readable at the README's width
+  // them, redrawing as the options change. A smaller window keeps the text
+  // readable at the README's width
   { file: "Books.base", name: "hero", theme: "light", charts: 1, options: true, window: { width: 960, height: 540 },
-    crop: [".bases-toolbar", ".menu.bases-toolbar-views-menu", ".chartwork-bases"] },
+    crop: [".bases-toolbar", ".menu.bases-toolbar-views-menu", ".chartwork-bases"],
+    record: [
+      { hold: 1500 },
+      { scroll: "Horizontal bars", hold: 1000 },
+      { toggle: "Horizontal bars", hold: 1800 },
+      { select: "Chart type", value: "doughnut", hold: 1800 },
+      { theme: "dark", hold: 2500 },
+    ] },
   // The note's first chart, drawn in each theme
   { file: "Reading.md", name: "themes", theme: "light", charts: 1, pair: true },
   // The toolbar shows the chart is a Bases view
@@ -171,8 +185,8 @@ async function grid(cdp, shot, sel) {
 }
 
 // The smallest box around the crop's elements, as the page draws it
-async function crop(cdp, shot) {
-  const box = await cdp.evaluate(`(() => {
+async function cropBox(cdp, shot) {
+  return cdp.evaluate(`(() => {
     const rects = ${JSON.stringify(shot.crop)}
       .map((s) => [...document.querySelectorAll(s)].find((e) => e.getBoundingClientRect().height > 0))
       .filter(Boolean)
@@ -183,6 +197,10 @@ async function crop(cdp, shot) {
     const bottom = Math.max(...rects.map((r) => r.bottom)) + ${CROP_PAD};
     return { x: left, y: top, width: right - left, height: bottom - top, scale: 1 };
   })()`);
+}
+
+async function crop(cdp, shot) {
+  const box = await cropBox(cdp, shot);
   const { data } = await cdp.send("Page.captureScreenshot", { format: "png", clip: box, captureBeyondViewport: false });
   write(shot, data);
 }
@@ -245,6 +263,95 @@ async function pair(cdp, shot, sel) {
   write(shot, png);
 }
 
+// A row of the open view options, by its label
+const optionRow = (label) => `[...document.querySelectorAll(".menu.bases-toolbar-views-menu .input-row")]
+  .find((r) => r.querySelector(".input-row-label")?.textContent.trim() === ${JSON.stringify(label)})`;
+
+async function step(cdp, s) {
+  if (s.theme) return setTheme(cdp, s.theme);
+  const row = s.scroll ?? s.toggle ?? s.select;
+  if (!row) return;
+  if (!(await cdp.evaluate(`!!${optionRow(row)}`))) throw new Error(`No view option "${row}"`);
+  // The browser's own smooth scroll ends before a second capture is back, so
+  // the options scroll by hand across the motion's frames
+  if (s.scroll) await cdp.evaluate(`(() => {
+    const row = ${optionRow(row)};
+    let box = row.parentElement;
+    while (box.scrollHeight <= box.clientHeight) box = box.parentElement;
+    const r = row.getBoundingClientRect(), b = box.getBoundingClientRect();
+    const from = box.scrollTop, by = r.top + r.height / 2 - (b.top + b.height / 2);
+    const start = performance.now();
+    const frame = (now) => {
+      const p = Math.min(1, (now - start) / ${MOTION_MS - 100});
+      box.scrollTop = from + by * (p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2);
+      if (p < 1) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  })()`);
+  if (s.toggle) await cdp.evaluate(`${optionRow(row)}.querySelector(".checkbox-container").click()`);
+  // Obsidian reads the dropdown on its change event, as when picked by hand
+  if (s.select) await cdp.evaluate(`(() => {
+    const el = ${optionRow(row)}.querySelector("select");
+    el.value = ${JSON.stringify(s.value)};
+    el.dispatchEvent(new Event("change"));
+  })()`);
+}
+
+// Each step's motion frame by frame, then its settled frame held. The chart
+// itself redraws in one frame
+async function record(cdp, shot, work) {
+  const box = await cropBox(cdp, shot);
+  const dir = join(work, "frames");
+  mkdirSync(dir);
+  // Two captures of an unchanged window still differ by a faint shade along
+  // the options' edges, and a GIF stores each such frame in full, so a frame
+  // counts as new only when enough pixels change by more than that
+  await cdp.evaluate(`window.chartworkChanged = async (png) => {
+    const img = new Image();
+    img.src = "data:image/png;base64," + png;
+    await img.decode();
+    const ctx = new OffscreenCanvas(img.width, img.height).getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const now = ctx.getImageData(0, 0, img.width, img.height).data;
+    const prev = window.chartworkFrame;
+    window.chartworkFrame = now;
+    if (!prev) return true;
+    let changed = 0;
+    for (let i = 0; i < now.length; i += 4) {
+      if (Math.abs(now[i] - prev[i]) + Math.abs(now[i + 1] - prev[i + 1]) + Math.abs(now[i + 2] - prev[i + 2]) > 24) changed++;
+    }
+    return changed > 50;
+  }`);
+  const frames = [];
+  const capture = async () => {
+    const { data } = await cdp.send("Page.captureScreenshot", { format: "png", clip: box });
+    if (!(await cdp.evaluate(`chartworkChanged(${JSON.stringify(data)})`))) return;
+    const file = join(dir, `${String(frames.length).padStart(4, "0")}.png`);
+    writeFileSync(file, Buffer.from(data, "base64"));
+    frames.push({ file, t: Date.now() });
+  };
+  for (const s of shot.record) {
+    await step(cdp, s);
+    const start = Date.now();
+    if (Object.keys(s).length > 1) while (Date.now() - start < MOTION_MS) await capture();
+    await sleep(200);
+    await capture();
+    for (const [i, f] of frames.entries()) f.duration ??= frames[i + 1] && frames[i + 1].t - f.t;
+    frames.at(-1).duration = s.hold;
+  }
+  const list = frames.map((f) => `file '${f.file}'\nduration ${f.duration / 1000}\n`).join("");
+  writeFileSync(join(dir, "list.txt"), list);
+  const file = join(OUT, `${shot.name}.gif`);
+  // A flat interface needs no dithering, which would only add noise between frames
+  execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", join(dir, "list.txt"),
+    "-vf", `scale=${GIF_WIDTH}:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff:max_colors=128[p];` +
+      "[b][p]paletteuse=dither=none:diff_mode=rectangle",
+    // The concat format drops the last frame's duration, so the GIF sets it
+    "-fps_mode", "vfr", "-loop", "0", "-final_delay", String(Math.round(frames.at(-1).duration / 10)), file]);
+  rmSync(dir, { recursive: true });
+  console.log(`Wrote ${file.slice(ROOT.length + 1)}`);
+}
+
 async function resize(cdp, shot) {
   const size = shot.window ?? WINDOW;
   await cdp.evaluate(`(() => {
@@ -254,7 +361,7 @@ async function resize(cdp, shot) {
   await sleep(500);
 }
 
-async function shoot(cdp, shot) {
+async function shoot(cdp, shot, work) {
   await resize(cdp, shot);
   await setTheme(cdp, shot.theme);
   // Obsidian's readable line length, so charts in a grid lay out at grid size
@@ -279,7 +386,8 @@ async function shoot(cdp, shot) {
   if (shot.options) await openOptions(cdp);
   // Chart.js animates in, and a theme change or a resize redraws it
   await sleep(1500);
-  if (shot.pair) await pair(cdp, shot, sel);
+  if (shot.record) await record(cdp, shot, work);
+  else if (shot.pair) await pair(cdp, shot, sel);
   else await (shot.crop ? crop(cdp, shot) : grid(cdp, shot, sel));
 }
 
@@ -306,7 +414,7 @@ try {
   await sleep(500);
   mkdirSync(OUT, { recursive: true });
   const only = process.argv.slice(2);
-  for (const shot of SHOTS) if (only.length === 0 || only.includes(shot.name)) await shoot(cdp, shot);
+  for (const shot of SHOTS) if (only.length === 0 || only.includes(shot.name)) await shoot(cdp, shot, work);
 } finally {
   cdp?.close();
   app.kill();

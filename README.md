@@ -2,7 +2,7 @@
 
 One plugin for every chart in your vault. Make one from a [Bases](https://help.obsidian.md/bases) view, a code block or a script. They match your theme, light or dark, with nothing to set up, and notes written for the [Charts](https://github.com/phibr0/obsidian-charts) plugin draw as they are.
 
-<img src="docs/images/hero.png" width="720" alt="A base of books drawn as a horizontal bar chart of pages by genre, next to its view options: genre as the category, summed by pages">
+<img src="docs/images/hero.gif" width="720" alt="A base of books drawn as a horizontal bar chart of pages by genre, next to its view options. Turning off horizontal bars and then picking Doughnut as the chart type redraws the chart each time, and switching to the dark theme recolors it">
 
 ## Three ways to make a chart
 
