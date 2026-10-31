@@ -10,7 +10,43 @@ The most installed chart plugin, Charts, has had no release since January 2024 a
 
 My own vault needs all three, and each chart there carries the same extra code to look right: reading the theme's colours so text stays readable on a dark background, putting the value on each bar, keeping horizontal bars the same thickness from one note to the next. Chartwork does that part itself, so a chart only has to say what to show.
 
-If you use Charts now, Chartwork is meant to read Charts' `chart` blocks and `window.renderChart` calls as they are, so switching shouldn't mean editing your notes. How the two behave when both are installed is still open.
+Two charts from my vault show the difference. Books counted by reading status took 87 lines of Dataview JavaScript with Charts. With Chartwork it is a Bases view embedded in the note, most of it set up in the view's options:
+
+```yaml
+filters:
+  and:
+    - tags.contains("Media")
+    - hierarchy.contains(link("Books"))
+formulas:
+  state: 'if(consumed == "active", "Reading", if(consumed == "yes", "Yes", if(consumed == "no", "No", if(consumed == "paused", "Paused", if(consumed == "dropped", "Dropped")))))'
+views:
+  - type: chartwork-chart
+    name: Consumption
+    x: formula.state
+    categoryOrder: Reading, Yes, No, Paused, Dropped
+    skipEmpty: true
+    colors:
+      - "Reading: rgb(173,247,182)"
+      - "Yes: rgb(158,202,225)"
+```
+
+Notes created this month, counted by tag, is a script in my vault. With Charts it went through a 57-line helper that themed and labelled a raw Chart.js config. With Chartwork the script only works out the numbers:
+
+```js
+const tags = {};
+for (const page of dv.pages().where((p) => p.file.cday >= dv.date("2026-10-01"))) {
+  for (const tag of page.tags ?? []) tags[tag] = (tags[tag] ?? 0) + 1;
+}
+window.chartwork.render(dv.container, {
+  kind: "bar",
+  horizontal: true,
+  labels: Object.keys(tags),
+  series: [{ name: "Notes", values: Object.values(tags) }],
+  topN: 10,
+}, dv.component);
+```
+
+If you use Charts now, Chartwork reads Charts' `chart` blocks and `window.renderChart` calls as they are, so switching shouldn't mean editing your notes. While Charts is enabled, Chartwork leaves both to it.
 
 ## Three ways to make a chart
 
