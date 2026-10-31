@@ -76,6 +76,7 @@ void test("theme text colour reaches axes, legend and title", () => {
   assert.equal(at(o, "scales.x.title.text"), "Count");
   assert.equal(at(o, "plugins.title.color"), "#111");
   assert.equal(at(o, "plugins.legend.labels.color"), "#111");
+  assert.equal(at(o, "plugins.legend.labels.boxWidth"), 12);
 });
 
 void test("horizontal height scales with bar count", () => {
@@ -90,7 +91,11 @@ void test("theme fill keeps what the caller set and does not mutate the input", 
   const config = {
     type: "bar",
     data: { labels: ["a"], datasets: [{ data: [1] }, { data: [2], backgroundColor: "hotpink" }] },
-    options: { color: "orange", scales: { y: { ticks: { color: "lime" }, grid: {} } } },
+    options: {
+      color: "orange",
+      scales: { y: { ticks: { color: "lime" }, grid: {} } },
+      plugins: { legend: { labels: { boxWidth: 30 } } },
+    },
   } as unknown as ChartConfiguration;
   const before = JSON.stringify(config);
   const out = fillThemeDefaults(config, theme);
@@ -103,6 +108,8 @@ void test("theme fill keeps what the caller set and does not mutate the input", 
   assert.equal(at(o, "scales.y.grid.color"), "#ddd");
   assert.equal(at(o, "scales.x.ticks.color"), "#111");
   assert.equal(at(o, "plugins.title.color"), "#111");
+  assert.equal(at(o, "plugins.legend.labels.boxWidth"), 30);
+  assert.equal(at(o, "plugins.legend.labels.boxHeight"), 12);
   assert.deepEqual(ds.map((d) => d.backgroundColor), ["#p1", "hotpink"]);
 });
 

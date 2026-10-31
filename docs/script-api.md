@@ -61,6 +61,6 @@ Colours can be any CSS colour, including `var(--color-red)`. Without one, series
 
 ## Charts' `renderChart`
 
-Scripts for the Charts plugin call `window.renderChart(config, element)` with a raw Chart.js config, or `{chartOptions: config, width: "60%"}`. Without Charts installed, Chartwork provides it: any Chart.js chart type, time axes included, with theme colours wherever the config sets none. A failing config shows its error and returns `null`. Charts' annotation and sankey plugins are not bundled. New scripts should use `render`, which knows when a note closes.
+Scripts for the Charts plugin call `window.renderChart(config, element)` with a raw Chart.js config, or `{chartOptions: config, width: "60%"}`. Without Charts installed, Chartwork provides it: any Chart.js chart type, time axes included, with theme colours and square legend keys wherever the config sets none. A failing config shows its error and returns `null`. Charts' annotation and sankey plugins are not bundled. New scripts should use `render`, which knows when a note closes.
 
 <img src="images/render-chart.png" width="560" alt="Four charts from renderChart: a radar of genres by year, a polar area of reading hours by time of day, a line of pages read on a time axis and a scatter of pages by year published">

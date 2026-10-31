@@ -10,6 +10,8 @@ export const DEFAULT_BAR_THICKNESS = 28;
 const DEFAULT_HEIGHT = 300;
 // Only reached with an empty palette, which readTheme never returns
 const FALLBACK_COLOR = "#888888";
+// Chart.js draws legend keys 40 px wide, longer than most of the labels they mark
+const LEGEND_KEY = { boxWidth: 12, boxHeight: 12 };
 
 // Chart.js parses colours itself and knows no color-mix(), so translucency is
 // added to the hex or rgb() value that readTheme normalised the theme to.
@@ -132,7 +134,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
         ? spec.kind === "pie" || spec.kind === "doughnut" || data.series.length > 1
         : spec.legend !== false,
       ...(typeof spec.legend === "string" ? { position: spec.legend } : {}),
-      labels: { color: theme.text },
+      labels: { color: theme.text, ...LEGEND_KEY },
     },
     title: { display: Boolean(spec.title), text: spec.title ?? "", color: theme.text },
   };
@@ -212,7 +214,7 @@ export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): Cha
     color: theme.text,
     font: { family: theme.font },
     plugins: {
-      legend: { labels: { color: theme.text } },
+      legend: { labels: { color: theme.text, ...LEGEND_KEY } },
       title: { color: theme.text },
     },
   };
