@@ -57,14 +57,16 @@ function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
       items: [
         {
           type: "dropdown",
-          key: "sort",
+          // Bases owns "sort" and "order" (arrays) in every view, and rejects
+          // the whole view when a plugin stores a string under them.
+          key: "categorySort",
           displayName: "Sort",
           default: "none",
           options: { none: "As found", value: "By value", label: "By label" },
         },
         { type: "slider", key: "topN", displayName: "Largest categories to keep", default: 0, min: 0, max: 50, step: 1 },
         { type: "text", key: "other", displayName: "Label for the rest" },
-        { type: "text", key: "order", displayName: "Order first", placeholder: "Comma separated labels" },
+        { type: "text", key: "categoryOrder", displayName: "Order first", placeholder: "Comma separated labels" },
         { type: "multitext", key: "colors", displayName: "Colors", default: [] },
         { type: "toggle", key: "skipEmpty", displayName: "Skip empty categories", default: false },
       ],
@@ -122,7 +124,7 @@ class ChartView extends BasesView {
     }
 
     const kindValue = this.config.get("kind");
-    const sortValue = this.config.get("sort");
+    const sortValue = this.config.get("categorySort");
     const topN = Number(this.config.get("topN"));
     const spec = aggregateRows(rows, {
       aggregation,
@@ -132,7 +134,7 @@ class ChartView extends BasesView {
       sort: sortValue === "value" || sortValue === "label" ? sortValue : "none",
       topN: Number.isFinite(topN) ? topN : 0,
       other: text(this.config, "other") || undefined,
-      order: text(this.config, "order").split(",").map((s) => s.trim()).filter(Boolean),
+      order: text(this.config, "categoryOrder").split(",").map((s) => s.trim()).filter(Boolean),
       categoryColors: parseCategoryColors(this.config.get("colors")),
       skipEmpty: this.config.get("skipEmpty") === true,
       seriesName: y ? this.config.getDisplayName(y) : undefined,
