@@ -4,10 +4,12 @@ import { parseColorList } from "./settings.ts";
 
 export class ChartworkSettingTab extends PluginSettingTab {
   private readonly plugin: ChartworkPlugin;
+  private readonly check: () => Promise<void>;
 
-  constructor(plugin: ChartworkPlugin) {
+  constructor(plugin: ChartworkPlugin, check: () => Promise<void>) {
     super(plugin.app, plugin);
     this.plugin = plugin;
+    this.check = check;
   }
 
   display(): void {
@@ -26,5 +28,11 @@ export class ChartworkSettingTab extends PluginSettingTab {
           void this.plugin.setSeriesColors(parseColorList(area.getValue()));
         });
       });
+    new Setting(this.containerEl)
+      .setName("Check chart blocks and scripts")
+      .setDesc("Lists every chart block in the vault that Chartwork can't draw or draws only in part, and every script still calling renderChart from the Charts plugin.")
+      .addButton((button) => button
+        .setButtonText("Check")
+        .onClick(() => void this.check()));
   }
 }

@@ -42,3 +42,10 @@
     height: auto !important;
   }
 }
+
+/* Obsidian turns off text selection across its interface; the findings are
+   worth copying a line at a time too */
+.chartwork-findings .modal-content {
+  -webkit-user-select: text;
+  user-select: text;
+}

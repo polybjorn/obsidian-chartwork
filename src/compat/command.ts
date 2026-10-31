@@ -1,8 +1,8 @@
-import { Modal, Notice, parseYaml } from "obsidian";
+import { Modal, Notice, Setting, parseYaml } from "obsidian";
 import type { App, Plugin, TFile } from "obsidian";
 import { errorText } from "../engine/index.ts";
 import { chartsEnabled } from "./charts.ts";
-import { checkNote } from "./scan.ts";
+import { checkNote, findingsMarkdown } from "./scan.ts";
 import type { Finding } from "./scan.ts";
 
 interface NoteFindings {
@@ -38,6 +38,13 @@ async function scanVault(app: App): Promise<ScanResult> {
   return { notes, unread: unread.sort() };
 }
 
+// Settings has no public close, and the list opens over it from the settings
+// tab's button, so a line link would land behind it
+function closeSettings(app: App): void {
+  const setting = (app as App & { setting?: { close?: () => void } }).setting;
+  if (typeof setting?.close === "function") setting.close();
+}
+
 class FindingsModal extends Modal {
   private readonly scan: ScanResult;
   private readonly chartsOn: boolean;
@@ -50,9 +57,10 @@ class FindingsModal extends Modal {
 
   override onOpen(): void {
     this.setTitle("Chart blocks and scripts to check");
+    this.modalEl.addClass("chartwork-findings");
     const { contentEl } = this;
     if (this.chartsOn) {
-      contentEl.createEl("p", { text: "Charts is enabled, so it draws chart blocks instead of Chartwork. Disable it and reload Obsidian to switch." });
+      contentEl.createEl("p", { text: "The Charts plugin is enabled, so it draws chart blocks instead of Chartwork. Disable it and reload Obsidian to switch." });
     }
     const { notes, unread } = this.scan;
     if (unread.length > 0) {
@@ -71,10 +79,27 @@ class FindingsModal extends Modal {
         link.addEventListener("click", (e) => {
           e.preventDefault();
           this.close();
+          closeSettings(this.app);
           void this.app.workspace.getLeaf(false).openFile(file, { eState: { line: finding.line } });
         });
         item.appendText(`: ${finding.message}`);
       }
+    }
+    new Setting(contentEl).addButton((button) => button
+      .setButtonText("Copy as Markdown")
+      .onClick(() => void this.copy()));
+  }
+
+  private async copy(): Promise<void> {
+    const markdown = findingsMarkdown(this.scan.notes.map(({ file, findings }) => ({
+      link: this.app.fileManager.generateMarkdownLink(file, ""),
+      findings,
+    })));
+    try {
+      await navigator.clipboard.writeText(markdown);
+      new Notice("Copied the list as Markdown.");
+    } catch (e) {
+      new Notice(`Chartwork could not copy the list. ${errorText(e)}`);
     }
   }
 
@@ -83,7 +108,8 @@ class FindingsModal extends Modal {
   }
 }
 
-export function registerCompat(plugin: Plugin): void {
+/** Registers the check command and returns it, for the settings tab's button. */
+export function registerCompat(plugin: Plugin): () => Promise<void> {
   const { app } = plugin;
   const check = async (): Promise<void> => {
     try {
@@ -103,16 +129,17 @@ export function registerCompat(plugin: Plugin): void {
   // turning Charts back on shows it again
   if (!chartsEnabled(plugin)) {
     app.saveLocalStorage(NOTICE_SHOWN, null);
-    return;
+    return check;
   }
-  if (app.loadLocalStorage(NOTICE_SHOWN)) return;
+  if (app.loadLocalStorage(NOTICE_SHOWN)) return check;
   app.workspace.onLayoutReady(() => {
     // A click anywhere on a notice closes it, the button included
     const message = document.createDocumentFragment();
-    message.appendText("Charts is enabled, so it keeps drawing chart blocks. To switch to Chartwork, disable Charts and reload Obsidian.");
+    message.appendText("The Charts plugin is enabled, so it keeps drawing chart blocks. To switch to Chartwork, disable Charts and reload Obsidian.");
     const button = message.createDiv({ cls: "chartwork-notice-actions" }).createEl("button", { text: "Check notes first" });
     button.addEventListener("click", () => void check());
     new Notice(message, 0);
     app.saveLocalStorage(NOTICE_SHOWN, true);
   });
+  return check;
 }

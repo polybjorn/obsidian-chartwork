@@ -17,8 +17,7 @@ export default class ChartworkPlugin extends Plugin {
     registerChartView(this, colors);
     installApi(this, colors);
     registerChartBlock(this, colors);
-    registerCompat(this);
-    this.addSettingTab(new ChartworkSettingTab(this));
+    this.addSettingTab(new ChartworkSettingTab(this, registerCompat(this)));
   }
 
   async setSeriesColors(seriesColors: string[]): Promise<void> {
