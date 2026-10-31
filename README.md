@@ -4,19 +4,25 @@ Charts in Obsidian, made from your notes. Point a Bases view at a property, type
 
 <img src="docs/images/readme.png" width="560" alt="Four charts in Obsidian's dark theme: a doughnut of books by genre and a bar chart of pages by author from Bases, a stacked bar chart of reading hours by weekday and a line chart of pages per month from code blocks">
 
-## Docs
-
-- [Bases view](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/bases-view.md)
-- [Chart code block](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/code-block.md)
-- [Script function](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/script-api.md)
-
 ## Three ways to make a chart
 
 | Way | Use it when | Needs |
 |---|---|---|
-| Bases view | the numbers are note properties, like books counted by status or hours summed by project | Bases, built into Obsidian |
-| `chart` code block | the numbers are in no note, so you type them in | nothing else |
-| Script function | the numbers have to be worked out first, like notes created this month counted by tag | a plugin that runs JavaScript in notes, such as Dataview |
+| [Bases view](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/bases-view.md) | the numbers are note properties, like books counted by status or hours summed by project | Bases, built into Obsidian |
+| [`chart` code block](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/code-block.md) | the numbers are in no note, so you type them in | nothing else |
+| [Script function](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/script-api.md) | the numbers have to be worked out first, like notes created this month counted by tag | a plugin that runs JavaScript in notes, such as Dataview |
+
+The smallest chart is a code block:
+
+````markdown
+```chart
+type: line
+labels: [Jan, Feb, Mar, Apr]
+series:
+  - title: Pages read
+    data: [320, 450, 280, 510]
+```
+````
 
 ## Requirements
 
