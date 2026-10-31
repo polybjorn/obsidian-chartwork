@@ -27,6 +27,18 @@ export function withAlpha(color: string, alpha: number): string {
   return color;
 }
 
+const RADIAL = new Set(["radar", "polarArea"]);
+
+function radialScale(theme: Theme): { ticks: Obj; grid: Obj; angleLines: Obj; pointLabels: Obj } {
+  return {
+    // Chart.js backs radial tick labels with white, which shows on a dark theme
+    ticks: { color: theme.text, backdropColor: "transparent" },
+    grid: { color: theme.grid },
+    angleLines: { color: theme.grid },
+    pointLabels: { color: theme.text },
+  };
+}
+
 export function wantsValueLabels(spec: ChartSpec): boolean {
   return spec.valueLabels ?? (spec.kind === "bar" && spec.series.length === 1);
 }
@@ -117,6 +129,18 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
         spanGaps: false,
       };
     }
+    if (spec.kind === "radar") {
+      const c = Array.isArray(color) ? color[0] : color;
+      return {
+        label: s.name,
+        data: s.values,
+        borderColor: c,
+        backgroundColor: s.fill === false ? c : withAlpha(c ?? FALLBACK_COLOR, 0.25),
+        pointBackgroundColor: c,
+        fill: s.fill !== false,
+        spanGaps: false,
+      };
+    }
     if (spec.kind === "bar") {
       return { label: s.name, data: s.values, backgroundColor: color, borderWidth: 0 };
     }
@@ -167,6 +191,17 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     options.scales = horizontal ? { x: valueAxis, y: categoryAxis } : { x: categoryAxis, y: valueAxis };
   }
 
+  if (RADIAL.has(spec.kind)) {
+    const scale = radialScale(theme);
+    options.scales = {
+      r: {
+        ...scale,
+        beginAtZero: spec.beginAtZero ?? true,
+        ...(allIntegers(data.series) ? { ticks: { ...scale.ticks, precision: 0 } } : {}),
+      },
+    };
+  }
+
   return {
     type: spec.kind,
     data: { labels: data.labels, datasets },
@@ -198,7 +233,6 @@ export function fillDefaults<T>(target: T, defaults: unknown): T {
 }
 
 const CARTESIAN = new Set(["bar", "line", "scatter", "bubble"]);
-const RADIAL = new Set(["radar", "polarArea"]);
 // One colour per data point rather than per dataset
 const PER_POINT = new Set(["pie", "doughnut", "polarArea"]);
 
@@ -231,15 +265,7 @@ export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): Cha
     if (names.size === 0) ["x", "y"].forEach((n) => names.add(n));
     defaults.scales = Object.fromEntries([...names].map((n) => [n, axis]));
   } else if (RADIAL.has(type)) {
-    defaults.scales = {
-      r: {
-        // Chart.js backs radial tick labels with white, which shows on a dark theme
-        ticks: { color: theme.text, backdropColor: "transparent" },
-        grid: { color: theme.grid },
-        angleLines: { color: theme.grid },
-        pointLabels: { color: theme.text },
-      },
-    };
+    defaults.scales = { r: radialScale(theme) };
   }
 
   const paint = (i: number): string => theme.palette[i % theme.palette.length] ?? FALLBACK_COLOR;

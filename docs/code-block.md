@@ -18,22 +18,22 @@ series:
 
 | Key | Applies to | What it does |
 |---|---|---|
-| `type` | all | `bar`, `line`, `pie` or `doughnut` |
+| `type` | all | `bar`, `line`, `pie`, `doughnut` or `radar` |
 | `indexAxis: y` | bar, line | Horizontal bars |
 | `stacked: true` | bar, line | Stack the series |
-| `fill: true` | line | Fill the area under each line |
+| `fill` | line, radar | `true` fills the area under each line. Radar shapes are filled unless `fill: false` |
 | `tension` | line | Curve, 0 for straight segments. Default 0.2 |
-| `beginAtZero` | bar, line | Start the value axis at zero. Default `true` |
+| `beginAtZero` | bar, line, radar | Start the value axis at zero. Default `true` |
 | `xTitle` / `yTitle` | bar, line | Title for the value axis (`xTitle` when the bars are horizontal) |
 | `legend` | all | `false` hides the legend, `true` shows it |
 | `legendPosition` | all | `top`, `bottom`, `left` or `right` |
 | `width` | all | Chart width, as CSS (`60%`) or pixels (`400`) |
 
-Colours come from the theme, or from the list under Series colors in Chartwork's settings. A bar chart with one series prints each value on its bar, and a horizontal one grows taller with each label so bars keep one thickness.
+Colours come from the theme, or from the list under Series colors in Chartwork's settings. A radar chart takes its spokes from `labels` and draws one shape per series. A bar chart with one series prints each value on its bar, and a horizontal one grows taller with each label so bars keep one thickness.
 
 ## Differences from Charts
 
-- Charts' `radar`, `polarArea` and `sankey` types, and charts built from a table with `id:`, show a message saying they are not supported yet.
+- Charts' `polarArea` and `sankey` types, and charts built from a table with `id:`, show a message saying they are not supported yet.
 - Keys not listed above are ignored. Raw Chart.js options in the block have no effect; use [the script function](script-api.md) for those.
 - While Charts is enabled, Chartwork leaves `chart` blocks to it, and says so once. Disable Charts and reload to switch over.
 

@@ -22,7 +22,7 @@ void test("accepts a minimal and a full spec", () => {
 });
 
 const bad: [string, (s: Record<string, unknown>) => void, RegExp][] = [
-  ["kind", (s) => { s.kind = "radar"; }, /kind must be one of/],
+  ["kind", (s) => { s.kind = "scatter"; }, /kind must be one of/],
   ["labels type", (s) => { s.labels = "ab"; }, /labels must be an array/],
   ["label item", (s) => { s.labels = ["a", 2]; }, /labels\[1\]/],
   ["series type", (s) => { s.series = {}; }, /series must be an array/],

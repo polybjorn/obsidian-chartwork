@@ -12,11 +12,11 @@ void test("a block that draws as written has no findings", () => {
 });
 
 void test("an unsupported type is reported at its opening fence", () => {
-  const findings = check('# Note\n\n```chart\n{"type": "radar", "labels": ["a"], "series": []}\n```\n');
+  const findings = check('# Note\n\n```chart\n{"type": "sankey", "labels": ["a"], "series": []}\n```\n');
   assert.equal(findings.length, 1);
   assert.equal(findings[0]?.kind, "error");
   assert.equal(findings[0]?.line, 2);
-  assert.match(findings[0]?.message ?? "", /radar/);
+  assert.match(findings[0]?.message ?? "", /sankey/);
 });
 
 void test("keys the parser does not read are listed", () => {
@@ -30,7 +30,7 @@ void test("a block that is not valid YAML is an error", () => {
 });
 
 void test("a chart fence shown inside a longer fence is an example, not a chart", () => {
-  assert.deepEqual(check('````markdown\n```chart\n{"type": "radar"}\n```\n````\n'), []);
+  assert.deepEqual(check('````markdown\n```chart\n{"type": "sankey"}\n```\n````\n'), []);
 });
 
 void test("a block in a callout is read without the quote markers", () => {
@@ -40,7 +40,7 @@ void test("a block in a callout is read without the quote markers", () => {
 });
 
 void test("tilde fences count", () => {
-  assert.equal(check('~~~chart\n{"type": "radar"}\n~~~\n').length, 1);
+  assert.equal(check('~~~chart\n{"type": "sankey"}\n~~~\n').length, 1);
 });
 
 void test("renderChart is reported inside a script block, not in prose", () => {

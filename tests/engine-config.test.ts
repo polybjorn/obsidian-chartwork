@@ -47,6 +47,26 @@ void test("value labels default on for a single-series bar only", () => {
   assert.equal(buildConfig({ ...two, valueLabels: true }, theme).plugins?.length, 1);
 });
 
+void test("a radar draws one translucent shape per series on a themed radial scale", () => {
+  const two: ChartSpec = { kind: "radar", labels: ["a", "b", "c"], series: [{ name: "n", values: [1, 2, 3] }, { name: "m", values: [3, 2, 1], fill: false }] };
+  const config = buildConfig(two, theme);
+  const ds = config.data.datasets as unknown as { borderColor: string; backgroundColor: string; fill: boolean }[];
+  assert.equal(config.type, "radar");
+  assert.deepEqual(ds.map((d) => d.borderColor), ["#p1", "#p2"]);
+  assert.equal(ds[0]?.backgroundColor, withAlpha("#p1", 0.25));
+  assert.deepEqual(ds.map((d) => d.fill), [true, false]);
+  assert.equal(ds[1]?.backgroundColor, "#p2");
+  const o = config.options;
+  assert.equal(at(o, "scales.r.grid.color"), "#ddd");
+  assert.equal(at(o, "scales.r.angleLines.color"), "#ddd");
+  assert.equal(at(o, "scales.r.pointLabels.color"), "#111");
+  assert.equal(at(o, "scales.r.ticks.backdropColor"), "transparent");
+  assert.equal(at(o, "scales.r.ticks.precision"), 0);
+  assert.equal(at(o, "scales.r.beginAtZero"), true);
+  assert.equal(at(o, "scales.x"), undefined);
+  assert.equal(at(o, "plugins.legend.display"), true);
+});
+
 void test("legend is hidden for one series and shown for several or for pie", () => {
   assert.equal(at(opts(spec), "plugins.legend.display"), false);
   const two = { ...spec, series: [...spec.series, { name: "m", values: [1, 2] }] };

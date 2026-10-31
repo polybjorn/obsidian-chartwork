@@ -10,7 +10,8 @@ export interface ParsedBlock {
 
 export type ParseResult = { ok: true; value: ParsedBlock } | { ok: false; error: string };
 
-const UNSUPPORTED = ["radar", "polararea", "sankey"];
+const UNSUPPORTED = ["polararea", "sankey"];
+const KIND_LIST = "bar, line, pie, doughnut or radar";
 
 /** Every key the parser reads; any other key in a block is ignored. */
 export const BLOCK_KEYS: readonly string[] = [
@@ -34,7 +35,7 @@ function bool(v: unknown): boolean | undefined {
   return typeof v === "boolean" ? v : undefined;
 }
 
-function parseSeries(raw: unknown, index: number, kind: ChartKind, fill: boolean): Series | string {
+function parseSeries(raw: unknown, index: number, kind: ChartKind, fill: boolean | undefined): Series | string {
   if (!isObj(raw)) return `Series ${index + 1} must have a title and data.`;
   const data = raw["data"];
   if (!Array.isArray(data)) return `Series ${index + 1} needs a data list, like data: [1, 2, 3].`;
@@ -47,6 +48,7 @@ function parseSeries(raw: unknown, index: number, kind: ChartKind, fill: boolean
   const title = label(raw["title"]);
   const series: Series = { name: title ?? `Series ${index + 1}`, values };
   if (kind === "line" && fill) series.fill = true;
+  if (kind === "radar") series.fill = fill ?? true;
   return series;
 }
 
@@ -54,13 +56,13 @@ export function parseChartBlock(input: unknown): ParseResult {
   if (!isObj(input)) return fail("The chart block is empty or is not a list of options. Start with type: bar.");
 
   const rawType = typeof input["type"] === "string" ? input["type"].trim() : "";
-  if (!rawType) return fail("The chart block needs a type: bar, line, pie or doughnut.");
+  if (!rawType) return fail(`The chart block needs a type: ${KIND_LIST}.`);
   const lower = rawType.toLowerCase();
   if (UNSUPPORTED.includes(lower)) {
-    return fail(`The chart type "${rawType}" is not supported yet. Use bar, line, pie or doughnut.`);
+    return fail(`The chart type "${rawType}" is not supported yet. Use ${KIND_LIST}.`);
   }
   if (!isOneOf(CHART_KINDS, lower)) {
-    return fail(`Unknown chart type "${rawType}". Use bar, line, pie or doughnut.`);
+    return fail(`Unknown chart type "${rawType}". Use ${KIND_LIST}.`);
   }
   const kind = lower;
 
@@ -81,7 +83,7 @@ export function parseChartBlock(input: unknown): ParseResult {
   if (!Array.isArray(rawSeries) || rawSeries.length === 0) {
     return fail("The chart block needs series, each with a title and data.");
   }
-  const fill = bool(input["fill"]) ?? false;
+  const fill = bool(input["fill"]);
   const series: Series[] = [];
   for (let i = 0; i < rawSeries.length; i++) {
     const s = parseSeries(rawSeries[i], i, kind, fill);

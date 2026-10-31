@@ -3,7 +3,7 @@ import type { App, Component } from "obsidian";
 // Every entry point (Bases view, code block, script) translates its input into
 // a ChartSpec, so theming and layout are decided in the engine alone.
 
-export const CHART_KINDS = ["bar", "line", "pie", "doughnut"] as const;
+export const CHART_KINDS = ["bar", "line", "pie", "doughnut", "radar"] as const;
 export type ChartKind = (typeof CHART_KINDS)[number];
 
 export const SORTS = ["none", "value", "label"] as const;
@@ -18,6 +18,7 @@ export interface Series {
   values: (number | null)[];
   /** One colour for the series, or one per label. Any CSS colour, including var(--x). */
   color?: string | string[];
+  /** Line: fill under the line. Radar: fill the shape, which is the default. */
   fill?: boolean;
 }
 
@@ -42,7 +43,7 @@ export interface ChartSpec {
   categoryColors?: Record<string, string>;
   /** Axis title for the values. */
   valueTitle?: string;
-  /** Start the value axis at zero. Defaults to true. */
+  /** Start the value axis, or radial scale, at zero. Defaults to true. */
   beginAtZero?: boolean;
   /** Line curve, 0 for straight segments. Defaults to 0.2. */
   tension?: number;
