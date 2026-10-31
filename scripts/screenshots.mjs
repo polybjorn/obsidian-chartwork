@@ -15,6 +15,8 @@ const OBSIDIAN = process.env.OBSIDIAN_BIN ?? "/Applications/Obsidian.app/Content
 const PORT = 9333;
 // The window's content size in points; a Retina screen captures it at 2x
 const WINDOW = { width: 1100, height: 780 };
+// The demo vault's note names are short, so the file list needs little room
+const SIDEBAR = 180;
 const THEMES = { light: "moonstone", dark: "obsidian" };
 
 const SHOTS = [
@@ -213,6 +215,7 @@ try {
     const win = require("@electron/remote").getCurrentWindow();
     win.setContentSize(${WINDOW.width}, ${WINDOW.height});
     win.center();
+    app.workspace.leftSplit.setSize(${SIDEBAR});
   })()`);
   await sleep(500);
   const id = windowId(app.pid);
