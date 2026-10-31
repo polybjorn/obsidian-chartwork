@@ -23,7 +23,7 @@ series:
 | `indexAxis: y` | bar, line | Horizontal bars |
 | `stacked: true` | bar, line | Stack the series |
 | `fill` | line, radar | `true` fills the area under each line, and with `stacked: true` each area down to the series below it. Radar shapes are filled unless `fill: false` |
-| `tension` | line | Curve, 0 for straight segments. Default 0.2 |
+| `tension` | line | Curve, 0 for straight segments. Left out, the line takes a gentle curve that never overshoots the values it joins |
 | `spanGaps: true` | line, radar | Join the line across a missing value, or a blank table cell |
 | `beginAtZero` | bar, line, radar | Start the value axis at zero. Default `true` |
 | `xTitle` / `yTitle` | bar, line, scatter | Title for the value axis (`xTitle` when the bars are horizontal). A scatter takes both |

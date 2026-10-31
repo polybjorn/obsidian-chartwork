@@ -75,7 +75,7 @@ The handle's `update` takes the shape the chart was made with: a spec for a spec
 | `labelColors` | boolean | Bars take one color per label |
 | `valueTitle` | string | Title for the value axis |
 | `beginAtZero` | boolean | Value axis or radar scale starts at zero. Default `true` |
-| `tension` | number | Line curve from 0 to 1. Default 0.2 |
+| `tension` | number | Line curve from 0 to 1. Left out, the line takes a gentle curve that never overshoots the values it joins |
 | `spanGaps` | boolean | A line or radar joins across a `null` value instead of leaving a gap |
 | `legend` | boolean, `"top"`, `"bottom"`, `"left"`, `"right"` | Default shown for pie, doughnut, polar area and multi-series charts |
 | `barThickness` | number | Pixels per bar on a horizontal chart. Default 28 |

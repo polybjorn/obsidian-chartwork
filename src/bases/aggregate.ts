@@ -1,4 +1,4 @@
-import type { ChartKind, ChartSpec, DateUnit, Series, Sort } from "../engine/index.ts";
+import type { AxisSpec, ChartKind, ChartSpec, DateUnit, Series, Sort } from "../engine/index.ts";
 
 export const AGGREGATIONS = ["count", "sum", "average", "min", "max"] as const;
 export type Aggregation = (typeof AGGREGATIONS)[number];
@@ -29,6 +29,12 @@ export interface AggregateOptions {
   dateUnit?: DateUnit;
   /** Series in this order, the rest after them as found. */
   seriesOrder?: string[];
+  /** Bounds of the value axis, which is x when horizontal. */
+  min?: number;
+  max?: number;
+  beginAtZero?: boolean;
+  tension?: number;
+  average?: boolean;
 }
 
 export const NONE_LABEL = "(none)";
@@ -155,6 +161,20 @@ const MAX_FILLED = 5000;
 
 interface Bucket { sum: number; count: number; min: number; max: number }
 
+// Pie and doughnut have no value axis, a line alone has tension
+function applyValueScale(spec: ChartSpec, opts: AggregateOptions): void {
+  if (spec.kind === "pie" || spec.kind === "doughnut") return;
+  if (opts.min !== undefined || opts.max !== undefined) {
+    const axis: AxisSpec = {};
+    if (opts.min !== undefined) axis.min = opts.min;
+    if (opts.max !== undefined) axis.max = opts.max;
+    spec.axes = { [opts.horizontal ? "x" : "y"]: axis };
+  }
+  if (opts.beginAtZero !== undefined) spec.beginAtZero = opts.beginAtZero;
+  if (opts.average) spec.average = true;
+  if (spec.kind === "line" && opts.tension !== undefined) spec.tension = opts.tension;
+}
+
 export function aggregateRows(rows: Row[], opts: AggregateOptions): ChartSpec {
   const labelOrder: string[] = [];
   const seen = new Set<string>();
@@ -248,6 +268,7 @@ export function aggregateRows(rows: Row[], opts: AggregateOptions): ChartSpec {
   if (opts.title) spec.title = opts.title;
   if (opts.valueTitle) spec.valueTitle = opts.valueTitle;
   if (opts.horizontal) spec.horizontal = true;
+  applyValueScale(spec, opts);
   if (onAxis) return spec;
   if (opts.sort) spec.sort = opts.sort;
   if (opts.order && opts.order.length > 0) spec.order = opts.order;

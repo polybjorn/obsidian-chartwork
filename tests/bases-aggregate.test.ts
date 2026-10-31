@@ -130,3 +130,24 @@ void test("one series per property, named by group when grouped, in property ord
   assert.deepEqual(aggregateRows(counted, { ...base, seriesOrder: names }).series.map((s) => s.values), [[1, 1], [2, 0]]);
   assert.deepEqual(propertyRows("a", [1, 2], names, "Gym", false).map((r) => r.group), ["Gym: Weight", "Gym: Minutes"]);
 });
+
+void test("value axis options land on y, or on x when horizontal", () => {
+  const rows = [{ x: "a" }, { x: "b" }];
+  const up = aggregateRows(rows, { ...base, min: 2, max: 9, beginAtZero: false, average: true });
+  assert.deepEqual(up.axes, { y: { min: 2, max: 9 } });
+  assert.equal(up.beginAtZero, false);
+  assert.equal(up.average, true);
+  const side = aggregateRows(rows, { ...base, horizontal: true, min: 2 });
+  assert.deepEqual(side.axes, { x: { min: 2 } });
+  assert.equal(aggregateRows(rows, base).axes, undefined);
+});
+
+void test("tension is for lines, and pies take no value axis options", () => {
+  const rows = [{ x: "a" }];
+  assert.equal(aggregateRows(rows, { ...base, kind: "line", tension: 0.5 }).tension, 0.5);
+  assert.equal(aggregateRows(rows, { ...base, tension: 0.5 }).tension, undefined);
+  const pie = aggregateRows(rows, { ...base, kind: "pie", min: 1, average: true, beginAtZero: false });
+  assert.equal(pie.axes, undefined);
+  assert.equal(pie.average, undefined);
+  assert.equal(pie.beginAtZero, undefined);
+});

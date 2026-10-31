@@ -20,6 +20,7 @@ function timeAxis(unit: DateUnit): Obj {
 
 export const DEFAULT_BAR_THICKNESS = 28;
 const DEFAULT_HEIGHT = 300;
+export const DEFAULT_TENSION = 0.2;
 // Only reached with an empty palette, which readTheme never returns
 const FALLBACK_COLOR = "#888888";
 
@@ -351,6 +352,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     : spec.kind === "pie" || spec.kind === "doughnut" || spec.kind === "polarArea" ? "arc" : undefined;
   const labelsOn = labelShape !== undefined && wantsValueLabels(spec);
 
+  const tension = spec.tension ?? DEFAULT_TENSION;
   const datasets: ChartDataset[] = data.series.map((s, si) => {
     const color = colorFor(spec, theme, data, si);
     if (spec.kind === "line") {
@@ -362,7 +364,11 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
         backgroundColor: s.fill ? withAlpha(c ?? FALLBACK_COLOR, 0.25) : c,
         // Stacked, each area fills down to the series below it, as it is drawn
         fill: s.fill === true ? (stacked ? (si === 0 ? "origin" : "-1") : true) : false,
-        tension: spec.tension ?? 0.2,
+        tension,
+        // Bezier curves overshoot, so a count line could dip below its real
+        // values. Monotone ignores tension, so a tension a note sets keeps
+        // Chart.js' meaning, as Charts draws it
+        ...(spec.tension === undefined ? { cubicInterpolationMode: "monotone" as const } : {}),
         spanGaps: spec.spanGaps === true,
         ...lineExtras(s),
       };

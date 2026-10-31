@@ -12,17 +12,21 @@ import {
   type QueryController,
   type Value,
 } from "obsidian";
-import { CHART_KINDS, DATE_UNITS, SORTS, errorText, isOneOf, renderSpec, showError, type ChartHandle } from "../engine/index.ts";
+import { CHART_KINDS, DATE_UNITS, DEFAULT_TENSION, SORTS, errorText, isOneOf, renderSpec, showError, type ChartHandle } from "../engine/index.ts";
 import {
   AGGREGATIONS,
   NONE_LABEL,
   aggregateRows,
   parseCategoryColors,
+  parseNumber,
   propertyRows,
   type Row,
 } from "./aggregate.ts";
 
 export const CHART_VIEW_TYPE = "chartwork-chart";
+
+// Bounds and the mean line have no meaning on a pie
+const noValueAxis = (config: BasesViewConfig): boolean => ["pie", "doughnut"].includes(text(config, "kind"));
 
 function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
   return [
@@ -58,6 +62,28 @@ function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
     },
     { type: "toggle", key: "horizontal", displayName: "Horizontal bars", default: false },
     { type: "text", key: "title", displayName: "Title" },
+    {
+      type: "group",
+      displayName: "Value axis",
+      shouldHide: () => noValueAxis(config),
+      items: [
+        // Text rather than a slider, so an empty field means no bound
+        { type: "text", key: "yMin", displayName: "Minimum", placeholder: "Automatic" },
+        { type: "text", key: "yMax", displayName: "Maximum", placeholder: "Automatic" },
+        { type: "toggle", key: "beginAtZero", displayName: "Start at zero", default: true },
+        { type: "toggle", key: "average", displayName: "Average line", default: false },
+        {
+          type: "slider",
+          key: "tension",
+          displayName: "Line smoothing",
+          default: DEFAULT_TENSION,
+          min: 0,
+          max: 1,
+          step: 0.05,
+          shouldHide: () => config.get("kind") !== "line",
+        },
+      ],
+    },
     {
       type: "group",
       displayName: "Categories",
@@ -99,6 +125,10 @@ function plain(value: Value | null): unknown {
 function text(config: BasesViewConfig, key: string): string {
   const value = config.get(key);
   return typeof value === "string" ? value.trim() : "";
+}
+
+function bound(config: BasesViewConfig, key: string): number | undefined {
+  return parseNumber(text(config, key)) ?? undefined;
 }
 
 class ChartView extends BasesView {
@@ -159,7 +189,14 @@ class ChartView extends BasesView {
     const unitValue = this.config.get("dateUnit");
     const sortValue = this.config.get("categorySort");
     const topN = Number(this.config.get("topN"));
+    const tension = this.config.get("tension");
     const spec = aggregateRows(rows, {
+      min: bound(this.config, "yMin"),
+      max: bound(this.config, "yMax"),
+      beginAtZero: this.config.get("beginAtZero") === false ? false : undefined,
+      average: this.config.get("average") === true,
+      // Left at the default, the line keeps the default curve, which cannot overshoot
+      tension: typeof tension === "number" && tension !== DEFAULT_TENSION ? tension : undefined,
       aggregation,
       kind: isOneOf(CHART_KINDS, kindValue) ? kindValue : "bar",
       horizontal: this.config.get("horizontal") === true,

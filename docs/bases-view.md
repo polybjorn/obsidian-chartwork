@@ -16,6 +16,10 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 | Group dates by | `dateUnit` | `day` (the default), `week`, `month` or `year`, when the category is a date. |
 | Horizontal bars | `horizontal` | Bars run sideways, and the chart grows taller with each category so bars keep the same thickness. |
 | Title | `title` | Shown above the chart. |
+| Minimum, Maximum | `yMin`, `yMax` | Range of the value axis, which is the horizontal one when bars run sideways. Empty fits the data. Not for pie and doughnut. |
+| Start at zero | `beginAtZero` | On by default. Turn it off so a line such as weight over time fills the chart instead of hugging a zero axis. A minimum above zero still wins. |
+| Average line | `average` | A dashed line at the mean of each series, in its color. |
+| Line smoothing | `tension` | For line charts: 0 draws straight segments, higher values curve more. At the default, 0.2, the curve never dips below or rises above the values it joins; another value can overshoot a little between points. |
 | Sort | `categorySort` | `none` keeps the order categories first appear in, `value` puts the largest first, `label` sorts by name. |
 | Largest categories to keep | `topN` | Keep only this many categories, by value. 0 keeps all. |
 | Label for the rest | `other` | With the option above, adds the dropped categories together under this label. Left empty, they are left out. |

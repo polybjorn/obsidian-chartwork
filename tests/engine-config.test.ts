@@ -263,6 +263,14 @@ void test("legend, tension and beginAtZero override the defaults", () => {
   assert.equal(at(line, "data.datasets.0.tension"), 0);
 });
 
+void test("the default curve is monotone so it cannot overshoot; a set tension keeps its own curve", () => {
+  const curved = (tension?: number) => buildConfig({ ...spec, kind: "line", ...(tension === undefined ? {} : { tension }) }, theme);
+  assert.equal(at(curved(), "data.datasets.0.cubicInterpolationMode"), "monotone");
+  assert.equal(at(curved(0.6), "data.datasets.0.cubicInterpolationMode"), undefined);
+  assert.equal(at(curved(0.6), "data.datasets.0.tension"), 0.6);
+  assert.equal(at(curved(0), "data.datasets.0.cubicInterpolationMode"), undefined);
+});
+
 void test("series steps, dots and hidden state reach the datasets", () => {
   const line = buildConfig({ ...spec, kind: "line", spanGaps: true, series: [{ name: "n", values: [2, null], stepped: "after", pointRadius: 0, hidden: true }] }, theme);
   assert.equal(at(line, "data.datasets.0.stepped"), "after");
