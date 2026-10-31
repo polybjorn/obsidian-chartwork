@@ -1,4 +1,4 @@
-import type { BarElement, ChartConfiguration, Plugin } from "chart.js";
+import type { ArcElement, BarElement, ChartConfiguration, Plugin } from "chart.js";
 import { allIntegers, prepareData } from "./data.ts";
 import type { PreparedData, PreparedSeries } from "./data.ts";
 import { isPlain } from "./guards.ts";
@@ -64,12 +64,26 @@ function colorFor(spec: ChartSpec, theme: Theme, data: PreparedData, si: number)
 }
 
 interface LabelStyle {
+  /** Where a label goes: past the end of a bar, above a point, or inside a slice. */
+  shape: "bar" | "line" | "arc";
   color: string;
+  /** Drawn around slice and point labels, which sit on colored slices and lines. */
+  halo: string;
   font: string;
   horizontal: boolean;
   stacked: boolean;
-  /** The value axis runs backwards, so a label sits past the other end of its bar. */
+  /** The value axis runs backwards, so a label sits past the other end of its bar, or under its point. */
   reversed: boolean;
+}
+
+// Below this angle a slice is too thin to hold its value
+const MIN_LABEL_ANGLE = 0.3;
+
+function drawArcLabel(ctx: CanvasRenderingContext2D, el: ArcElement, text: string): void {
+  if (el.circumference < MIN_LABEL_ANGLE || el.outerRadius - el.innerRadius < 16) return;
+  const { x, y } = el.tooltipPosition(false);
+  ctx.strokeText(text, x, y);
+  ctx.fillText(text, x, y);
 }
 
 // Chart.js has no always-on value labels, and a dependency for one draw call
@@ -82,13 +96,31 @@ function valueLabelsPlugin(style: LabelStyle): Plugin {
       ctx.save();
       ctx.font = `bold 12px ${style.font}`;
       ctx.fillStyle = style.color;
+      ctx.strokeStyle = style.halo;
+      ctx.lineWidth = 3;
+      ctx.lineJoin = "round";
       chart.data.datasets.forEach((ds, i) => {
         if (!chart.isDatasetVisible(i)) return;
         chart.getDatasetMeta(i).data.forEach((el, j) => {
           const v = ds.data[j];
           if (typeof v !== "number") return;
-          const bar = el as BarElement & { base: number };
           const text = String(v);
+          if (style.shape === "arc") {
+            if (!chart.getDataVisibility(j)) return;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            drawArcLabel(ctx, el as ArcElement, text);
+            return;
+          }
+          if (style.shape === "line") {
+            ctx.textAlign = "center";
+            ctx.textBaseline = style.reversed ? "top" : "bottom";
+            const y = el.y + (style.reversed ? 8 : -8);
+            ctx.strokeText(text, el.x, y);
+            ctx.fillText(text, el.x, y);
+            return;
+          }
+          const bar = el as BarElement & { base: number };
           const neg = (v < 0) !== style.reversed;
           if (style.stacked) {
             ctx.textAlign = "center";
@@ -143,7 +175,9 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
   const cartesian = spec.kind === "bar" || spec.kind === "line";
   const horizontal = cartesian && spec.horizontal === true;
   const stacked = cartesian && spec.stacked === true;
-  const labelsOn = spec.kind === "bar" && wantsValueLabels(spec);
+  const labelShape = spec.kind === "bar" || spec.kind === "line" ? spec.kind
+    : spec.kind === "pie" || spec.kind === "doughnut" || spec.kind === "polarArea" ? "arc" : undefined;
+  const labelsOn = labelShape !== undefined && wantsValueLabels(spec);
 
   const datasets = data.series.map((s, si) => {
     const color = colorFor(spec, theme, data, si);
@@ -180,7 +214,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
   });
 
   const maxLabel = Math.max(0, ...data.series.flatMap((s) => s.values.map((v) => (v === null ? 0 : String(v).length))));
-  const padding = labelsOn
+  const padding = labelsOn && labelShape !== "arc"
     ? horizontal ? { right: 12 + maxLabel * 8 } : { top: 20 }
     : undefined;
 
@@ -241,9 +275,9 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     type: spec.kind,
     data: { labels: data.labels, datasets },
     options,
-    plugins: labelsOn
+    plugins: labelsOn && labelShape
       ? [valueLabelsPlugin({
-        color: theme.text, font: theme.font, horizontal, stacked,
+        shape: labelShape, color: theme.text, halo: theme.background, font: theme.font, horizontal, stacked,
         reversed: spec.axes?.[horizontal ? "x" : "y"]?.reverse === true,
       })]
       : [],

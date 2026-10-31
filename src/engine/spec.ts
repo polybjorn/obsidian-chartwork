@@ -57,7 +57,7 @@ export interface ChartSpec {
   title?: string;
   horizontal?: boolean;
   stacked?: boolean;
-  /** Print each value on its bar. Defaults to true for a single-series bar chart. */
+  /** Print each value on its bar, slice or line point. Defaults to true for a single-series bar chart. */
   valueLabels?: boolean;
   /** Category order. Defaults to "none", the order the labels came in. */
   sort?: Sort;

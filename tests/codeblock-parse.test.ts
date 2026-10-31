@@ -135,6 +135,12 @@ void test("a title shows above the chart, sankey included", () => {
   assert.deepEqual(r.value.config.options?.plugins?.title, { display: true, text: "Flow" });
 });
 
+void test("valueLabels turns value labels on or off, except on a radar", () => {
+  assert.equal(ok({ ...base, type: "pie", valueLabels: true }).spec.valueLabels, true);
+  assert.equal(ok({ ...base, valueLabels: false }).spec.valueLabels, false);
+  assert.equal(ok({ ...base, type: "radar", valueLabels: true }).spec.valueLabels, undefined);
+});
+
 void test("invalid input gives readable errors", () => {
   assert.match(err(null), /empty/);
   assert.match(err("text"), /empty/);

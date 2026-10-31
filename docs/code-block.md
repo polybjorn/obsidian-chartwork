@@ -34,6 +34,7 @@ series:
 | `xTickPadding` / `yTickPadding` | bar, line | Pixels between the tick labels and the axis |
 | `rMin` / `rMax` | radar, polarArea | Scale range |
 | `labelColors: true` | bar | One color per label, as in a pie |
+| `valueLabels` | bar, line, pie, doughnut, polarArea | `true` prints each value on its bar, slice or point. `false` hides them on a single-series bar chart, where they show by default |
 | `legend` | all | `false` hides the legend, `true` shows it |
 | `legendPosition` | all | `top`, `bottom`, `left` or `right` |
 | `width` | all | Chart width, as CSS (`60%`) or pixels (`400`) |

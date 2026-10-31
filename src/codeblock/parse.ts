@@ -40,7 +40,7 @@ export const BLOCK_KEYS: readonly string[] = [
   "id", "file", "layout", "select", "labelColors",
   "xMin", "xMax", "xReverse", "xDisplay", "xTickDisplay", "xTickPadding",
   "yMin", "yMax", "yReverse", "yDisplay", "yTickDisplay", "yTickPadding",
-  "rMin", "rMax", "spanGaps", "title",
+  "rMin", "rMax", "spanGaps", "title", "valueLabels",
 ];
 
 function fail(error: string): ParseResult {
@@ -219,6 +219,8 @@ export function parseChartBlock(input: unknown): ParseResult {
   const spec: ChartSpec = { kind, labels, series };
   const title = label(input["title"]);
   if (title) spec.title = title;
+  const valueLabels = bool(input["valueLabels"]);
+  if (valueLabels !== undefined && kind !== "radar") spec.valueLabels = valueLabels;
 
   if (kind === "bar" || kind === "line") {
     const axis = input["indexAxis"];

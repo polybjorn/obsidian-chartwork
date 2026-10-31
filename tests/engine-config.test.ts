@@ -45,6 +45,14 @@ void test("value labels default on for a single-series bar only", () => {
   assert.equal(buildConfig({ ...spec, kind: "line" }, theme).plugins?.length, 0);
   assert.equal(buildConfig({ ...spec, valueLabels: false }, theme).plugins?.length, 0);
   assert.equal(buildConfig({ ...two, valueLabels: true }, theme).plugins?.length, 1);
+  for (const kind of ["line", "pie", "doughnut", "polarArea"] as const) {
+    assert.equal(buildConfig({ ...spec, kind }, theme).plugins?.length, 0, kind);
+    assert.equal(buildConfig({ ...spec, kind, valueLabels: true }, theme).plugins?.length, 1, kind);
+  }
+  assert.equal(buildConfig({ ...spec, kind: "radar", valueLabels: true }, theme).plugins?.length, 0);
+  // Slice labels sit inside the chart, so they take no padding
+  assert.equal(at(opts({ ...spec, kind: "pie", valueLabels: true }), "layout.padding"), undefined);
+  assert.deepEqual(at(opts({ ...spec, kind: "line", valueLabels: true }), "layout.padding"), { top: 20 });
 });
 
 void test("a radar draws one translucent shape per series on a themed radial scale", () => {
