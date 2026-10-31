@@ -191,6 +191,39 @@ function lineExtras(s: PreparedSeries): { stepped?: Stepped; hidden?: boolean; p
   return out;
 }
 
+const REFERENCE_DASH = [4, 4];
+
+// The annotation plugin places a line by scale id and a value on that scale.
+// The label axis reads a bare number as a position, so a number that is also a
+// label, such as a year, goes in as the label. An average follows its series:
+// the legend switching the series off hides its line too.
+function referenceAnnotations(spec: ChartSpec, theme: Theme, data: PreparedData, horizontal: boolean): Obj[] {
+  const lines: Obj[] = [];
+  const labelAxis = horizontal ? "y" : "x";
+  for (const id of ["x", "y"] as const) {
+    for (const at of spec.referenceLines?.[id] ?? []) {
+      const value = id === labelAxis && data.labels.includes(String(at)) ? String(at) : at;
+      lines.push({ type: "line", scaleID: id, value, borderColor: theme.text, borderWidth: 1, borderDash: REFERENCE_DASH });
+    }
+  }
+  if (!spec.average) return lines;
+  data.series.forEach((s, si) => {
+    const values = s.values.filter((v): v is number => v !== null);
+    if (values.length === 0) return;
+    const color = colorFor(spec, theme, data, si);
+    lines.push({
+      type: "line",
+      scaleID: horizontal ? "x" : "y",
+      value: values.reduce((sum, v) => sum + v, 0) / values.length,
+      borderColor: Array.isArray(color) ? theme.text : color,
+      borderWidth: 1.5,
+      borderDash: REFERENCE_DASH,
+      display: (ctx: { chart: { isDatasetVisible(i: number): boolean } }) => ctx.chart.isDatasetVisible(si),
+    });
+  });
+  return lines;
+}
+
 export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
   const data = prepareData(spec);
   const cartesian = spec.kind === "bar" || spec.kind === "line";
@@ -258,6 +291,8 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     plugins,
   };
   if (padding) options.layout = { padding };
+  const annotations = cartesian ? referenceAnnotations(spec, theme, data, horizontal) : [];
+  if (annotations.length > 0) plugins.annotation = { annotations };
 
   if (cartesian) {
     const integers = allIntegers(data.series);

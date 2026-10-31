@@ -238,3 +238,14 @@ void test("a sankey block with bad rows says what is wrong", () => {
   assert.match(err({ type: "sankey", series: [{ data: [["a", "x", "b"]] }] }), /number for the flow/);
   assert.match(err({ type: "sankey", series: [{ data: [["a", 1]] }] }), /\[from, flow, to\]/);
 });
+
+void test("xLine and yLine take a value or a label, or a list, and average a boolean", () => {
+  const { spec } = ok({ ...base, yLine: [4, 6], xLine: "b", average: true });
+  assert.deepEqual(spec.referenceLines, { y: [4, 6], x: ["b"] });
+  assert.equal(spec.average, true);
+  assert.deepEqual(ok({ ...base, xLine: new Date("2024-01-05") }).spec.referenceLines, { x: ["2024-01-05"] });
+  assert.match(err({ ...base, yLine: [4, { at: 6 }] }), /yLine must be a value or a label/);
+  const pie = ok({ ...base, type: "pie", yLine: 4, average: true }).spec;
+  assert.equal(pie.referenceLines, undefined);
+  assert.equal(pie.average, undefined);
+});

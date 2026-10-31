@@ -17,6 +17,7 @@ void test("accepts a minimal and a full spec", () => {
       ...good(), title: "t", horizontal: true, stacked: false, valueLabels: true, sort: "value",
       order: ["b"], topN: 3, other: "Other", categoryColors: { a: "red" }, valueTitle: "v", barThickness: 20,
       beginAtZero: false, tension: 0.4, legend: "bottom", labelColors: true, spanGaps: true,
+      referenceLines: { x: ["a"], y: [2, 3] }, average: true,
       axes: { x: { min: "a", max: 1, reverse: true, display: true, ticks: false, tickPadding: 4 }, y: {}, r: { max: 5 } },
     }),
   );
@@ -40,6 +41,10 @@ const bad: [string, (s: Record<string, unknown>) => void, RegExp][] = [
   ["hidden", (s) => { s.series = [{ name: "n", values: [1, 2], hidden: 1 }]; }, /hidden must be a boolean/],
   ["pointRadius", (s) => { s.series = [{ name: "n", values: [1, 2], pointRadius: -1 }]; }, /pointRadius must be a number of 0 or more/],
   ["spanGaps", (s) => { s.spanGaps = "yes"; }, /spanGaps must be a boolean/],
+  ["average", (s) => { s.average = 1; }, /average must be a boolean/],
+  ["referenceLines", (s) => { s.referenceLines = [2]; }, /referenceLines must be an object/],
+  ["referenceLines axis", (s) => { s.referenceLines = { r: [2] }; }, /unknown field referenceLines\.r/],
+  ["referenceLines item", (s) => { s.referenceLines = { y: [2, null] }; }, /referenceLines\.y\[1\] must be a finite number or a label/],
   ["title", (s) => { s.title = 3; }, /title must be a string/],
   ["horizontal", (s) => { s.horizontal = "true"; }, /horizontal must be a boolean/],
   ["sort", (s) => { s.sort = "random"; }, /sort must be one of/],

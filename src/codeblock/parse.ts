@@ -41,7 +41,7 @@ export const BLOCK_KEYS: readonly string[] = [
   "id", "file", "layout", "select", "labelColors",
   "xMin", "xMax", "xReverse", "xDisplay", "xTickDisplay", "xTickPadding",
   "yMin", "yMax", "yReverse", "yDisplay", "yTickDisplay", "yTickPadding",
-  "rMin", "rMax", "spanGaps", "title", "valueLabels",
+  "rMin", "rMax", "spanGaps", "title", "valueLabels", "xLine", "yLine", "average",
 ];
 
 function fail(error: string): ParseResult {
@@ -283,6 +283,14 @@ export function parseChartBlock(input: unknown): ParseResult {
     const t = input[spec.horizontal ? "xTitle" : "yTitle"];
     if (typeof t === "string" && t) spec.valueTitle = t;
     if (kind === "bar" && bool(input["labelColors"]) === true) spec.labelColors = true;
+    for (const id of ["x", "y"] as const) {
+      const raw = input[`${id}Line`];
+      if (raw === undefined) continue;
+      const at = (Array.isArray(raw) ? raw as unknown[] : [raw]).map((v) => num(v) ?? label(v));
+      if (at.some((v) => v === undefined)) return fail(`${id}Line must be a value or a label, or a list of them, like ${id}Line: [4, 6].`);
+      spec.referenceLines = { ...spec.referenceLines, [id]: at as (number | string)[] };
+    }
+    if (bool(input["average"]) === true) spec.average = true;
   }
 
   const axisIds: AxisId[] = kind === "bar" || kind === "line" ? ["x", "y"] : kind === "radar" || kind === "polarArea" ? ["r"] : [];

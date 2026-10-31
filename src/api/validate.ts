@@ -6,7 +6,7 @@ import type { AxisSpec, ChartSpec, Series } from "../engine/spec.ts";
 const SPEC_KEYS = [
   "kind", "labels", "series", "title", "horizontal", "stacked", "valueLabels", "sort", "order",
   "topN", "other", "categoryColors", "labelColors", "valueTitle", "beginAtZero", "tension", "legend",
-  "barThickness", "axes", "spanGaps",
+  "barThickness", "axes", "spanGaps", "referenceLines", "average",
 ] as const;
 const SERIES_KEYS = ["name", "values", "color", "fill", "stepped", "hidden", "pointRadius"] as const;
 const AXIS_KEYS = ["min", "max", "reverse", "display", "ticks", "tickPadding"] as const;
@@ -117,6 +117,22 @@ function axes(v: unknown): Partial<Record<(typeof AXIS_IDS)[number], AxisSpec>> 
   return out;
 }
 
+function referenceLines(v: unknown): Partial<Record<"x" | "y", (number | string)[]>> {
+  if (!isObj(v)) fail("referenceLines", "an object", v);
+  knownKeys(v, ["x", "y"], "referenceLines.");
+  const out: Partial<Record<"x" | "y", (number | string)[]>> = {};
+  for (const id of ["x", "y"] as const) {
+    const list = v[id];
+    if (list === undefined) continue;
+    if (!Array.isArray(list)) fail(`referenceLines.${id}`, "an array of numbers or labels", list);
+    list.forEach((at, i) => {
+      if (typeof at !== "string" && (typeof at !== "number" || !Number.isFinite(at))) fail(`referenceLines.${id}[${i}]`, "a finite number or a label", at);
+    });
+    out[id] = [...(list as (number | string)[])];
+  }
+  return out;
+}
+
 /**
  * Scripts pass arbitrary objects, so every field is checked before the engine
  * sees it. The result is a copy: the engine redraws from it on a theme change,
@@ -141,6 +157,7 @@ export function validateSpec(input: unknown): ChartSpec {
   optBool(input, "beginAtZero");
   optBool(input, "spanGaps");
   optBool(input, "labelColors");
+  optBool(input, "average");
   if (input.tension !== undefined && (typeof input.tension !== "number" || input.tension < 0 || input.tension > 1)) {
     fail("tension", "a number from 0 to 1", input.tension);
   }
@@ -161,5 +178,6 @@ export function validateSpec(input: unknown): ChartSpec {
     out.categoryColors = { ...(input.categoryColors as Record<string, string>) };
   }
   if (input.axes !== undefined) out.axes = axes(input.axes);
+  if (input.referenceLines !== undefined) out.referenceLines = referenceLines(input.referenceLines);
   return out;
 }

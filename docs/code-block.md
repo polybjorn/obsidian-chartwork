@@ -32,6 +32,8 @@ series:
 | `xDisplay` / `yDisplay` | bar, line, scatter | `false` hides the axis |
 | `xTickDisplay` / `yTickDisplay` | bar, line, scatter | `false` hides the tick labels |
 | `xTickPadding` / `yTickPadding` | bar, line, scatter | Pixels between the tick labels and the axis |
+| `xLine` / `yLine` | bar, line | A dashed line across the chart at a value, or at a label on the label axis. Takes a list, like `yLine: [4, 6]` |
+| `average: true` | bar, line | A dashed line at each series' average, in the series color |
 | `rMin` / `rMax` | radar, polarArea | Scale range |
 | `labelColors: true` | bar | One color per label, as in a pie |
 | `valueLabels` | bar, line, pie, doughnut, polarArea | `true` prints each value on its bar, slice or point. `false` hides them on a single-series bar chart, where they show by default |

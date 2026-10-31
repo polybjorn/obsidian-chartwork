@@ -85,6 +85,10 @@ export interface ChartSpec {
   axes?: Partial<Record<AxisId, AxisSpec>>;
   /** Horizontal bars: pixels per bar, so height follows the bar count. */
   barThickness?: number;
+  /** Bar, line: dashed lines across the chart where an axis reads these values, or these labels on the label axis. */
+  referenceLines?: Partial<Record<"x" | "y", (number | string)[]>>;
+  /** Bar, line: a dashed line at each series' mean, in its color. */
+  average?: boolean;
 }
 
 export interface RenderContext {

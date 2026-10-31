@@ -337,3 +337,20 @@ void test("var() colours in a raw config resolve under colour keys only", () => 
   assert.equal(out.options.plugins.legend.labels.color, "resolved var(--text-muted)");
   assert.equal(config.data.datasets[0]!.colorFrom.a, "var(--color-red)");
 });
+
+void test("reference lines go on their axis, a number that is a label as the label", () => {
+  const years: ChartSpec = { kind: "line", labels: ["2023", "2024"], series: [{ name: "n", values: [2, 4] }], referenceLines: { x: [2024], y: [3, 5] } };
+  const lines = at(opts(years), "plugins.annotation.annotations") as Record<string, unknown>[];
+  assert.deepEqual(lines.map((l) => [l.scaleID, l.value, l.borderColor]), [["x", "2024", "#111"], ["y", 3, "#111"], ["y", 5, "#111"]]);
+  assert.equal(at(opts(spec), "plugins.annotation"), undefined);
+  assert.equal(at(opts({ ...spec, kind: "pie", referenceLines: { y: [1] } }), "plugins.annotation"), undefined);
+});
+
+void test("average draws each series' mean in its color, on the value axis", () => {
+  const two: ChartSpec = { kind: "bar", labels: ["a", "b", "c"], average: true, horizontal: true,
+    series: [{ name: "n", values: [2, null, 4] }, { name: "m", values: [1, 2, 6], color: "red" }] };
+  const lines = at(opts(two), "plugins.annotation.annotations") as Record<string, unknown>[];
+  assert.deepEqual(lines.map((l) => [l.scaleID, l.value, l.borderColor]), [["x", 3, "#p1"], ["x", 3, "red"]]);
+  const hidden = { chart: { isDatasetVisible: (i: number) => i !== 1 } };
+  assert.deepEqual(lines.map((l) => (l.display as (c: typeof hidden) => boolean)(hidden)), [true, false]);
+});

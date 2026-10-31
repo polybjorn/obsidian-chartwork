@@ -58,6 +58,8 @@ A bad or unknown field throws an error naming it, such as `chartwork: series[0].
 | `spanGaps` | boolean | A line or radar joins across a `null` value instead of leaving a gap |
 | `legend` | boolean, `"top"`, `"bottom"`, `"left"`, `"right"` | Default shown for pie, doughnut, polar area and multi-series charts |
 | `barThickness` | number | Pixels per bar on a horizontal chart. Default 28 |
+| `referenceLines` | `{x?, y?}` | Bar and line charts: dashed lines across the chart at these values, or at labels on the label axis |
+| `average` | boolean | Bar and line charts: a dashed line at each series' average, in the series color |
 | `axes` | `{x?, y?, r?}` | Per axis: `min`, `max`, `reverse`, `display`, `ticks` (`false` hides the tick labels) and `tickPadding`. `x` runs across and `y` up; `r` is the radar and polar area scale |
 
 Colors can be any CSS color, including `var(--color-red)`. Without one, series take the colors listed under Series colors in Chartwork's settings, then `--chart-color-1`, `--chart-color-2` and on from a CSS snippet, else the theme's colors.
