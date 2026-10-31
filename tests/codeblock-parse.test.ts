@@ -126,6 +126,15 @@ void test("series keep Charts' stepped, hidden and pointRadius, and the block it
   assert.equal(ok({ ...base, type: "pie", series: [{ title: "S", data: [1, 2], hidden: true }] }).spec.series[0]?.hidden, undefined);
 });
 
+void test("a title shows above the chart, sankey included", () => {
+  assert.equal(ok({ ...base, title: "Reading" }).spec.title, "Reading");
+  assert.equal(ok({ ...base, title: 2024 }).spec.title, "2024");
+  assert.equal(ok(base).spec.title, undefined);
+  const r = parseChartBlock({ type: "sankey", title: "Flow", series: [{ data: [["A", 1, "B"]] }] });
+  assert.ok(r.ok && "config" in r.value);
+  assert.deepEqual(r.value.config.options?.plugins?.title, { display: true, text: "Flow" });
+});
+
 void test("invalid input gives readable errors", () => {
   assert.match(err(null), /empty/);
   assert.match(err("text"), /empty/);

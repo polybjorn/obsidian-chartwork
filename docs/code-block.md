@@ -19,6 +19,7 @@ series:
 | Key | Applies to | What it does |
 |---|---|---|
 | `type` | all | `bar`, `line`, `pie`, `doughnut`, `radar`, `polarArea` or `sankey` |
+| `title` | all | Shown above the chart |
 | `indexAxis: y` | bar, line | Horizontal bars |
 | `stacked: true` | bar, line | Stack the series |
 | `fill` | line, radar | `true` fills the area under each line. Radar shapes are filled unless `fill: false` |

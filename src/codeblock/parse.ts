@@ -40,7 +40,7 @@ export const BLOCK_KEYS: readonly string[] = [
   "id", "file", "layout", "select", "labelColors",
   "xMin", "xMax", "xReverse", "xDisplay", "xTickDisplay", "xTickPadding",
   "yMin", "yMax", "yReverse", "yDisplay", "yTickDisplay", "yTickPadding",
-  "rMin", "rMax", "spanGaps",
+  "rMin", "rMax", "spanGaps", "title",
 ];
 
 function fail(error: string): ParseResult {
@@ -167,7 +167,9 @@ function parseSankey(input: Record<string, unknown>): ParseResult {
     const map = first[key];
     if (isObj(map)) dataset[key] = map;
   }
-  const config = { type: "sankey", data: { datasets: [dataset] } } as unknown as ChartConfiguration;
+  const title = label(input["title"]);
+  const options = title ? { plugins: { title: { display: true, text: title } } } : {};
+  const config = { type: "sankey", data: { datasets: [dataset] }, options } as unknown as ChartConfiguration;
   const width = blockWidth(input);
   return { ok: true, value: width ? { config, width } : { config } };
 }
@@ -215,6 +217,8 @@ export function parseChartBlock(input: unknown): ParseResult {
   }
 
   const spec: ChartSpec = { kind, labels, series };
+  const title = label(input["title"]);
+  if (title) spec.title = title;
 
   if (kind === "bar" || kind === "line") {
     const axis = input["indexAxis"];
