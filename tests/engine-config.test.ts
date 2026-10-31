@@ -8,7 +8,6 @@ import type { ChartConfiguration } from "chart.js";
 
 const theme: Theme = {
   text: "#111",
-  muted: "#666",
   grid: "#ddd",
   background: "#fff",
   font: "Inter",

@@ -3,7 +3,14 @@ import type { App, Component } from "obsidian";
 // Every entry point (Bases view, code block, script) translates its input into
 // a ChartSpec, so theming and layout are decided in the engine alone.
 
-export type ChartKind = "bar" | "line" | "pie" | "doughnut";
+export const CHART_KINDS = ["bar", "line", "pie", "doughnut"] as const;
+export type ChartKind = (typeof CHART_KINDS)[number];
+
+export const SORTS = ["none", "value", "label"] as const;
+export type Sort = (typeof SORTS)[number];
+
+export const LEGEND_SIDES = ["top", "bottom", "left", "right"] as const;
+export type LegendSide = (typeof LEGEND_SIDES)[number];
 
 export interface Series {
   name: string;
@@ -24,7 +31,7 @@ export interface ChartSpec {
   /** Print each value on its bar. Defaults to true for a single-series bar chart. */
   valueLabels?: boolean;
   /** Category order. Defaults to "none", the order the labels came in. */
-  sort?: "none" | "value" | "label";
+  sort?: Sort;
   /** Labels to place first, in this order; the rest follow by `sort`. */
   order?: string[];
   /** Keep the N largest categories by the first series. Implies sort by value. */
@@ -40,7 +47,7 @@ export interface ChartSpec {
   /** Line curve, 0 for straight segments. Defaults to 0.2. */
   tension?: number;
   /** Show the legend, or show it on one side. Defaults to shown when there is more than one series, and for pie and doughnut. */
-  legend?: boolean | "top" | "bottom" | "left" | "right";
+  legend?: boolean | LegendSide;
   /** Horizontal bars: pixels per bar, so height follows the bar count. */
   barThickness?: number;
 }

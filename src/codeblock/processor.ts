@@ -1,18 +1,8 @@
 import { MarkdownRenderChild, parseYaml } from "obsidian";
 import type { MarkdownPostProcessorContext, Plugin } from "obsidian";
+import { chartsEnabled } from "../compat/charts.ts";
 import { renderSpec, showError } from "../engine/index.ts";
 import { parseChartBlock } from "./parse.ts";
-
-interface PluginsHost {
-  plugins?: { enabledPlugins?: Set<string> };
-}
-
-// Two processors on one language would both draw into the same block, and
-// app.plugins is not public API, so a missing field means "not detected".
-export function chartsEnabled(plugin: Plugin): boolean {
-  const host = plugin.app as unknown as PluginsHost;
-  return host.plugins?.enabledPlugins?.has("obsidian-charts") === true;
-}
 
 export function registerChartBlock(plugin: Plugin): void {
   if (chartsEnabled(plugin)) return;

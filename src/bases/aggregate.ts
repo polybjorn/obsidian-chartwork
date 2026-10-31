@@ -1,4 +1,4 @@
-import type { ChartKind, ChartSpec, Series } from "../engine/index.ts";
+import type { ChartKind, ChartSpec, Series, Sort } from "../engine/index.ts";
 
 export type Aggregation = "count" | "sum" | "average";
 
@@ -16,7 +16,7 @@ export interface AggregateOptions {
   topN?: number;
   other?: string;
   order?: string[];
-  sort?: "none" | "value" | "label";
+  sort?: Sort;
   categoryColors?: Record<string, string>;
   title?: string;
   valueTitle?: string;

@@ -2,7 +2,6 @@ import type { ChartSpec } from "./spec.ts";
 
 export interface Theme {
   text: string;
-  muted: string;
   grid: string;
   /** Slice borders, so adjacent arcs separate against the page. */
   background: string;
@@ -58,7 +57,6 @@ export function readTheme(el: HTMLElement): Theme {
   });
   return {
     text: get("--text-normal") || "#dadada",
-    muted: get("--text-muted") || "#a0a0a0",
     grid: get("--background-modifier-border") || "rgba(128, 128, 128, 0.3)",
     background: get("--background-primary") || "transparent",
     font: get("--font-interface") || "sans-serif",

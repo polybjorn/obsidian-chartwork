@@ -1,6 +1,7 @@
 import { Modal, Notice, parseYaml } from "obsidian";
 import type { App, Plugin, TFile } from "obsidian";
-import { chartsEnabled } from "../codeblock/processor.ts";
+import { errorText } from "../engine/index.ts";
+import { chartsEnabled } from "./charts.ts";
 import { checkNote } from "./scan.ts";
 import type { Finding } from "./scan.ts";
 
@@ -12,24 +13,38 @@ interface NoteFindings {
 // Local storage, not data.json, so the notice leaves the vault untouched
 const NOTICE_SHOWN = "chartwork-charts-notice";
 
-async function scanVault(app: App): Promise<NoteFindings[]> {
-  const results: NoteFindings[] = [];
+interface ScanResult {
+  notes: NoteFindings[];
+  /** Notes that could not be read, so their blocks went unchecked. */
+  unread: string[];
+}
+
+async function scanVault(app: App): Promise<ScanResult> {
+  const notes: NoteFindings[] = [];
+  const unread: string[] = [];
   for (const file of app.vault.getMarkdownFiles()) {
-    const text = await app.vault.cachedRead(file);
-    if (!/chart/i.test(text)) continue;
-    const findings = checkNote(text, parseYaml);
-    if (findings.length > 0) results.push({ file, findings });
+    // One unreadable note, such as one deleted mid-scan, would otherwise end
+    // the check with nothing shown
+    try {
+      const text = await app.vault.cachedRead(file);
+      if (!/chart/i.test(text)) continue;
+      const findings = checkNote(text, parseYaml);
+      if (findings.length > 0) notes.push({ file, findings });
+    } catch {
+      unread.push(file.path);
+    }
   }
-  return results.sort((a, b) => a.file.path.localeCompare(b.file.path));
+  notes.sort((a, b) => a.file.path.localeCompare(b.file.path));
+  return { notes, unread: unread.sort() };
 }
 
 class FindingsModal extends Modal {
-  private readonly results: NoteFindings[];
+  private readonly scan: ScanResult;
   private readonly chartsOn: boolean;
 
-  constructor(app: App, results: NoteFindings[], chartsOn: boolean) {
+  constructor(app: App, scan: ScanResult, chartsOn: boolean) {
     super(app);
-    this.results = results;
+    this.scan = scan;
     this.chartsOn = chartsOn;
   }
 
@@ -39,11 +54,15 @@ class FindingsModal extends Modal {
     if (this.chartsOn) {
       contentEl.createEl("p", { text: "Charts is enabled, so it draws chart blocks instead of Chartwork. Disable it and reload Obsidian to switch." });
     }
-    if (this.results.length === 0) {
-      contentEl.createEl("p", { text: "Every chart block draws in Chartwork, and no script calls renderChart." });
+    const { notes, unread } = this.scan;
+    if (unread.length > 0) {
+      contentEl.createEl("p", { text: `These notes could not be read, so they were not checked: ${unread.join(", ")}.` });
+    }
+    if (notes.length === 0) {
+      if (unread.length === 0) contentEl.createEl("p", { text: "Every chart block draws in Chartwork, and no script calls renderChart." });
       return;
     }
-    for (const { file, findings } of this.results) {
+    for (const { file, findings } of notes) {
       contentEl.createEl("h4", { text: file.path });
       const list = contentEl.createEl("ul");
       for (const finding of findings) {
@@ -67,8 +86,11 @@ class FindingsModal extends Modal {
 export function registerCompat(plugin: Plugin): void {
   const { app } = plugin;
   const check = async (): Promise<void> => {
-    const results = await scanVault(app);
-    new FindingsModal(app, results, chartsEnabled(plugin)).open();
+    try {
+      new FindingsModal(app, await scanVault(app), chartsEnabled(plugin)).open();
+    } catch (e) {
+      new Notice(`Chartwork could not check the notes. ${errorText(e)}`);
+    }
   };
   plugin.addCommand({
     id: "check-chart-blocks",

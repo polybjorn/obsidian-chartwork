@@ -1,4 +1,6 @@
+import { CHART_KINDS, LEGEND_SIDES } from "../engine/spec.ts";
 import type { ChartKind, ChartSpec, Series } from "../engine/spec.ts";
+import { isObj, isOneOf } from "../engine/guards.ts";
 
 export interface ParsedBlock {
   spec: ChartSpec;
@@ -8,9 +10,6 @@ export interface ParsedBlock {
 
 export type ParseResult = { ok: true; value: ParsedBlock } | { ok: false; error: string };
 
-type Obj = Record<string, unknown>;
-
-const KINDS: readonly string[] = ["bar", "line", "pie", "doughnut"];
 const UNSUPPORTED = ["radar", "polararea", "sankey"];
 
 /** Every key the parser reads; any other key in a block is ignored. */
@@ -18,10 +17,6 @@ export const BLOCK_KEYS: readonly string[] = [
   "type", "labels", "series", "indexAxis", "stacked", "fill", "tension",
   "beginAtZero", "xTitle", "yTitle", "legend", "legendPosition", "width",
 ];
-
-function isObj(v: unknown): v is Obj {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
 
 function fail(error: string): ParseResult {
   return { ok: false, error };
@@ -64,10 +59,10 @@ export function parseChartBlock(input: unknown): ParseResult {
   if (UNSUPPORTED.includes(lower)) {
     return fail(`The chart type "${rawType}" is not supported yet. Use bar, line, pie or doughnut.`);
   }
-  if (!KINDS.includes(lower)) {
+  if (!isOneOf(CHART_KINDS, lower)) {
     return fail(`Unknown chart type "${rawType}". Use bar, line, pie or doughnut.`);
   }
-  const kind = lower as ChartKind;
+  const kind = lower;
 
   if (input["id"] !== undefined && input["series"] === undefined) {
     return fail("Charts from a table (id:) are not supported yet. Give the block labels and series.");
@@ -112,7 +107,7 @@ export function parseChartBlock(input: unknown): ParseResult {
   const legend = bool(input["legend"]);
   const side = input["legendPosition"];
   if (legend === false) spec.legend = false;
-  else if (side === "top" || side === "bottom" || side === "left" || side === "right") spec.legend = side;
+  else if (isOneOf(LEGEND_SIDES, side)) spec.legend = side;
   else if (legend === true) spec.legend = true;
 
   let width: string | undefined;

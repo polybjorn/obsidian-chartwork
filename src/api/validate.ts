@@ -1,7 +1,7 @@
+import { isObj, isOneOf } from "../engine/guards.ts";
+import type { Obj } from "../engine/guards.ts";
+import { CHART_KINDS, LEGEND_SIDES, SORTS } from "../engine/spec.ts";
 import type { ChartSpec, Series } from "../engine/spec.ts";
-
-const KINDS: readonly string[] = ["bar", "line", "pie", "doughnut"];
-const SORTS: readonly string[] = ["none", "value", "label"];
 
 const SPEC_KEYS = [
   "kind", "labels", "series", "title", "horizontal", "stacked", "valueLabels", "sort", "order",
@@ -17,15 +17,9 @@ const seriesListed: Complete<keyof Series, (typeof SERIES_KEYS)[number]> = true;
 void specListed;
 void seriesListed;
 
-type Obj = Record<string, unknown>;
-
 function fail(path: string, want: string, got: unknown): never {
   const seen = got === null ? "null" : Array.isArray(got) ? "array" : typeof got;
   throw new Error(`chartwork: ${path} must be ${want}, got ${seen}`);
-}
-
-function isObj(v: unknown): v is Obj {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
 // A misspelt field would otherwise do nothing, silently
@@ -89,8 +83,8 @@ function series(v: unknown, path: string, labelCount: number): Series {
 export function validateSpec(input: unknown): ChartSpec {
   if (!isObj(input)) fail("spec", "an object", input);
   knownKeys(input, SPEC_KEYS, "");
-  if (typeof input.kind !== "string" || !KINDS.includes(input.kind)) {
-    throw new Error(`chartwork: kind must be one of ${KINDS.join(", ")}, got ${JSON.stringify(input.kind)}`);
+  if (!isOneOf(CHART_KINDS, input.kind)) {
+    throw new Error(`chartwork: kind must be one of ${CHART_KINDS.join(", ")}, got ${JSON.stringify(input.kind)}`);
   }
   const labels = strList(input.labels, "labels");
   if (!Array.isArray(input.series)) fail("series", "an array", input.series);
@@ -106,14 +100,13 @@ export function validateSpec(input: unknown): ChartSpec {
   if (input.tension !== undefined && (typeof input.tension !== "number" || input.tension < 0 || input.tension > 1)) {
     fail("tension", "a number from 0 to 1", input.tension);
   }
-  const sides = ["top", "bottom", "left", "right"];
-  if (input.legend !== undefined && typeof input.legend !== "boolean" && !sides.includes(input.legend as string)) {
-    throw new Error(`chartwork: legend must be true, false or one of ${sides.join(", ")}, got ${JSON.stringify(input.legend)}`);
+  if (input.legend !== undefined && typeof input.legend !== "boolean" && !isOneOf(LEGEND_SIDES, input.legend)) {
+    throw new Error(`chartwork: legend must be true, false or one of ${LEGEND_SIDES.join(", ")}, got ${JSON.stringify(input.legend)}`);
   }
   optNum(input, "barThickness");
   optNum(input, "topN");
   if (input.topN !== undefined && !Number.isInteger(input.topN)) fail("topN", "a whole number", input.topN);
-  if (input.sort !== undefined && (typeof input.sort !== "string" || !SORTS.includes(input.sort))) {
+  if (input.sort !== undefined && !isOneOf(SORTS, input.sort)) {
     throw new Error(`chartwork: sort must be one of ${SORTS.join(", ")}, got ${JSON.stringify(input.sort)}`);
   }
   const out = { ...input, labels, series: allSeries } as unknown as ChartSpec;

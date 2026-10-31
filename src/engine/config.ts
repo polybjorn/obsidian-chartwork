@@ -1,17 +1,15 @@
 import type { BarElement, ChartConfiguration, Plugin } from "chart.js";
 import { allIntegers, prepareData } from "./data.ts";
 import type { PreparedData } from "./data.ts";
+import { isPlain } from "./guards.ts";
+import type { Obj } from "./guards.ts";
 import type { ChartSpec } from "./spec.ts";
 import type { Theme } from "./theme.ts";
 
-type Obj = Record<string, unknown>;
-
 export const DEFAULT_BAR_THICKNESS = 28;
 const DEFAULT_HEIGHT = 300;
-
-function isPlain(v: unknown): v is Obj {
-  return typeof v === "object" && v !== null && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
-}
+// Only reached with an empty palette, which readTheme never returns
+const FALLBACK_COLOR = "#888888";
 
 // Chart.js parses colours itself and knows no color-mix(), so translucency is
 // added to the hex or rgb() value that readTheme normalised the theme to.
@@ -33,7 +31,7 @@ export function wantsValueLabels(spec: ChartSpec): boolean {
 
 function colorFor(spec: ChartSpec, theme: Theme, data: PreparedData, si: number): string | string[] {
   const series = data.series[si];
-  const pick = (i: number): string => theme.palette[i % theme.palette.length] ?? "#888888";
+  const pick = (i: number): string => theme.palette[i % theme.palette.length] ?? FALLBACK_COLOR;
   const perLabel = spec.kind === "pie" || spec.kind === "doughnut" ||
     (spec.kind === "bar" && data.series.length === 1);
 
@@ -111,7 +109,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
         label: s.name,
         data: s.values,
         borderColor: c,
-        backgroundColor: s.fill ? withAlpha(c ?? "#888888", 0.25) : c,
+        backgroundColor: s.fill ? withAlpha(c ?? FALLBACK_COLOR, 0.25) : c,
         fill: s.fill === true,
         tension: spec.tension ?? 0.2,
         spanGaps: false,
@@ -242,7 +240,7 @@ export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): Cha
     };
   }
 
-  const paint = (i: number): string => theme.palette[i % theme.palette.length] ?? "#888888";
+  const paint = (i: number): string => theme.palette[i % theme.palette.length] ?? FALLBACK_COLOR;
   const datasets = config.data.datasets.map((ds, i) => {
     const d = ds as unknown as Obj;
     if (PER_POINT.has(type)) {

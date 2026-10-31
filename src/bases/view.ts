@@ -12,8 +12,9 @@ import {
   type QueryController,
   type Value,
 } from "obsidian";
-import { errorText, renderSpec, showError, type ChartHandle, type ChartKind } from "../engine/index.ts";
+import { CHART_KINDS, SORTS, errorText, isOneOf, renderSpec, showError, type ChartHandle } from "../engine/index.ts";
 import {
+  NONE_LABEL,
   aggregateRows,
   parseCategoryColors,
   type Aggregation,
@@ -22,7 +23,6 @@ import {
 
 export const CHART_VIEW_TYPE = "chartwork-chart";
 
-const KINDS: ChartKind[] = ["bar", "line", "pie", "doughnut"];
 const AGGREGATIONS: Aggregation[] = ["count", "sum", "average"];
 
 function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
@@ -128,7 +128,7 @@ class ChartView extends BasesView {
     const grouped = groups.length > 1 || groups.some((g) => g.hasKey());
     const rows: Row[] = [];
     for (const group of groups) {
-      const name = grouped ? (group.hasKey() ? group.key?.toString() ?? "" : "(none)") : undefined;
+      const name = grouped ? (group.hasKey() ? group.key?.toString() ?? "" : NONE_LABEL) : undefined;
       for (const entry of group.entries) rows.push(this.row(entry, x, y, name));
     }
 
@@ -137,10 +137,10 @@ class ChartView extends BasesView {
     const topN = Number(this.config.get("topN"));
     const spec = aggregateRows(rows, {
       aggregation,
-      kind: KINDS.find((k) => k === kindValue) ?? "bar",
+      kind: isOneOf(CHART_KINDS, kindValue) ? kindValue : "bar",
       horizontal: this.config.get("horizontal") === true,
       title: text(this.config, "title") || undefined,
-      sort: sortValue === "value" || sortValue === "label" ? sortValue : "none",
+      sort: isOneOf(SORTS, sortValue) ? sortValue : "none",
       topN: Number.isFinite(topN) ? topN : 0,
       other: text(this.config, "other") || undefined,
       order: text(this.config, "categoryOrder").split(",").map((s) => s.trim()).filter(Boolean),
