@@ -256,3 +256,12 @@ void test("bestFit keys apply to line charts, bestFitNumber counting from 0", ()
   assert.match(err({ ...base, type: "line", bestFit: true, bestFitNumber: "first" }), /bestFitNumber must be a series number/);
   assert.equal(ok({ ...base, bestFit: true }).spec.bestFit, undefined);
 });
+
+void test("a block with csv: names a CSV file, apart from id and file", () => {
+  assert.deepEqual(ok({ type: "line", csv: "data/reading.csv", layout: "rows" }).table, { csv: "data/reading.csv", layout: "rows" });
+  assert.deepEqual(ok({ type: "bar", csv: "[[reading.csv]]" }).table, { csv: "reading.csv", layout: "columns" });
+  assert.match(err({ type: "bar", csv: "a.csv", id: "t" }), /Use csv on its own/);
+  assert.match(err({ type: "bar", csv: "a.csv", file: "Notes.md" }), /Use csv on its own/);
+  assert.match(err({ type: "bar", csv: "" }), /csv must name a CSV file/);
+  assert.equal(ok({ ...base, csv: "a.csv" }).table, undefined);
+});

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cellNumber, parseTable, stripLinks, tableToSeries } from "../src/codeblock/table.ts";
+import { cellNumber, parseCsv, parseTable, stripLinks, tableToSeries } from "../src/codeblock/table.ts";
 import type { TableData } from "../src/codeblock/table.ts";
 
 const text = [
@@ -119,4 +119,21 @@ void test("a table with links in the names and a linked number", () => {
   assert.deepEqual(r.labels, ["January", "Feb"]);
   assert.equal(r.series[0]?.name, "Q1");
   assert.deepEqual(r.series[0]?.values, [3, 2]);
+});
+
+void test("parseCsv reads quotes, doubled quotes, line breaks in quotes and CRLF", () => {
+  const csv = '\uFEFF,Q1,Q2\r\n"Books, paper",12,"9"\r\n"Say ""hi""",4,"7\n"\r\n\r\n';
+  assert.deepEqual(parseCsv(csv), { header: ["", "Q1", "Q2"], rows: [["Books, paper", "12", "9"], ['Say "hi"', "4", "7"]] });
+  assert.equal(parseCsv(""), undefined);
+  assert.equal(parseCsv("\n\n"), undefined);
+});
+
+void test("parseCsv takes the delimiter from the header line", () => {
+  const semi = parseCsv(";Q1;Q2\nBooks;12,5;9\n");
+  assert.deepEqual(semi?.rows, [["Books", "12,5", "9"]]);
+  assert.deepEqual(parseCsv("\tQ1\tQ2\nBooks\t1\t2")?.header, ["", "Q1", "Q2"]);
+  assert.deepEqual(parseCsv('"a;b",Q1\nx,1')?.header, ["a;b", "Q1"]);
+  const data = tableToSeries(semi, "rows");
+  assert.ok(data.ok);
+  assert.deepEqual(data.series, [{ name: "Books", values: [12.5, 9] }]);
 });

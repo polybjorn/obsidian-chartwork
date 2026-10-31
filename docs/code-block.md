@@ -70,8 +70,9 @@ layout: rows
 | `layout` | `rows`: each row is a series. `columns` (default): each column is a series |
 | `select` | Rows or columns to draw, such as `[Books]`. Default all |
 | `file` | The note holding the table, if not this one |
+| `csv` | A CSV file to read instead, by vault path or file name, such as `csv: data/reading.csv` |
 
-The first row and column hold the names. Lines without numbers are skipped.
+The first row and column hold the names. Lines without numbers are skipped. A CSV file may separate its fields with commas, semicolons or tabs, and its numbers may use a decimal comma. The chart redraws when the file changes.
 
 A `sankey` block takes rows of `[from, flow, to]` in the first series, as Charts does, plus optional `priority`, `colorFrom` and `colorTo` maps from node name to a number or CSS color. Nodes without a color take the theme's.
 

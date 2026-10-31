@@ -32,6 +32,53 @@ export function parseTable(text: string): Table | undefined {
   return { header: cells(lines[0] ?? ""), rows: lines.slice(2).map(cells) };
 }
 
+const DELIMITERS = [",", ";", "\t"] as const;
+
+// Spreadsheets with a decimal comma export semicolons, so the header line
+// decides; a quoted header may hold any of them.
+function csvDelimiter(text: string): string {
+  const first = text.split(/\r?\n/, 1)[0]?.replace(/"[^"]*"/g, "") ?? "";
+  const count = (d: string): number => first.split(d).length;
+  return DELIMITERS.reduce((best, d) => (count(d) > count(best) ? d : best), ",");
+}
+
+/**
+ * A CSV file as a table: the first line is the header. A quoted field may hold
+ * the delimiter, a line break or a doubled quote, as RFC 4180 writes them.
+ * Blank lines are skipped. No lines gives undefined.
+ */
+export function parseCsv(text: string): Table | undefined {
+  const body = text.replace(/^\uFEFF/, "");
+  const delimiter = csvDelimiter(body);
+  const lines: string[][] = [];
+  let line: string[] = [];
+  let field = "";
+  let quoted = false;
+  const endField = (): void => {
+    line.push(field.trim());
+    field = "";
+  };
+  const endLine = (): void => {
+    endField();
+    if (line.some((c) => c !== "")) lines.push(line);
+    line = [];
+  };
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (quoted) {
+      if (ch !== "\"") field += ch;
+      else if (body[i + 1] === "\"") field += body[++i];
+      else quoted = false;
+    } else if (ch === "\"") quoted = true;
+    else if (ch === delimiter) endField();
+    else if (ch === "\n") endLine();
+    else if (ch !== "\r") field += ch;
+  }
+  endLine();
+  const [header, ...rows] = lines;
+  return header ? { header, rows } : undefined;
+}
+
 /**
  * A cell's text with links reduced to what they show: `[[Note|Alias]]` is the
  * alias, `[[folder/Note#Heading]]` the note's base name (a link to a heading in

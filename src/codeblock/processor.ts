@@ -5,7 +5,7 @@ import { renderConfig, renderSpec, showError } from "../engine/index.ts";
 import type { ChartHandle, ChartSpec } from "../engine/index.ts";
 import { parseChartBlock, seriesFill } from "./parse.ts";
 import type { ParsedBlock, TableRef } from "./parse.ts";
-import { findTable } from "./table-source.ts";
+import { findCsv, findTable } from "./table-source.ts";
 import { tableToSeries } from "./table.ts";
 
 /**
@@ -27,7 +27,7 @@ function renderTableBlock(
   let handle: ChartHandle | null = null;
   let host: HTMLElement | null = null;
   let error: HTMLElement | null = null;
-  let tablePath = ref.file ? "" : ctx.sourcePath;
+  let tablePath = "csv" in ref || ref.file ? "" : ctx.sourcePath;
   // Reads finish out of order when edits come fast; only the latest draws
   let latest = 0;
 
@@ -46,7 +46,9 @@ function renderTableBlock(
 
   const draw = async (): Promise<void> => {
     const run = ++latest;
-    const found = await findTable(app, ref.id, ref.file, ctx.sourcePath);
+    const found = "csv" in ref
+      ? await findCsv(app, ref.csv, ctx.sourcePath)
+      : await findTable(app, ref.id, ref.file, ctx.sourcePath);
     if (run !== latest) return;
     if (!found.ok) return fail(found.error);
     tablePath = found.value.path;
@@ -72,6 +74,17 @@ function renderTableBlock(
   owner.registerEvent(app.metadataCache.on("changed", (file) => {
     if (file.path === tablePath) void draw();
   }));
+  // The metadata cache skips files that are not notes, so a CSV is watched in the vault
+  if ("csv" in ref) {
+    owner.registerEvent(app.vault.on("modify", (file) => {
+      if (file.path === tablePath) void draw();
+    }));
+    const retry = (): void => {
+      if (error) void draw();
+    };
+    owner.registerEvent(app.vault.on("create", retry));
+    owner.registerEvent(app.vault.on("rename", retry));
+  }
   // The cache may not know the note yet when Obsidian has just started
   owner.registerEvent(app.metadataCache.on("resolved", () => {
     if (error) void draw();

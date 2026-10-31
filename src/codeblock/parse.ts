@@ -7,20 +7,27 @@ import { LAYOUTS } from "./table.ts";
 import type { Layout } from "./table.ts";
 
 /** Where a table-backed block finds its numbers; labels and series come from the table. */
-export interface TableRef {
-  id: string;
-  /** Note holding the table, as a link path. Absent means the note the block sits in. */
-  file?: string;
+export type TableRef = {
   layout: Layout;
   select?: string[];
   fill?: boolean;
-}
+} & (
+  | {
+    id: string;
+    /** Note holding the table, as a link path. Absent means the note the block sits in. */
+    file?: string;
+  }
+  | {
+    /** A CSV file, as a vault path or file name. */
+    csv: string;
+  }
+);
 
 export interface ParsedBlock {
   spec: ChartSpec;
   /** Any CSS width from the block, for the host element. */
   width?: string;
-  /** Set when the block names a table with id:. The spec then has no labels or series yet. */
+  /** Set when the block names a table with id: or a file with csv:. The spec then has no labels or series yet. */
   table?: TableRef;
 }
 
@@ -38,7 +45,7 @@ const KIND_LIST = "bar, line, pie, doughnut, radar, polarArea, scatter or sankey
 export const BLOCK_KEYS: readonly string[] = [
   "type", "labels", "series", "indexAxis", "stacked", "fill", "tension",
   "beginAtZero", "xTitle", "yTitle", "legend", "legendPosition", "width",
-  "id", "file", "layout", "select", "labelColors",
+  "id", "file", "csv", "layout", "select", "labelColors",
   "xMin", "xMax", "xReverse", "xDisplay", "xTickDisplay", "xTickPadding",
   "yMin", "yMax", "yReverse", "yDisplay", "yTickDisplay", "yTickPadding",
   "rMin", "rMax", "spanGaps", "title", "valueLabels", "xLine", "yLine", "average",
@@ -122,14 +129,24 @@ function parseSeries(raw: unknown, index: number, kind: ChartKind, fill: boolean
   return series;
 }
 
-function parseTableRef(input: Record<string, unknown>, fill: boolean | undefined): TableRef | string {
+function tableSource(input: Record<string, unknown>): { id: string; file?: string } | { csv: string } | string {
+  if (input["csv"] !== undefined) {
+    if (input["id"] !== undefined || input["file"] !== undefined) return "Use csv on its own: id and file name a table in a note.";
+    const csv = typeof input["csv"] === "string" ? input["csv"].trim().replace(/^\[\[(.*)\]\]$/, "$1").trim() : "";
+    return csv ? { csv } : "csv must name a CSV file in the vault, like csv: data/reading.csv.";
+  }
   const id = typeof input["id"] === "string" ? input["id"].trim().replace(/^\^/, "") : "";
   if (!id) return "id must be the block id of a table, like id: sales.";
+  return typeof input["file"] === "string" && input["file"].trim() ? { id, file: input["file"].trim() } : { id };
+}
+
+function parseTableRef(input: Record<string, unknown>, fill: boolean | undefined): TableRef | string {
+  const source = tableSource(input);
+  if (typeof source === "string") return source;
   const layout = input["layout"] ?? "columns";
   if (!isOneOf(LAYOUTS, layout)) return `layout must be rows or columns, not ${JSON.stringify(layout)}.`;
-  const ref: TableRef = { id, layout };
+  const ref: TableRef = { ...source, layout };
   if (fill !== undefined) ref.fill = fill;
-  if (typeof input["file"] === "string" && input["file"].trim()) ref.file = input["file"].trim();
   const select = input["select"];
   if (select !== undefined) {
     const names = (Array.isArray(select) ? select : [select]).map(label);
@@ -245,7 +262,7 @@ export function parseChartBlock(input: unknown): ParseResult {
   let labels: string[] = [];
   const series: Series[] = [];
 
-  if (input["id"] !== undefined && input["series"] === undefined) {
+  if ((input["id"] !== undefined || input["csv"] !== undefined) && input["series"] === undefined) {
     const ref = parseTableRef(input, fill);
     if (typeof ref === "string") return fail(ref);
     table = ref;

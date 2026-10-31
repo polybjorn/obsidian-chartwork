@@ -1,5 +1,5 @@
 import type { App } from "obsidian";
-import { parseTable } from "./table.ts";
+import { parseCsv, parseTable } from "./table.ts";
 import type { Table } from "./table.ts";
 
 export interface TableSource {
@@ -24,4 +24,17 @@ export async function findTable(app: App, id: string, file: string | undefined, 
   const table = parseTable(text.slice(block.position.start.offset, block.position.end.offset));
   if (!table) return { ok: false, error: `The block "${id}" in ${note.basename} is not a table.` };
   return { ok: true, value: { path: note.path, table } };
+}
+
+/**
+ * Finds a CSV file by vault path or file name, as a link would, from the note
+ * the block sits in.
+ */
+export async function findCsv(app: App, csv: string, sourcePath: string): Promise<TableLookup> {
+  const file = app.metadataCache.getFirstLinkpathDest(csv, sourcePath);
+  if (!file) return { ok: false, error: `The file "${csv}" was not found.` };
+  if (file.extension.toLowerCase() !== "csv") return { ok: false, error: `"${csv}" is not a .csv file.` };
+  const table = parseCsv(await app.vault.read(file));
+  if (!table) return { ok: false, error: `${file.name} is empty.` };
+  return { ok: true, value: { path: file.path, table } };
 }

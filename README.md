@@ -39,5 +39,5 @@ Your `chart` blocks and `renderChart` scripts draw as they are, with everything 
 
 ## What the plugin accesses
 
-- **Vault, read-only.** Chartwork sees only the data a Bases view, `chart` block or script hands it, and writes nothing. The check command reads your notes to find chart blocks and scripts. A Bases view's options are saved into its `.base` file by Bases itself.
+- **Vault, read-only.** Chartwork reads what a Bases view or script hands it, the note or CSV file a `chart` block names, and, for the check command, your notes. It writes nothing. A Bases view's options are saved into its `.base` file by Bases itself.
 - **No network.** The plugin makes no outbound requests.
