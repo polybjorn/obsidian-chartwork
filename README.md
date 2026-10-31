@@ -6,8 +6,6 @@ Charts in Obsidian, made from your notes. Point a Bases view at a property, type
 
 Docs: [Bases view](docs/bases-view.md), [chart code block](docs/code-block.md), [script function](docs/script-api.md).
 
-> Not released yet; it runs my own vault.
-
 ## Three ways to make a chart
 
 | Way | Use it when | Needs |
@@ -18,9 +16,9 @@ Docs: [Bases view](docs/bases-view.md), [chart code block](docs/code-block.md), 
 
 ## What Chartwork takes care of
 
-- **Your theme's colours.** Text, grid lines and series follow the theme, so a chart stays readable in light and dark and redraws when you switch. In a Bases view or a script, any CSS colour sets a category or series apart, including the theme's own, like `var(--color-green)`.
-- **Values on the bars.** A bar chart with one series prints each value on its bar.
-- **Even horizontal bars.** A horizontal chart grows taller with each category, so bars keep one thickness from note to note.
-- **Order and trimming.** In a Bases view or a script, sort by value or label, put chosen categories first, keep the largest few and add the rest up under one label.
-- **Notes made for the Charts plugin.** Chartwork draws its `chart` blocks and `window.renderChart` calls as they are, and leaves both to Charts while it is enabled.
-- **Nothing leaves your vault.** Chartwork only sees the data a Bases view, code block or script hands it. It writes nothing to your vault and makes no network requests; Chart.js 4 is bundled.
+- **Theme colours.** Text, grid lines and series follow your theme, light or dark, and redraw when you switch. In a Bases view or a script, any CSS colour sets a category apart, such as `var(--color-green)`.
+- **Values on the bars** of a bar chart with one series.
+- **Even horizontal bars.** The chart grows taller with each category, so bars keep one thickness.
+- **Order and trimming.** In a Bases view or a script: sort by value or label, put chosen categories first, keep the largest few and add the rest up under one label.
+- **Notes made for the Charts plugin.** Its `chart` blocks and `window.renderChart` calls draw as they are. While Charts is enabled, Chartwork leaves them to it.
+- **Small and offline.** One dependency, Chart.js 4, bundled into a 210 KB file. Chartwork reads only the data a view, block or script hands it, writes nothing to your vault and makes no network requests.
