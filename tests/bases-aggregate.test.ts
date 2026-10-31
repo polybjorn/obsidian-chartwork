@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { aggregateRows, bucketLabel, dateOf, parseCategoryColors, propertyRows, xLabels, type AggregateOptions } from "../src/bases/aggregate.ts";
+import { aggregateRows, bucketLabel, dateOf, parseCategoryColors, propertyRows, scatterSpec, xLabels, type AggregateOptions } from "../src/bases/aggregate.ts";
 
 const base: AggregateOptions = { aggregation: "count", kind: "bar" };
 
@@ -157,4 +157,47 @@ void test("tension is for lines, and pies take no value axis options", () => {
   assert.equal(pie.axes, undefined);
   assert.equal(pie.average, undefined);
   assert.equal(pie.beginAtZero, undefined);
+});
+
+void test("scatter makes one point per note and skips notes missing x or y", () => {
+  const spec = scatterSpec([
+    { name: "Alpha", x: 1, y: 2 },
+    { name: "Beta", x: "3,5", y: "4" },
+    { name: "Gamma", x: 5, y: null },
+    { name: "Delta", x: "n/a", y: 1 },
+  ]);
+  assert.equal(spec.kind, "scatter");
+  assert.deepEqual(spec.series[0]?.points, [
+    { x: 1, y: 2, name: "Alpha" },
+    { x: 3.5, y: 4, name: "Beta" },
+  ]);
+});
+
+void test("scatter scales point radius linearly between 3 and 15 over the size range", () => {
+  const spec = scatterSpec([
+    { name: "a", x: 0, y: 0, size: 10 },
+    { name: "b", x: 1, y: 1, size: 20 },
+    { name: "c", x: 2, y: 2, size: 30 },
+    { name: "d", x: 3, y: 3 },
+  ], { sized: true });
+  assert.deepEqual(spec.series[0]?.points?.map((p) => p.radius), [3, 9, 15, 9]);
+});
+
+void test("scatter gives a middle radius when every size is equal, and none without a size property", () => {
+  const same = scatterSpec([{ name: "a", x: 0, y: 0, size: 4 }, { name: "b", x: 1, y: 1, size: 4 }], { sized: true });
+  assert.deepEqual(same.series[0]?.points?.map((p) => p.radius), [9, 9]);
+  const unsized = scatterSpec([{ name: "a", x: 0, y: 0, size: 4 }]);
+  assert.equal(unsized.series[0]?.points?.[0]?.radius, undefined);
+});
+
+void test("scatter ignores the size of a note it skips, and splits groups into series", () => {
+  const spec = scatterSpec([
+    { name: "a", x: 0, y: 0, size: 1, group: "Gym" },
+    { name: "skipped", x: null, y: 0, size: 1000, group: "Gym" },
+    { name: "b", x: 1, y: 1, size: 3, group: "Run" },
+  ], { sized: true, xTitle: "Hours", yTitle: "Score" });
+  assert.deepEqual(spec.series.map((s) => s.name), ["Gym", "Run"]);
+  assert.deepEqual(spec.series.map((s) => s.points?.[0]?.radius), [3, 15]);
+  assert.equal(spec.xTitle, "Hours");
+  assert.equal(spec.valueTitle, "Score");
 });

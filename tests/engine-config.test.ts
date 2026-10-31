@@ -450,3 +450,37 @@ void test("dateUnit draws bar and line labels on a time axis in date order", () 
   assert.equal(at(opts({ ...dated, kind: "bar", horizontal: true }), "scales.y.reverse"), true);
   assert.equal(at(opts({ ...dated, kind: "pie" }), "scales"), undefined);
 });
+
+const scatter: ChartSpec = {
+  kind: "scatter",
+  labels: [],
+  xTitle: "Hours",
+  valueTitle: "Score",
+  series: [{ name: "Notes", values: [], points: [{ x: 1, y: 2, name: "Alpha", radius: 9 }, { x: 3, y: 4, name: "Beta" }] }],
+};
+
+void test("scatter draws {x, y} points with linear axes and per-point radius", () => {
+  const config = buildConfig(scatter, theme);
+  assert.equal(config.type, "scatter");
+  const ds = config.data.datasets[0] as unknown as Record<string, unknown>;
+  assert.deepEqual(ds.data, [{ x: 1, y: 2, name: "Alpha" }, { x: 3, y: 4, name: "Beta" }]);
+  assert.deepEqual(ds.pointRadius, [9, 4]);
+  assert.equal(at(config.options, "scales.x.type"), "linear");
+  assert.equal(at(config.options, "scales.x.title.text"), "Hours");
+  assert.equal(at(config.options, "scales.y.title.text"), "Score");
+  assert.equal(at(config.options, "scales.y.beginAtZero"), false);
+});
+
+void test("scatter tooltip shows the note name and both values", () => {
+  const callbacks = at(buildConfig(scatter, theme).options, "plugins.tooltip.callbacks") as {
+    title(items: unknown[]): string;
+    label(item: unknown): string;
+  };
+  const raw = { x: 1, y: 2, name: "Alpha" };
+  assert.equal(callbacks.title([{ raw }]), "Alpha");
+  assert.equal(callbacks.label({ raw }), "Hours: 1, Score: 2");
+});
+
+void test("scatter has no legend with one series", () => {
+  assert.equal(at(buildConfig(scatter, theme).options, "plugins.legend.display"), false);
+});

@@ -4,7 +4,9 @@ import type { App, Component } from "obsidian";
 // a ChartSpec, so theming and layout are decided in the engine alone.
 
 export const CHART_KINDS = ["bar", "line", "pie", "doughnut", "radar", "polarArea"] as const;
-export type ChartKind = (typeof CHART_KINDS)[number];
+// Scatter stays out of CHART_KINDS, which the code block and the script API
+// accept: they have no way to give points, so only the Bases view builds one.
+export type ChartKind = (typeof CHART_KINDS)[number] | "scatter";
 
 export const SORTS = ["none", "value", "label"] as const;
 export type Sort = (typeof SORTS)[number];
@@ -40,8 +42,18 @@ export interface AxisSpec {
 export const STEPS = ["before", "after", "middle"] as const;
 export type Stepped = boolean | (typeof STEPS)[number];
 
+/** One scatter point: where it sits, its note's name for the tooltip, and an optional radius in pixels. */
+export interface ScatterPoint {
+  x: number;
+  y: number;
+  name: string;
+  radius?: number;
+}
+
 export interface Series {
   name: string;
+  /** Scatter: the points. `values` is then empty and `labels` unused. */
+  points?: ScatterPoint[];
   /** null leaves a gap, as in a line with a missing reading. */
   values: (number | null)[];
   /** One colour for the series, or one per label. Any CSS colour, including var(--x). */
@@ -77,6 +89,8 @@ export interface ChartSpec {
   categoryColors?: Record<string, string>;
   /** A bar chart takes one color per label, as a pie does, whatever its series count. */
   labelColors?: boolean;
+  /** Scatter: axis title for x. */
+  xTitle?: string;
   /** Axis title for the values. */
   valueTitle?: string;
   /** Start the value axis, or radial scale, at zero. Defaults to true. */

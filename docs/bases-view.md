@@ -12,7 +12,8 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 | Aggregation | `aggregation` | `count` (the default) counts notes, `sum` adds up the value property, `average` averages it, `min` and `max` keep the smallest or largest. |
 | Value property | `y` | The number to sum, average, or take the smallest or largest of. Hidden while counting. Text that reads as a number, like `"412"` or `3,5`, counts as one; anything else is skipped. |
 | One series per property | `propertySeries` | Chart every property shown in the base's **Properties** menu, other than the category and the file name, as its own series, with the aggregation above. Count counts the notes that fill each one in. The value property is then hidden. |
-| Chart type | `kind` | `bar`, `line`, `pie` or `doughnut`. |
+| Chart type | `kind` | `bar`, `line`, `pie`, `doughnut` or `scatter`, see [Scatter](#scatter). |
+| Point size property | `size` | Scatter only. A number property that sets each point's radius, see [Scatter](#scatter). |
 | Group dates by | `dateUnit` | `day` (the default), `week`, `month` or `year`, when the category is a date. |
 | Running total | `cumulative` | Bar and line charts: each series becomes its running sum, in the order drawn, after Sort and Largest categories to keep. On a time axis the total runs in date order. A category with no value adds nothing and leaves a gap. Pie and doughnut charts ignore it. |
 | Horizontal bars | `horizontal` | Bars run sideways, and the chart grows taller with each category so bars keep the same thickness. |
@@ -31,6 +32,24 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 When the base is grouped, each group becomes its own series: one bar per group within each category, and a legend. With one series per property as well, each group and property pair is a series, named like `Gym: minutes`.
 
 Bases keeps `sort` and `order` for its own settings, which is why Chartwork's are named `categorySort` and `categoryOrder`.
+
+## Scatter
+
+With Chart type set to `scatter`, each note is one point. The Category property (`x`) and the Value property (`y`) are both number properties: `x` is the horizontal position and `y` the vertical. Aggregation, Group dates by, One series per property, Horizontal bars and the category options do not apply and are hidden. A note missing either number, or with text that does not read as one, is left out.
+
+Hovering a point shows the note's name and both values. A grouped base draws each group as its own series, with a legend.
+
+The optional Point size property (`size`) sets each point's radius, scaled linearly from 3 px for the smallest value to 15 px for the largest, over the notes in the view. When every value is the same, points get a middle radius, and so does a note with no value for it.
+
+```yaml
+views:
+  - type: chartwork-chart
+    name: Sleep and mood
+    kind: scatter
+    x: hours_slept
+    y: mood
+    size: caffeine_mg
+```
 
 ## Dates
 

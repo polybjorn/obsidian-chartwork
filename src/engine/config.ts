@@ -21,6 +21,7 @@ function timeAxis(unit: DateUnit): Obj {
 export const DEFAULT_BAR_THICKNESS = 28;
 const DEFAULT_HEIGHT = 300;
 export const DEFAULT_TENSION = 0.2;
+export const DEFAULT_POINT_RADIUS = 4;
 // Only reached with an empty palette, which readTheme never returns
 const FALLBACK_COLOR = "#888888";
 
@@ -355,6 +356,19 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
   const tension = spec.tension ?? DEFAULT_TENSION;
   const datasets: ChartDataset[] = data.series.map((s, si) => {
     const color = colorFor(spec, theme, data, si);
+    if (spec.kind === "scatter") {
+      const c = Array.isArray(color) ? color[0] : color;
+      const points = s.points ?? [];
+      return {
+        label: s.name,
+        data: points.map((p) => ({ x: p.x, y: p.y, name: p.name })),
+        borderColor: c,
+        backgroundColor: withAlpha(c ?? FALLBACK_COLOR, 0.6),
+        pointRadius: points.map((p) => p.radius ?? DEFAULT_POINT_RADIUS),
+        pointHoverRadius: points.map((p) => (p.radius ?? DEFAULT_POINT_RADIUS) + 2),
+        ...(s.hidden ? { hidden: true } : {}),
+      };
+    }
     if (spec.kind === "line") {
       const c = Array.isArray(color) ? color[0] : color;
       return {
@@ -470,6 +484,29 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
         beginAtZero: spec.beginAtZero ?? true,
         ...(allIntegers(data.series) ? { ticks: { ...scale.ticks, precision: 0 } } : {}),
       }, spec.axes?.r),
+    };
+  }
+
+  if (spec.kind === "scatter") {
+    const axisOf = (title: string | undefined, id: "x" | "y"): Obj => applyAxis({
+      type: "linear",
+      // Zero is no more meaningful than any other floor for two measurements
+      beginAtZero: false,
+      grace: "5%",
+      ticks: { color: theme.text, font: textFont(theme) },
+      grid: { color: theme.grid },
+      ...(title ? { title: { display: true, text: title, color: theme.text, font: textFont(theme) } } : {}),
+    }, spec.axes?.[id]);
+    options.scales = { x: axisOf(spec.xTitle, "x"), y: axisOf(spec.valueTitle, "y") };
+    // The default tooltip prints bare coordinates; the note's name is the point of hovering
+    plugins.tooltip = {
+      callbacks: {
+        title: (items: { raw: unknown }[]) => String((items[0]?.raw as { name?: string } | undefined)?.name ?? ""),
+        label: (item: { raw: unknown }) => {
+          const p = item.raw as { x: number; y: number };
+          return `${spec.xTitle ?? "x"}: ${formatLabel(p.x, undefined)}, ${spec.valueTitle ?? "y"}: ${formatLabel(p.y, undefined)}`;
+        },
+      },
     };
   }
 

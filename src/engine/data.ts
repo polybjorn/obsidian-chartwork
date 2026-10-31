@@ -1,8 +1,9 @@
-import type { ChartSpec, Stepped } from "./spec.ts";
+import type { ChartSpec, ScatterPoint, Stepped } from "./spec.ts";
 
 export interface PreparedSeries {
   name: string;
   values: (number | null)[];
+  points?: ScatterPoint[];
   /** Same length as labels when the spec gave one colour per label. */
   color?: string | string[];
   fill?: boolean;
@@ -82,6 +83,7 @@ export function prepareData(spec: ChartSpec): PreparedData {
       }
     }
     const out: PreparedSeries = { name: s.name, values };
+    if (s.points) out.points = s.points;
     if (s.fill !== undefined) out.fill = s.fill;
     if (s.stepped !== undefined) out.stepped = s.stepped;
     if (s.hidden !== undefined) out.hidden = s.hidden;

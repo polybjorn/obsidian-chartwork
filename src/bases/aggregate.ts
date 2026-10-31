@@ -316,3 +316,65 @@ export function parseCategoryColors(lines: unknown): Record<string, string> {
   }
   return colors;
 }
+
+export interface ScatterEntry {
+  name: string;
+  x: unknown;
+  y: unknown;
+  size?: unknown;
+  /** Series name when the Bases view is grouped. */
+  group?: string;
+}
+
+export interface ScatterOptions {
+  title?: string;
+  xTitle?: string;
+  yTitle?: string;
+  /** Whether a size property is chosen; without one every point has the default radius. */
+  sized?: boolean;
+}
+
+export const MIN_POINT_RADIUS = 3;
+export const MAX_POINT_RADIUS = 15;
+
+/**
+ * One point per note, no aggregation. A note missing x or y has no place on
+ * the plot and is skipped; one missing only its size gets the middle radius.
+ * Sizes scale over every note drawn, groups included, so radii compare across
+ * series.
+ */
+export function scatterSpec(entries: ScatterEntry[], opts: ScatterOptions = {}): ChartSpec {
+  const kept = entries.flatMap((e) => {
+    const x = parseNumber(e.x);
+    const y = parseNumber(e.y);
+    return x === null || y === null ? [] : [{ name: e.name, x, y, size: opts.sized ? parseNumber(e.size) : null, group: e.group ?? "" }];
+  });
+  const sizes = kept.flatMap((p) => (p.size === null ? [] : [p.size]));
+  const lo = Math.min(...sizes);
+  const hi = Math.max(...sizes);
+  const middle = (MIN_POINT_RADIUS + MAX_POINT_RADIUS) / 2;
+  const radius = (size: number | null): number | undefined => {
+    if (!opts.sized) return undefined;
+    if (size === null || hi === lo) return middle;
+    return MIN_POINT_RADIUS + ((size - lo) / (hi - lo)) * (MAX_POINT_RADIUS - MIN_POINT_RADIUS);
+  };
+
+  const order: string[] = [];
+  const byGroup = new Map<string, Series>();
+  for (const p of kept) {
+    let series = byGroup.get(p.group);
+    if (!series) {
+      series = { name: p.group || "Notes", values: [], points: [] };
+      byGroup.set(p.group, series);
+      order.push(p.group);
+    }
+    const r = radius(p.size);
+    series.points?.push({ x: p.x, y: p.y, name: p.name, ...(r === undefined ? {} : { radius: r }) });
+  }
+  const series = order.flatMap((g) => byGroup.get(g) ?? []);
+  const spec: ChartSpec = { kind: "scatter", labels: [], series: series.length > 0 ? series : [{ name: "Notes", values: [], points: [] }] };
+  if (opts.title) spec.title = opts.title;
+  if (opts.xTitle) spec.xTitle = opts.xTitle;
+  if (opts.yTitle) spec.valueTitle = opts.yTitle;
+  return spec;
+}

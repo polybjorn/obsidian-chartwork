@@ -12,7 +12,7 @@ import {
   type QueryController,
   type Value,
 } from "obsidian";
-import { CHART_KINDS, DATE_UNITS, DEFAULT_TENSION, SORTS, errorText, isOneOf, renderSpec, showError, type ChartHandle } from "../engine/index.ts";
+import { CHART_KINDS, DATE_UNITS, DEFAULT_TENSION, SORTS, errorText, isOneOf, renderSpec, showError, type ChartHandle, type ChartSpec } from "../engine/index.ts";
 import {
   AGGREGATIONS,
   NONE_LABEL,
@@ -20,38 +20,44 @@ import {
   parseCategoryColors,
   parseNumber,
   propertyRows,
+  scatterSpec,
   type Row,
+  type ScatterEntry,
 } from "./aggregate.ts";
 
 export const CHART_VIEW_TYPE = "chartwork-chart";
 
-// Bounds and the mean line have no meaning on a pie
-const noValueAxis = (config: BasesViewConfig): boolean => ["pie", "doughnut"].includes(text(config, "kind"));
+// Bounds and the mean line have no meaning on a pie, and a scatter plots each
+// note as it is
+const noValueAxis = (config: BasesViewConfig): boolean => ["pie", "doughnut", "scatter"].includes(text(config, "kind"));
 
 function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
+  const scatter = (): boolean => config.get("kind") === "scatter";
   return [
-    { type: "property", key: "x", displayName: "Category property", placeholder: "Property" },
+    { type: "property", key: "x", displayName: "Category property (x for scatter)", placeholder: "Property" },
     {
       type: "dropdown",
       key: "aggregation",
       displayName: "Aggregation",
       default: "count",
+      shouldHide: scatter,
       options: { count: "Count", sum: "Sum", average: "Average", min: "Minimum", max: "Maximum" },
     },
     {
       type: "property",
       key: "y",
-      displayName: "Value property",
+      displayName: "Value property (y for scatter)",
       placeholder: "Property",
-      shouldHide: () => (config.get("aggregation") ?? "count") === "count" || config.get("propertySeries") === true,
+      shouldHide: () => !scatter() && ((config.get("aggregation") ?? "count") === "count" || config.get("propertySeries") === true),
     },
-    { type: "toggle", key: "propertySeries", displayName: "One series per property", default: false },
+    { type: "property", key: "size", displayName: "Point size property", placeholder: "Property", shouldHide: () => !scatter() },
+    { type: "toggle", key: "propertySeries", displayName: "One series per property", default: false, shouldHide: scatter },
     {
       type: "dropdown",
       key: "kind",
       displayName: "Chart type",
       default: "bar",
-      options: { bar: "Bar", line: "Line", pie: "Pie", doughnut: "Doughnut" },
+      options: { bar: "Bar", line: "Line", pie: "Pie", doughnut: "Doughnut", scatter: "Scatter" },
     },
     {
       type: "dropdown",
@@ -59,9 +65,10 @@ function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
       displayName: "Group dates by",
       default: "day",
       options: { day: "Day", week: "Week", month: "Month", year: "Year" },
+      shouldHide: scatter,
     },
-    { type: "toggle", key: "horizontal", displayName: "Horizontal bars", default: false },
-    { type: "toggle", key: "cumulative", displayName: "Running total", default: false },
+    { type: "toggle", key: "horizontal", displayName: "Horizontal bars", default: false, shouldHide: scatter },
+    { type: "toggle", key: "cumulative", displayName: "Running total", default: false, shouldHide: scatter },
     { type: "text", key: "title", displayName: "Title" },
     {
       type: "group",
@@ -88,6 +95,7 @@ function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
     {
       type: "group",
       displayName: "Categories",
+      shouldHide: scatter,
       items: [
         {
           type: "dropdown",
@@ -155,6 +163,7 @@ class ChartView extends BasesView {
 
   private draw(): void {
     const x = this.config.getAsPropertyId("x");
+    if (this.config.get("kind") === "scatter") return this.drawScatter(x);
     if (!x) return this.showMessage("Choose a category property in the view options.");
 
     const aggregationValue = this.config.get("aggregation");
@@ -215,6 +224,42 @@ class ChartView extends BasesView {
       valueTitle: y ? this.config.getDisplayName(y) : undefined,
     });
 
+    this.show(spec);
+  }
+
+  private drawScatter(x: BasesPropertyId | null): void {
+    const y = this.config.getAsPropertyId("y");
+    if (!x || !y) return this.showMessage("Choose an x and a y property in the view options.");
+    const size = this.config.getAsPropertyId("size");
+
+    const groups = this.data.groupedData;
+    const grouped = groups.length > 1 || groups.some((g) => g.hasKey());
+    const entries: ScatterEntry[] = [];
+    for (const group of groups) {
+      const name = grouped ? (group.hasKey() ? group.key?.toString() ?? "" : NONE_LABEL) : undefined;
+      for (const entry of group.entries) {
+        entries.push({
+          name: entry.file.basename,
+          x: plain(entry.getValue(x)),
+          y: plain(entry.getValue(y)),
+          size: size ? plain(entry.getValue(size)) : undefined,
+          group: name,
+        });
+      }
+    }
+    const spec = scatterSpec(entries, {
+      title: text(this.config, "title") || undefined,
+      xTitle: this.config.getDisplayName(x),
+      yTitle: this.config.getDisplayName(y),
+      sized: size !== null,
+    });
+    if (spec.series.every((s) => (s.points?.length ?? 0) === 0)) {
+      return this.showMessage("No notes have a number in both the x and y properties.");
+    }
+    this.show(spec);
+  }
+
+  private show(spec: ChartSpec): void {
     if (this.handle) {
       this.handle.update(spec);
       return;
