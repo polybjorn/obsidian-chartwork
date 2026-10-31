@@ -187,6 +187,18 @@ void test("theme fill reaches radial scales and colours each chart type", () => 
   assert.equal(at(raw("bar"), "data.datasets.0.borderColor"), undefined);
 });
 
+void test("fillThemeDefaults colors each dataset of a mixed chart by its own type", () => {
+  const out = fillThemeDefaults({
+    type: "bar",
+    data: { labels: ["a", "b"], datasets: [{ data: [1, 2] }, { type: "line", data: [2, 1] }, { type: "bubble", data: [] }] },
+  } as unknown as ChartConfiguration, theme);
+  assert.equal(at(out, "data.datasets.0.borderColor"), undefined);
+  assert.equal(at(out, "data.datasets.0.backgroundColor"), "#p1");
+  assert.equal(at(out, "data.datasets.1.borderColor"), "#p2");
+  assert.equal(at(out, "data.datasets.1.backgroundColor"), "#p2");
+  assert.equal(at(out, "data.datasets.2.backgroundColor"), withAlpha("#p3", 0.3));
+});
+
 void test("theme fill reaches the axes a config leaves out and no others", () => {
   const timeOnly = fillThemeDefaults({
     type: "line",

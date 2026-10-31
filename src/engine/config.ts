@@ -493,7 +493,10 @@ export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): Cha
   const datasets = config.data.datasets.map((ds, i) => {
     const d = ds as unknown as Obj;
     if (type === "sankey") return sankeyDataset(d, theme);
-    if (PER_POINT.has(type)) {
+    // A mixed chart sets the type per dataset, as a line over bars, and
+    // each one takes the colors its own type draws with
+    const kind = typeof d.type === "string" ? d.type : type;
+    if (PER_POINT.has(kind)) {
       const n = Array.isArray(d.data) ? d.data.length : 0;
       return {
         ...d,
@@ -502,9 +505,9 @@ export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): Cha
       };
     }
     if (d.backgroundColor !== undefined || d.borderColor !== undefined) return d;
-    if (type === "bar") return { ...d, backgroundColor: paint(i) };
+    if (kind === "bar") return { ...d, backgroundColor: paint(i) };
     // A radar or bubble fill covers what lies under it unless it lets it show through
-    const fill = type === "radar" || type === "bubble" ? withAlpha(paint(i), 0.3) : paint(i);
+    const fill = kind === "radar" || kind === "bubble" ? withAlpha(paint(i), 0.3) : paint(i);
     return { ...d, borderColor: paint(i), backgroundColor: fill };
   });
 
