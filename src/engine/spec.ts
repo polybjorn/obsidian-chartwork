@@ -12,6 +12,25 @@ export type Sort = (typeof SORTS)[number];
 export const LEGEND_SIDES = ["top", "bottom", "left", "right"] as const;
 export type LegendSide = (typeof LEGEND_SIDES)[number];
 
+export const AXIS_IDS = ["x", "y", "r"] as const;
+export type AxisId = (typeof AXIS_IDS)[number];
+
+/** One axis as Chart.js names it: x runs across and y up, whichever holds the values; r is the radar and polar area scale. */
+export interface AxisSpec {
+  /** Lowest value shown. On a category axis, a label or its index. */
+  min?: number | string;
+  /** Highest value shown. On a category axis, a label or its index. */
+  max?: number | string;
+  /** Run the axis the other way. */
+  reverse?: boolean;
+  /** false hides the axis, ticks and title included. */
+  display?: boolean;
+  /** false hides the tick labels. */
+  ticks?: boolean;
+  /** Pixels between the tick labels and the axis. */
+  tickPadding?: number;
+}
+
 export interface Series {
   name: string;
   /** null leaves a gap, as in a line with a missing reading. */
@@ -41,6 +60,8 @@ export interface ChartSpec {
   other?: string;
   /** Colour per category label, for single-series bar, pie, doughnut and polar area charts. */
   categoryColors?: Record<string, string>;
+  /** A bar chart takes one color per label, as a pie does, whatever its series count. */
+  labelColors?: boolean;
   /** Axis title for the values. */
   valueTitle?: string;
   /** Start the value axis, or radial scale, at zero. Defaults to true. */
@@ -49,6 +70,8 @@ export interface ChartSpec {
   tension?: number;
   /** Show the legend, or show it on one side. Defaults to shown when there is more than one series, and for pie, doughnut and polar area. */
   legend?: boolean | LegendSide;
+  /** Range, direction and visibility per axis. */
+  axes?: Partial<Record<AxisId, AxisSpec>>;
   /** Horizontal bars: pixels per bar, so height follows the bar count. */
   barThickness?: number;
 }

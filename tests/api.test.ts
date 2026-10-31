@@ -16,7 +16,8 @@ void test("accepts a minimal and a full spec", () => {
     validateSpec({
       ...good(), title: "t", horizontal: true, stacked: false, valueLabels: true, sort: "value",
       order: ["b"], topN: 3, other: "Other", categoryColors: { a: "red" }, valueTitle: "v", barThickness: 20,
-      beginAtZero: false, tension: 0.4, legend: "bottom",
+      beginAtZero: false, tension: 0.4, legend: "bottom", labelColors: true,
+      axes: { x: { min: "a", max: 1, reverse: true, display: true, ticks: false, tickPadding: 4 }, y: {}, r: { max: 5 } },
     }),
   );
 });
@@ -38,6 +39,11 @@ const bad: [string, (s: Record<string, unknown>) => void, RegExp][] = [
   ["title", (s) => { s.title = 3; }, /title must be a string/],
   ["horizontal", (s) => { s.horizontal = "true"; }, /horizontal must be a boolean/],
   ["sort", (s) => { s.sort = "random"; }, /sort must be one of/],
+  ["axes type", (s) => { s.axes = [1]; }, /axes must be an object/],
+  ["axis id", (s) => { s.axes = { z: {} }; }, /unknown field axes\.z/],
+  ["axis key", (s) => { s.axes = { y: { minimum: 0 } }; }, /unknown field axes\.y\.minimum/],
+  ["axis bound", (s) => { s.axes = { y: { max: true } }; }, /axes\.y\.max must be a finite number or a label/],
+  ["axis flag", (s) => { s.axes = { x: { reverse: "yes" } }; }, /axes\.x\.reverse must be a boolean/],
   ["topN", (s) => { s.topN = 2.5; }, /topN/],
   ["barThickness", (s) => { s.barThickness = -1; }, /barThickness/],
   ["order", (s) => { s.order = [1]; }, /order\[0\]/],

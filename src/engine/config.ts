@@ -3,7 +3,7 @@ import { allIntegers, prepareData } from "./data.ts";
 import type { PreparedData } from "./data.ts";
 import { isPlain } from "./guards.ts";
 import type { Obj } from "./guards.ts";
-import type { ChartSpec } from "./spec.ts";
+import type { AxisSpec, ChartSpec } from "./spec.ts";
 import type { Theme } from "./theme.ts";
 
 export const DEFAULT_BAR_THICKNESS = 28;
@@ -49,12 +49,12 @@ function colorFor(spec: ChartSpec, theme: Theme, data: PreparedData, si: number)
   const series = data.series[si];
   const pick = (i: number): string => theme.palette[i % theme.palette.length] ?? FALLBACK_COLOR;
   const perLabel = spec.kind === "pie" || spec.kind === "doughnut" || spec.kind === "polarArea" ||
-    (spec.kind === "bar" && data.series.length === 1);
+    (spec.kind === "bar" && (data.series.length === 1 || spec.labelColors === true));
 
   if (!perLabel) return (typeof series?.color === "string" ? series.color : undefined) ?? pick(si);
 
   const base = typeof series?.color === "string" ? series.color : undefined;
-  const hasPerLabel = Array.isArray(series?.color) || spec.categoryColors !== undefined;
+  const hasPerLabel = Array.isArray(series?.color) || spec.categoryColors !== undefined || spec.labelColors === true;
   if (!hasPerLabel && spec.kind === "bar") return base ?? pick(0);
 
   return data.labels.map((label, j) => {
@@ -68,6 +68,8 @@ interface LabelStyle {
   font: string;
   horizontal: boolean;
   stacked: boolean;
+  /** The value axis runs backwards, so a label sits past the other end of its bar. */
+  reversed: boolean;
 }
 
 // Chart.js has no always-on value labels, and a dependency for one draw call
@@ -87,7 +89,7 @@ function valueLabelsPlugin(style: LabelStyle): Plugin {
           if (typeof v !== "number") return;
           const bar = el as BarElement & { base: number };
           const text = String(v);
-          const neg = v < 0;
+          const neg = (v < 0) !== style.reversed;
           if (style.stacked) {
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
@@ -108,6 +110,24 @@ function valueLabelsPlugin(style: LabelStyle): Plugin {
       ctx.restore();
     },
   };
+}
+
+function applyAxis(scale: Obj, axis: AxisSpec | undefined): Obj {
+  if (!axis) return scale;
+  const out: Obj = { ...scale };
+  if (axis.min !== undefined) out.min = axis.min;
+  if (axis.max !== undefined) out.max = axis.max;
+  // Chart.js widens a range by its grace even past a bound the note set
+  if (axis.min !== undefined || axis.max !== undefined) delete out.grace;
+  if (axis.reverse !== undefined) out.reverse = axis.reverse;
+  if (axis.display !== undefined) out.display = axis.display;
+  if (axis.ticks !== undefined || axis.tickPadding !== undefined) {
+    const ticks: Obj = { ...(isPlain(scale.ticks) ? scale.ticks : {}) };
+    if (axis.ticks !== undefined) ticks.display = axis.ticks;
+    if (axis.tickPadding !== undefined) ticks.padding = axis.tickPadding;
+    out.ticks = ticks;
+  }
+  return out;
 }
 
 export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
@@ -190,17 +210,20 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
       grid: horizontal ? { display: false } : { color: theme.grid },
     };
     options.indexAxis = horizontal ? "y" : "x";
-    options.scales = horizontal ? { x: valueAxis, y: categoryAxis } : { x: categoryAxis, y: valueAxis };
+    options.scales = {
+      x: applyAxis(horizontal ? valueAxis : categoryAxis, spec.axes?.x),
+      y: applyAxis(horizontal ? categoryAxis : valueAxis, spec.axes?.y),
+    };
   }
 
   if (RADIAL.has(spec.kind)) {
     const scale = radialScale(theme);
     options.scales = {
-      r: {
+      r: applyAxis({
         ...scale,
         beginAtZero: spec.beginAtZero ?? true,
         ...(allIntegers(data.series) ? { ticks: { ...scale.ticks, precision: 0 } } : {}),
-      },
+      }, spec.axes?.r),
     };
   }
 
@@ -209,7 +232,10 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     data: { labels: data.labels, datasets },
     options,
     plugins: labelsOn
-      ? [valueLabelsPlugin({ color: theme.text, font: theme.font, horizontal, stacked })]
+      ? [valueLabelsPlugin({
+        color: theme.text, font: theme.font, horizontal, stacked,
+        reversed: spec.axes?.[horizontal ? "x" : "y"]?.reverse === true,
+      })]
       : [],
   };
 }

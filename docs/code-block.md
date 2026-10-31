@@ -25,6 +25,13 @@ series:
 | `tension` | line | Curve, 0 for straight segments. Default 0.2 |
 | `beginAtZero` | bar, line, radar | Start the value axis at zero. Default `true` |
 | `xTitle` / `yTitle` | bar, line | Title for the value axis (`xTitle` when the bars are horizontal) |
+| `xMin`, `xMax`, `yMin`, `yMax` | bar, line | Axis range. `x` runs across and `y` up, as drawn; the label axis takes a label |
+| `xReverse` / `yReverse` | bar, line | Run the axis the other way |
+| `xDisplay` / `yDisplay` | bar, line | `false` hides the axis |
+| `xTickDisplay` / `yTickDisplay` | bar, line | `false` hides the tick labels |
+| `xTickPadding` / `yTickPadding` | bar, line | Pixels between the tick labels and the axis |
+| `rMin` / `rMax` | radar, polarArea | Scale range |
+| `labelColors: true` | bar | One color per label, as in a pie |
 | `legend` | all | `false` hides the legend, `true` shows it |
 | `legendPosition` | all | `top`, `bottom`, `left` or `right` |
 | `width` | all | Chart width, as CSS (`60%`) or pixels (`400`) |

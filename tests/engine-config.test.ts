@@ -183,6 +183,39 @@ void test("parseVarRef reads a variable with and without fallback", () => {
   assert.equal(parseVarRef("#fff"), null);
 });
 
+void test("axes set range, direction and visibility, and a bound drops the grace", () => {
+  const o = opts({ ...spec, axes: { y: { min: 0, max: 10, reverse: true, ticks: false, tickPadding: 6 }, x: { display: false } } });
+  assert.equal(at(o, "scales.y.min"), 0);
+  assert.equal(at(o, "scales.y.max"), 10);
+  assert.equal(at(o, "scales.y.grace"), undefined);
+  assert.equal(at(o, "scales.y.reverse"), true);
+  assert.equal(at(o, "scales.y.ticks.display"), false);
+  assert.equal(at(o, "scales.y.ticks.padding"), 6);
+  assert.equal(at(o, "scales.y.ticks.color"), "#111");
+  assert.equal(at(o, "scales.x.display"), false);
+  assert.equal(at(opts(spec), "scales.y.grace"), "5%");
+});
+
+void test("x and y name the drawn axes on a horizontal chart too", () => {
+  const o = opts({ ...spec, horizontal: true, axes: { x: { max: 8 } } });
+  assert.equal(at(o, "scales.x.max"), 8);
+  assert.equal(at(o, "scales.y.max"), undefined);
+});
+
+void test("the radial scale takes axes.r", () => {
+  const o = opts({ kind: "radar", labels: ["a", "b", "c"], series: [{ name: "n", values: [1, 2, 3] }], axes: { r: { min: 1, max: 5 } } });
+  assert.equal(at(o, "scales.r.min"), 1);
+  assert.equal(at(o, "scales.r.max"), 5);
+});
+
+void test("labelColors gives bars one palette color per label", () => {
+  const ds = (s: ChartSpec): unknown => buildConfig(s, theme).data.datasets.map((d) => d.backgroundColor);
+  assert.deepEqual(ds(spec), ["#p1"]);
+  assert.deepEqual(ds({ ...spec, labelColors: true }), [["#p1", "#p2"]]);
+  const two = { ...spec, series: [{ name: "n", values: [2, 4] }, { name: "m", values: [1, 3] }], labelColors: true };
+  assert.deepEqual(ds(two), [["#p1", "#p2"], ["#p1", "#p2"]]);
+});
+
 void test("legend, tension and beginAtZero override the defaults", () => {
   assert.equal(at(opts({ ...spec, legend: true }), "plugins.legend.display"), true);
   assert.equal(at(opts({ ...spec, kind: "pie", legend: false }), "plugins.legend.display"), false);

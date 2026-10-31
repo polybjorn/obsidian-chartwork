@@ -51,11 +51,13 @@ A bad or unknown field throws an error naming it, such as `chartwork: series[0].
 | `topN` | number | Keep the N largest categories by the first series |
 | `other` | string | With `topN`, sums the dropped categories under this label |
 | `categoryColors` | `{label: color}` | Color per category, for single-series bar, pie, doughnut and polar area charts |
+| `labelColors` | boolean | Bars take one color per label |
 | `valueTitle` | string | Title for the value axis |
 | `beginAtZero` | boolean | Value axis or radar scale starts at zero. Default `true` |
 | `tension` | number | Line curve from 0 to 1. Default 0.2 |
 | `legend` | boolean, `"top"`, `"bottom"`, `"left"`, `"right"` | Default shown for pie, doughnut, polar area and multi-series charts |
 | `barThickness` | number | Pixels per bar on a horizontal chart. Default 28 |
+| `axes` | `{x?, y?, r?}` | Per axis: `min`, `max`, `reverse`, `display`, `ticks` (`false` hides the tick labels) and `tickPadding`. `x` runs across and `y` up; `r` is the radar and polar area scale |
 
 Colors can be any CSS color, including `var(--color-red)`. Without one, series take the colors listed under Series colors in Chartwork's settings, then `--chart-color-1`, `--chart-color-2` and on from a CSS snippet, else the theme's colors.
 

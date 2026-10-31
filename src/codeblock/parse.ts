@@ -1,6 +1,6 @@
 import type { ChartConfiguration } from "chart.js";
 import { CHART_KINDS, LEGEND_SIDES } from "../engine/spec.ts";
-import type { ChartKind, ChartSpec, Series } from "../engine/spec.ts";
+import type { AxisId, AxisSpec, ChartKind, ChartSpec, Series } from "../engine/spec.ts";
 import { isObj, isOneOf } from "../engine/guards.ts";
 import { LAYOUTS } from "./table.ts";
 import type { Layout } from "./table.ts";
@@ -37,7 +37,10 @@ const KIND_LIST = "bar, line, pie, doughnut, radar, polarArea or sankey";
 export const BLOCK_KEYS: readonly string[] = [
   "type", "labels", "series", "indexAxis", "stacked", "fill", "tension",
   "beginAtZero", "xTitle", "yTitle", "legend", "legendPosition", "width",
-  "id", "file", "layout", "select",
+  "id", "file", "layout", "select", "labelColors",
+  "xMin", "xMax", "xReverse", "xDisplay", "xTickDisplay", "xTickPadding",
+  "yMin", "yMax", "yReverse", "yDisplay", "yTickDisplay", "yTickPadding",
+  "rMin", "rMax",
 ];
 
 function fail(error: string): ParseResult {
@@ -54,6 +57,32 @@ function label(v: unknown): string | undefined {
 
 function bool(v: unknown): boolean | undefined {
   return typeof v === "boolean" ? v : undefined;
+}
+
+function num(v: unknown): number | undefined {
+  return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+}
+
+// Charts reads these as xMin, yReverse, rMax and so on, one flat key per axis.
+// A category axis takes a label as its bound, which YAML may have read as a date.
+function parseAxis(input: Record<string, unknown>, id: AxisId): AxisSpec | undefined {
+  const bound = (v: unknown): number | string | undefined => id === "r" ? num(v) : num(v) ?? label(v);
+  const axis: AxisSpec = {};
+  const min = bound(input[`${id}Min`]);
+  const max = bound(input[`${id}Max`]);
+  if (min !== undefined) axis.min = min;
+  if (max !== undefined) axis.max = max;
+  if (id !== "r") {
+    const reverse = bool(input[`${id}Reverse`]);
+    const display = bool(input[`${id}Display`]);
+    const ticks = bool(input[`${id}TickDisplay`]);
+    const padding = num(input[`${id}TickPadding`]);
+    if (reverse !== undefined) axis.reverse = reverse;
+    if (display !== undefined) axis.display = display;
+    if (ticks !== undefined) axis.ticks = ticks;
+    if (padding !== undefined) axis.tickPadding = padding;
+  }
+  return Object.keys(axis).length > 0 ? axis : undefined;
 }
 
 // Radar shapes read as areas, so they fill unless the block says not to,
@@ -184,6 +213,13 @@ export function parseChartBlock(input: unknown): ParseResult {
     // The value axis is x when the bars run sideways
     const t = input[spec.horizontal ? "xTitle" : "yTitle"];
     if (typeof t === "string" && t) spec.valueTitle = t;
+    if (kind === "bar" && bool(input["labelColors"]) === true) spec.labelColors = true;
+  }
+
+  const axisIds: AxisId[] = kind === "bar" || kind === "line" ? ["x", "y"] : kind === "radar" || kind === "polarArea" ? ["r"] : [];
+  for (const id of axisIds) {
+    const axis = parseAxis(input, id);
+    if (axis) spec.axes = { ...spec.axes, [id]: axis };
   }
 
   if (kind === "line" && typeof input["tension"] === "number") spec.tension = input["tension"];

@@ -52,6 +52,28 @@ void test("indexAxis y is horizontal and its value title is xTitle", () => {
   assert.equal(spec.valueTitle, "Hours");
 });
 
+void test("Charts' axis keys map per axis, x and y as Chart.js draws them", () => {
+  const { spec } = ok({
+    ...base, yMin: 0, yMax: 50, yReverse: true, yTickDisplay: false, yTickPadding: 8,
+    xMin: "a", xDisplay: false, rMax: 9,
+  });
+  assert.deepEqual(spec.axes, {
+    x: { min: "a", display: false },
+    y: { min: 0, max: 50, reverse: true, ticks: false, tickPadding: 8 },
+  });
+});
+
+void test("rMin and rMax set the radial scale, which takes numbers only", () => {
+  const { spec } = ok({ ...base, type: "radar", rMin: 1, rMax: 5, yMax: 3 });
+  assert.deepEqual(spec.axes, { r: { min: 1, max: 5 } });
+  assert.equal(ok({ ...base, type: "polarArea", rMax: "5" }).spec.axes, undefined);
+});
+
+void test("labelColors applies to bar charts", () => {
+  assert.equal(ok({ ...base, labelColors: true }).spec.labelColors, true);
+  assert.equal(ok({ ...base, type: "line", labelColors: true }).spec.labelColors, undefined);
+});
+
 void test("stacked maps for bar and line", () => {
   assert.equal(ok({ ...base, stacked: true }).spec.stacked, true);
   assert.equal(ok({ ...base, type: "line", stacked: false }).spec.stacked, undefined);
