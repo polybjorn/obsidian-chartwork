@@ -17,13 +17,15 @@ const PORT = 9333;
 const WINDOW = { width: 1100, height: 780 };
 // The demo vault's note names are short, so the file list needs little room
 const SIDEBAR = 180;
+// Room under a fitted chart, so the status bar does not cover it
+const FIT_MARGIN = 72;
 const THEMES = { light: "moonstone", dark: "obsidian" };
 
 const SHOTS = [
   { file: "Reading.md", name: "readme", theme: "dark", chart: ".chartwork-bases" },
   { file: "Genres.md", name: "bases-view", theme: "light", chart: ".chartwork-bases", menu: true },
-  { file: "Pages read.md", name: "code-block", theme: "light", chart: ".chartwork-block" },
-  { file: "Script.md", name: "script", theme: "light", chart: ".chartwork-script", script: true },
+  { file: "Pages read.md", name: "code-block", theme: "light", chart: ".chartwork-block", fit: true },
+  { file: "Script.md", name: "script", theme: "light", chart: ".chartwork-script", script: true, fit: true },
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -146,6 +148,11 @@ function windowId(pid) {
   return id;
 }
 
+async function resize(cdp, height) {
+  await cdp.evaluate(`require("@electron/remote").getCurrentWindow().setContentSize(${WINDOW.width}, ${height})`);
+  await sleep(500);
+}
+
 async function shoot(cdp, shot, id) {
   await cdp.evaluate(`app.changeTheme(${JSON.stringify(THEMES[shot.theme])})`);
   await cdp.evaluate(`(async () => {
@@ -180,6 +187,12 @@ async function shoot(cdp, shot, id) {
   await sleep(1500);
   // The theme switch redraws the chart, so the canvas can be briefly absent
   await waitFor(() => cdp.evaluate(`!!${visible(sel)}`), `${shot.chart} after the redraw`);
+  // A short note leaves the lower half of the window empty, so the window ends
+  // under the chart. Only the height changes, so the chart keeps its size
+  if (shot.fit) {
+    const bottom = await cdp.evaluate(`Math.ceil(${visible(sel)}.getBoundingClientRect().bottom)`);
+    await resize(cdp, Math.min(WINDOW.height, bottom + FIT_MARGIN));
+  }
   // An unfocused window draws its buttons grey
   await cdp.evaluate(`(() => {
     const remote = require("@electron/remote");
@@ -190,6 +203,7 @@ async function shoot(cdp, shot, id) {
   const file = join(OUT, `${shot.name}.png`);
   execFileSync("screencapture", ["-x", "-l", String(id), file]);
   console.log(`Wrote ${file.slice(ROOT.length + 1)}`);
+  if (shot.fit) await resize(cdp, WINDOW.height);
   if (shot.menu) {
     for (const type of ["keyDown", "keyUp"]) {
       await cdp.send("Input.dispatchKeyEvent", { type, key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });

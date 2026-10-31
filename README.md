@@ -34,7 +34,3 @@ Obsidian 1.10 or later. Chart.js 4 is bundled, so there is nothing else to insta
 
 - **Vault, read-only.** Chartwork sees only the data a Bases view, `chart` block or script hands it, and writes nothing. A Bases view's options are saved into its `.base` file by Bases itself.
 - **No network.** The plugin makes no outbound requests.
-
-## Disclaimer
-
-Independent community plugin, not affiliated with Chart.js or the Charts plugin.
