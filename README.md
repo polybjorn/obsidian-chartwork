@@ -40,6 +40,80 @@ Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 
 
 <img src="docs/images/themes.png" width="720" alt="The same bar chart of books by status in the light and the dark theme, its text, grid lines and category colors changed to match">
 
+## A script, before and after
+
+Notes created this month counted by tag, as horizontal bars with the count on each bar. Both versions start from `counts`, an object of tag and count. With Chartwork:
+
+```js
+window.chartwork.render(dv.container, {
+  kind: "bar",
+  horizontal: true,
+  labels: Object.keys(counts),
+  series: [{ name: "Notes", values: Object.values(counts) }],
+  sort: "value",
+  topN: 10,
+}, dv.component);
+```
+
+<details>
+<summary>The same chart with Charts' <code>renderChart</code>, 45 lines</summary>
+
+```js
+const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+// renderChart sets no colors, and Chart.js's grey disappears on a dark theme
+const css = getComputedStyle(dv.container);
+const text = css.getPropertyValue("--text-normal").trim();
+const grid = css.getPropertyValue("--background-modifier-border").trim();
+const bar = css.getPropertyValue("--interactive-accent").trim();
+
+// Chart.js prints no values on bars by itself
+const valueLabels = {
+  id: "valueLabels",
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    ctx.save();
+    ctx.font = "bold 12px sans-serif";
+    ctx.fillStyle = text;
+    ctx.textBaseline = "middle";
+    chart.getDatasetMeta(0).data.forEach((el, i) => {
+      ctx.fillText(chart.data.datasets[0].data[i], el.x + 6, el.y);
+    });
+    ctx.restore();
+  },
+};
+
+window.renderChart({
+  type: "bar",
+  plugins: [valueLabels],
+  data: {
+    labels: top.map(([tag]) => tag),
+    datasets: [{
+      label: "Notes",
+      data: top.map(([, n]) => n),
+      backgroundColor: bar,
+    }],
+  },
+  options: {
+    indexAxis: "y",
+    // Without this the bars get thinner as tags are added
+    aspectRatio: 600 / (top.length * 28 + 60),
+    layout: { padding: { right: 24 } },
+    plugins: { legend: { display: false } },
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: { color: text, precision: 0 },
+        grid: { color: grid },
+      },
+      y: { ticks: { color: text }, grid: { display: false } },
+    },
+  },
+}, dv.container);
+```
+
+</details>
+
 ## Instead of other chart plugins
 
 Notes written for [Charts](https://github.com/phibr0/obsidian-charts) work without changes, so you no longer need Charts. The Bases view counts notes and adds up values by category or by day, week, month or year. That does the job of [Bases Charts](https://github.com/mProjectsCode/obsidian-bases-charts-plugin) and most of what people use [Tracker](https://github.com/pyrochlore/obsidian-tracker) for. Tracker's month calendar and streak summaries, and Charts' chart builder and image export, are not in Chartwork.
