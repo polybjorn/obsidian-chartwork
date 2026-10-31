@@ -1,6 +1,6 @@
 # Chartwork
 
-Turn your notes into charts. Make one from a [Bases](https://help.obsidian.md/bases) view, a code block or a script. Charts match your theme, light or dark, with nothing to set up, and notes written for the [Charts](https://github.com/phibr0/obsidian-charts) plugin draw as they are.
+Turn your notes into charts. Make one from a [Bases](https://help.obsidian.md/bases) view, a code block or a script. They match your theme, light or dark, with nothing to set up, and notes written for the [Charts](https://github.com/phibr0/obsidian-charts) plugin draw as they are.
 
 <img src="docs/images/readme.png" width="560" alt="Four charts in Obsidian's dark theme: a doughnut and a bar chart from Bases, a radar chart and a line chart from code blocks">
 
@@ -36,9 +36,13 @@ Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 
 - **Dates on a time axis.** A Bases view groups dates by day, week, month or year, with a gap where nothing happened.
 - **Order and trimming.** In a Bases view or a script: sort by value or label, put chosen categories first, keep the largest few and add the rest up under one label.
 
-## Coming from Charts
+## Compared with other chart plugins
 
-Your `chart` blocks and `renderChart` scripts draw as they are, with everything above on top, and the command **Check chart blocks and scripts** lists any that won't. While Charts is enabled, Chartwork leaves them to it. Charts' chart-builder menu and image export are left out.
+**[Charts](https://github.com/phibr0/obsidian-charts)** has had no release since January 2024, runs Chart.js 3 and has no Bases view. Chartwork draws its `chart` blocks and `renderChart` scripts as they are, on Chart.js 4, and the command **Check chart blocks and scripts** lists any that won't. While Charts is enabled, Chartwork leaves its blocks to it. Its chart-builder menu and image export are not in Chartwork.
+
+**[Tracker](https://github.com/pyrochlore/obsidian-tracker)** finds values in your notes and plots them by date, but it adds up two values from the same day and can't total by week or month. In Chartwork, Bases or a script finds the values, and a Bases view groups dates by day, week, month or year with a count, sum, average, minimum or maximum. Tracker's month calendar and streak summaries are not in Chartwork.
+
+**[Bases Charts](https://github.com/mProjectsCode/obsidian-bases-charts-plugin)** draws one point per note as a scatter, line or bar chart, so it can't count notes or add them up per category, and it has no pie chart. Chartwork's Bases view does both, keeps the largest few with the rest added up and colors each category. Scatter charts are not in Chartwork yet.
 
 ## What the plugin accesses
 
