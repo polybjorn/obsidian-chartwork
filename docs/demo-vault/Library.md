@@ -28,17 +28,13 @@ views:
 ```
 
 ```chart
-type: bar
-labels: [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
-stacked: true
+type: radar
+labels: [Fantasy, Mystery, History, Science, Poetry, Memoir]
 series:
-  - title: Paper
-    data: [0.5, 0.25, 0.5, 0.25, 0.75, 1.5, 2]
-  - title: Ebook
-    data: [0.75, 1, 0.5, 1, 0.5, 0.5, 0.25]
-  - title: Audio
-    data: [1, 0.75, 1, 1.25, 0.5, 0.25, 0.5]
-yTitle: Hours
+  - title: "2025"
+    data: [9, 6, 3, 4, 2, 3]
+  - title: "2026"
+    data: [5, 8, 6, 7, 3, 2]
 ```
 
 ```chart

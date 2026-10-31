@@ -2,7 +2,7 @@
 
 Turn your notes into charts. Make one from a [Bases](https://help.obsidian.md/bases) view, a code block or a script. Charts match your theme, light or dark, with nothing to set up, and notes written for the [Charts](https://github.com/phibr0/obsidian-charts) plugin draw as they are.
 
-<img src="docs/images/readme.png" width="560" alt="Four charts in Obsidian's dark theme: a doughnut and a bar chart from Bases, a stacked bar chart and a line chart from code blocks">
+<img src="docs/images/readme.png" width="560" alt="Four charts in Obsidian's dark theme: a doughnut and a bar chart from Bases, a radar chart and a line chart from code blocks">
 
 ## Three ways to make a chart
 
