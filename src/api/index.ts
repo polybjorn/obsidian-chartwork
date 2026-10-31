@@ -1,5 +1,5 @@
 import type { Component, Plugin } from "obsidian";
-import { renderConfig, renderSpec, showError, errorText } from "../engine/index.ts";
+import { registerItems, renderConfig, requireModule, renderSpec, showError, errorText } from "../engine/index.ts";
 import type { ChartHandle, ChartSpec } from "../engine/index.ts";
 import { shouldInstallRenderChart, shouldRemoveRenderChart } from "./coexist.ts";
 import { unwrapRaw } from "./raw.ts";
@@ -7,6 +7,10 @@ import { validateSpec } from "./validate.ts";
 
 export interface ChartworkApi {
   version: string;
+  /** Gives a CommonJS add-on file Chartwork's own "chart.js" and "chart.js/helpers"; throws for any other name. */
+  require(name: string): unknown;
+  /** Passes controllers, elements, scales and plugins through to Chart.register. */
+  register(...items: Parameters<typeof registerItems>): void;
   render(el: HTMLElement, spec: ChartSpec, owner?: Component): ChartHandle;
 }
 
@@ -23,6 +27,8 @@ export function installApi(plugin: Plugin, seriesColors: () => string[]): void {
 
   const api: ChartworkApi = {
     version: plugin.manifest.version,
+    require: requireModule,
+    register: (...items) => registerItems(...items),
     render: (el, spec, owner = plugin) => {
       const handle = renderSpec(el, validateSpec(spec), ctx(owner));
       return { update: (next) => handle.update(validateSpec(next)), destroy: () => handle.destroy() };

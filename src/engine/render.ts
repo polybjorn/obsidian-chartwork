@@ -1,6 +1,8 @@
 import { Component, Events } from "obsidian";
+import * as ChartJs from "chart.js";
+import * as helpers from "chart.js/helpers";
 import { Chart, registerables } from "chart.js";
-import type { ChartConfiguration } from "chart.js";
+import type { ChartComponentLike, ChartConfiguration } from "chart.js";
 import { Flow, SankeyController } from "chartjs-chart-sankey";
 import annotationPlugin from "chartjs-plugin-annotation";
 import { buildConfig, chartHeight, fillThemeDefaults } from "./config.ts";
@@ -18,6 +20,22 @@ function registerOnce(): void {
   // Every chart type and axis, since a config written for Charts may use any
   Chart.register(...registerables, annotationPlugin, SankeyController, Flow);
   installDateAdapter();
+}
+
+/** Hands add-on items to Chart.js, after the built-ins so an add-on may replace one. */
+export function registerItems(...items: ChartComponentLike[]): void {
+  registerOnce();
+  Chart.register(...items);
+}
+
+/** What a CommonJS add-on file gets for its `require`; other modules are not Chartwork's to hand out. */
+export function requireModule(name: string): unknown {
+  // An add-on registers itself through this Chart as it loads, so the
+  // built-ins go in first and cannot replace it on the first draw
+  registerOnce();
+  if (name === "chart.js") return ChartJs;
+  if (name === "chart.js/helpers") return helpers;
+  throw new Error(`chartwork.require: "${name}" is not available, only "chart.js" and "chart.js/helpers"`);
 }
 
 interface Built {

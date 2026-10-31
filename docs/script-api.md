@@ -61,6 +61,18 @@ A bad or unknown field throws an error naming it, such as `chartwork: series[0].
 
 Colors can be any CSS color, including `var(--color-red)`. Without one, series take the colors listed under Series colors in Chartwork's settings, then `--chart-color-1`, `--chart-color-2` and on from a CSS snippet, else the theme's colors.
 
+## Add-ons
+
+Chartwork bundles no niche chart types, and fetches nothing. A script can add a Chart.js controller, element, scale or plugin from a CommonJS or UMD file in your vault, such as `chartjs-chart-matrix` or `chartjs-chart-financial` (candlestick), built for Chart.js 4. Run the block before any chart that uses the add-on. This one loads the matrix file saved as `Scripts/chartjs-chart-matrix.min.js`:
+
+```js
+const module = { exports: {} };
+const src = await app.vault.adapter.read("Scripts/chartjs-chart-matrix.min.js");
+new Function("module", "exports", "require", src)(module, module.exports, window.chartwork.require);
+```
+
+`chartwork.require` hands the file Chartwork's own `chart.js` and `chart.js/helpers`, and throws for any other name. Both add-ons above register themselves through it. For one that only exports its parts, call `window.chartwork.register(...items)`, which passes through to `Chart.register`. A chart that draws before this ran shows an error saying so; draw it again afterward. Registrations last until Chartwork unloads.
+
 ## Charts' `renderChart`
 
 Scripts for the Charts plugin call `window.renderChart(config, element)` with a raw Chart.js config, or `{chartOptions: config, width: "60%"}`. Without Charts installed, Chartwork provides it: any Chart.js chart type, sankey and time axes included, with theme colors and square legend keys wherever the config sets none. A color the config does set can be `var(--color-red)` as well. A failing config shows its error and returns `null`. Annotations draw, in the text color unless they set their own. New scripts should use `render`, which knows when a note closes.

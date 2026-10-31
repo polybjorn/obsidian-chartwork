@@ -1,4 +1,4 @@
-export { renderConfig, renderSpec } from "./render.ts";
+export { registerItems, renderConfig, requireModule, renderSpec } from "./render.ts";
 export { errorText, showError } from "./error.ts";
 export { CHART_KINDS, LEGEND_SIDES, SORTS } from "./spec.ts";
 export type * from "./spec.ts";
