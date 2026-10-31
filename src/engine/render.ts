@@ -1,4 +1,4 @@
-import { Component } from "obsidian";
+import { Component, Events } from "obsidian";
 import { Chart, registerables } from "chart.js";
 import type { ChartConfiguration } from "chart.js";
 import { buildConfig, chartHeight, fillThemeDefaults } from "./config.ts";
@@ -35,6 +35,11 @@ interface View {
 
 // Loose charts have no note to tell them it closed, so every new chart and
 // every theme change checks them all
+// Chartwork's own events, since a workspace event like css-change would also
+// wake every other plugin listening for it
+export const chartworkEvents = new Events();
+export const SERIES_COLORS_CHANGED = "series-colors";
+
 const loose = new Set<() => void>();
 function sweepLoose(): void {
   for (const check of [...loose]) check();
@@ -97,12 +102,14 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
     ctx.owner.removeChild(life);
   };
 
-  life.registerEvent(ctx.app.workspace.on("css-change", () => {
+  const onStyle = (): void => {
     if (ctx.loose) check();
     // A note's chart redraws even while out of view, so it is right when it
     // comes back; the theme is then read from the document
     redraw();
-  }));
+  };
+  life.registerEvent(ctx.app.workspace.on("css-change", onStyle));
+  life.registerEvent(chartworkEvents.on(SERIES_COLORS_CHANGED, onStyle));
   life.register(destroy);
   ctx.owner.addChild(life);
   if (ctx.loose) {
