@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { aggregateRows, bucketLabel, dateOf, parseCategoryColors, xLabels, type AggregateOptions } from "../src/bases/aggregate.ts";
+import { aggregateRows, bucketLabel, dateOf, parseCategoryColors, propertyRows, xLabels, type AggregateOptions } from "../src/bases/aggregate.ts";
 
 const base: AggregateOptions = { aggregation: "count", kind: "bar" };
 
@@ -113,4 +113,20 @@ void test("dates only count when every category is one, and a pie gets readable 
   assert.equal(pie.dateUnit, undefined);
   assert.equal(bucketLabel("2025-12-29", "week"), "2026-W01");
   assert.equal(bucketLabel("2026-12-28", "week"), "2026-W53");
+});
+
+void test("one series per property, named by group when grouped, in property order", () => {
+  const notes = [
+    { x: "Mon", values: [null, 3] },
+    { x: "Mon", values: [80, 5] },
+    { x: "Tue", values: [81, ""] },
+  ];
+  const names = ["Weight", "Minutes"];
+  const rows = notes.flatMap((n) => propertyRows(n.x, n.values, names, undefined, false));
+  const spec = aggregateRows(rows, { ...base, aggregation: "sum", seriesOrder: names });
+  assert.deepEqual(spec.series.map((s) => s.name), ["Weight", "Minutes"]);
+  assert.deepEqual(spec.series.map((s) => s.values), [[80, 81], [8, 0]]);
+  const counted = notes.flatMap((n) => propertyRows(n.x, n.values, names, undefined, true));
+  assert.deepEqual(aggregateRows(counted, { ...base, seriesOrder: names }).series.map((s) => s.values), [[1, 1], [2, 0]]);
+  assert.deepEqual(propertyRows("a", [1, 2], names, "Gym", false).map((r) => r.group), ["Gym: Weight", "Gym: Minutes"]);
 });

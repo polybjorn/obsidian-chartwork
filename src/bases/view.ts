@@ -18,6 +18,7 @@ import {
   NONE_LABEL,
   aggregateRows,
   parseCategoryColors,
+  propertyRows,
   type Row,
 } from "./aggregate.ts";
 
@@ -38,8 +39,9 @@ function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
       key: "y",
       displayName: "Value property",
       placeholder: "Property",
-      shouldHide: () => (config.get("aggregation") ?? "count") === "count",
+      shouldHide: () => (config.get("aggregation") ?? "count") === "count" || config.get("propertySeries") === true,
     },
+    { type: "toggle", key: "propertySeries", displayName: "One series per property", default: false },
     {
       type: "dropdown",
       key: "kind",
@@ -126,17 +128,31 @@ class ChartView extends BasesView {
 
     const aggregationValue = this.config.get("aggregation");
     const aggregation = isOneOf(AGGREGATIONS, aggregationValue) ? aggregationValue : "count";
-    const y = aggregation === "count" ? null : this.config.getAsPropertyId("y");
-    if (aggregation !== "count" && !y) {
+    const properties = this.config.get("propertySeries") === true ? this.seriesProperties(x) : null;
+    if (properties?.length === 0) {
+      return this.showMessage("Choose the properties to chart in the Properties menu.");
+    }
+    const y = aggregation === "count" || properties ? null : this.config.getAsPropertyId("y");
+    if (aggregation !== "count" && !properties && !y) {
       return this.showMessage("Choose a value property in the view options.");
     }
 
     const groups = this.data.groupedData;
     const grouped = groups.length > 1 || groups.some((g) => g.hasKey());
     const rows: Row[] = [];
+    const seriesOrder: string[] = [];
     for (const group of groups) {
       const name = grouped ? (group.hasKey() ? group.key?.toString() ?? "" : NONE_LABEL) : undefined;
-      for (const entry of group.entries) rows.push(this.row(entry, x, y, name));
+      if (!properties) {
+        for (const entry of group.entries) rows.push(this.row(entry, x, y, name));
+        continue;
+      }
+      const names = properties.map((p) => this.config.getDisplayName(p));
+      seriesOrder.push(...names.map((n) => (name ? `${name}: ${n}` : n)));
+      for (const entry of group.entries) {
+        const values = properties.map((p) => plain(entry.getValue(p)));
+        rows.push(...propertyRows(plain(entry.getValue(x)), values, names, name, aggregation === "count"));
+      }
     }
 
     const kindValue = this.config.get("kind");
@@ -156,6 +172,7 @@ class ChartView extends BasesView {
       skipEmpty: this.config.get("skipEmpty") === true,
       dateUnit: isOneOf(DATE_UNITS, unitValue) ? unitValue : "day",
       seriesName: y ? this.config.getDisplayName(y) : undefined,
+      seriesOrder: properties ? seriesOrder : undefined,
       valueTitle: y ? this.config.getDisplayName(y) : undefined,
     });
 
@@ -165,6 +182,11 @@ class ChartView extends BasesView {
     }
     this.host.empty();
     this.handle = renderSpec(this.host, spec, { app: this.app, owner: this, seriesColors: this.seriesColors });
+  }
+
+  // The file name is in a new view's property list by default, and is never a number
+  private seriesProperties(x: BasesPropertyId): BasesPropertyId[] {
+    return this.config.getOrder().filter((p) => p !== x && p !== "file.name");
   }
 
   private row(entry: BasesEntry, x: BasesPropertyId, y: BasesPropertyId | null, group?: string): Row {

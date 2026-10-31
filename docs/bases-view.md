@@ -11,6 +11,7 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 | Category property | `x` | The property that names each bar or slice. A list property puts a note in every category it lists. Links show as the note name, tags without the `#`. A date property groups by date, see [Dates](#dates). |
 | Aggregation | `aggregation` | `count` (the default) counts notes, `sum` adds up the value property, `average` averages it, `min` and `max` keep the smallest or largest. |
 | Value property | `y` | The number to sum, average, or take the smallest or largest of. Hidden while counting. Text that reads as a number, like `"412"` or `3,5`, counts as one; anything else is skipped. |
+| One series per property | `propertySeries` | Chart every property shown in the base's **Properties** menu, other than the category and the file name, as its own series, with the aggregation above. Count counts the notes that fill each one in. The value property is then hidden. |
 | Chart type | `kind` | `bar`, `line`, `pie` or `doughnut`. |
 | Group dates by | `dateUnit` | `day` (the default), `week`, `month` or `year`, when the category is a date. |
 | Horizontal bars | `horizontal` | Bars run sideways, and the chart grows taller with each category so bars keep the same thickness. |
@@ -22,7 +23,7 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 | Category colors | `categoryColors` | One `label: color` line per category, for single-series bar, pie and doughnut charts. Any CSS color works, including `var(--color-green)`. |
 | Skip empty categories | `skipEmpty` | Leave out notes with no category value. Otherwise they are counted under `(none)`, placed last. |
 
-When the base is grouped, each group becomes its own series: one bar per group within each category, and a legend.
+When the base is grouped, each group becomes its own series: one bar per group within each category, and a legend. With one series per property as well, each group and property pair is a series, named like `Gym: minutes`.
 
 Bases keeps `sort` and `order` for its own settings, which is why Chartwork's are named `categorySort` and `categoryOrder`.
 

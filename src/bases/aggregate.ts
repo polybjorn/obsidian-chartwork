@@ -27,6 +27,8 @@ export interface AggregateOptions {
   seriesName?: string;
   /** When every category is a date, bucket by this unit. */
   dateUnit?: DateUnit;
+  /** Series in this order, the rest after them as found. */
+  seriesOrder?: string[];
 }
 
 export const NONE_LABEL = "(none)";
@@ -118,6 +120,18 @@ export function bucketLabel(start: string, unit: DateUnit): string {
   const thursday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 3);
   const week = Math.floor((thursday.getTime() - new Date(thursday.getFullYear(), 0, 1).getTime()) / 864e5 / 7) + 1;
   return `${thursday.getFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+/** One row per property for a note, each its own series, named `group: property` when the view is grouped. */
+export function propertyRows(x: unknown, values: unknown[], names: string[], group: string | undefined, counting: boolean): Row[] {
+  const rows: Row[] = [];
+  values.forEach((y, i) => {
+    // Counting per property counts the notes that fill it in
+    if (counting && xLabels(y).length === 0) return;
+    const name = names[i] ?? "";
+    rows.push({ x, y, group: group ? `${group}: ${name}` : name });
+  });
+  return rows;
 }
 
 function items(x: unknown): unknown[] {
@@ -213,6 +227,13 @@ export function aggregateRows(rows: Row[], opts: AggregateOptions): ChartSpec {
     if (seen.has(NONE_LABEL)) labels.push(NONE_LABEL);
   }
 
+  if (opts.seriesOrder) {
+    const rank = (g: string): number => {
+      const i = opts.seriesOrder?.indexOf(g) ?? -1;
+      return i === -1 ? Infinity : i;
+    };
+    groupOrder.sort((a, b) => rank(a) - rank(b));
+  }
   const series: Series[] = groupOrder.map((group) => {
     const perGroup = buckets.get(group);
     const values = labels.map((label) => value(perGroup?.get(label), opts.aggregation));
