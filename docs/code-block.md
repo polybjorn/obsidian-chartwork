@@ -33,7 +33,7 @@ Colors come from the theme, or from the list under Series colors in Chartwork's 
 
 ## Chart from a table
 
-Put a block id on the line after a table, then name it with `id`.
+Put a block id on the line after a table, then name it with `id`. A link in a label shows its alias, its note name or its link text, not the markdown.
 
 ````markdown
 |       | Q1 | Q2 | Q3 |

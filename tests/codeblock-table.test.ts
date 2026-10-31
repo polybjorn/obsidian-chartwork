@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cellNumber, parseTable, tableToSeries } from "../src/codeblock/table.ts";
+import { cellNumber, parseTable, stripLinks, tableToSeries } from "../src/codeblock/table.ts";
 import type { TableData } from "../src/codeblock/table.ts";
 
 const text = [
@@ -96,4 +96,27 @@ void test("cellNumber reads decimal commas, percents and spaces, and gaps otherw
   assert.equal(cellNumber("-2"), -2);
   assert.equal(cellNumber(""), null);
   assert.equal(cellNumber("n/a"), null);
+});
+
+void test("stripLinks shows the alias, note name or link text", () => {
+  assert.equal(stripLinks("[[Note|Alias]]"), "Alias");
+  assert.equal(stripLinks("[[Note]]"), "Note");
+  assert.equal(stripLinks("[[folder/Note#Heading]]"), "Note");
+  assert.equal(stripLinks("[[folder/Note#^abc|Shown]]"), "Shown");
+  assert.equal(stripLinks("[[#Heading]]"), "Heading");
+  assert.equal(stripLinks("![[Note]]"), "Note");
+  assert.equal(stripLinks("[text](https://example.com/a_b)"), "text");
+  assert.equal(stripLinks("a [[X|Y]] and [Z](u)"), "a Y and Z");
+  assert.equal(stripLinks("plain"), "plain");
+});
+
+void test("a table with links in the names and a linked number", () => {
+  const t = parseTable(
+    ["| | [[Jan\\|January]] | [Feb](f.md) |", "| - | - | - |", "| [[Sales/Q1\\|Q1]] | [[3]] | 2 |"].join("\n"),
+  );
+  assert.ok(t);
+  const r = good(tableToSeries(t, "rows"));
+  assert.deepEqual(r.labels, ["January", "Feb"]);
+  assert.equal(r.series[0]?.name, "Q1");
+  assert.deepEqual(r.series[0]?.values, [3, 2]);
 });

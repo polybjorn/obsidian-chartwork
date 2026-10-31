@@ -32,9 +32,27 @@ export function parseTable(text: string): Table | undefined {
   return { header: cells(lines[0] ?? ""), rows: lines.slice(2).map(cells) };
 }
 
+/**
+ * A cell's text with links reduced to what they show: `[[Note|Alias]]` is the
+ * alias, `[[folder/Note#Heading]]` the note's base name (a link to a heading in
+ * the same note shows the heading), `[text](url)` the text. Embeds read the same.
+ */
+export function stripLinks(cell: string): string {
+  return cell
+    .replace(/!?\[\[([^\]]*?)\]\]/g, (_m, inner: string) => {
+      const [target = "", ...alias] = inner.split(/\\?\|/);
+      if (alias.length) return alias.join("|").trim();
+      const [path = "", heading] = target.split("#");
+      const name = path.split("/").pop()?.trim() ?? "";
+      return name || (heading ?? "").trim();
+    })
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .trim();
+}
+
 /** A cell as a number: blank is a gap, a decimal comma and a trailing percent sign are read. */
 export function cellNumber(cell: string): number | null {
-  const t = cell.replace(/[\s]/g, "").replace(/%$/, "");
+  const t = stripLinks(cell).replace(/[\s]/g, "").replace(/%$/, "");
   if (!t) return null;
   const n = Number(/^-?\d+,\d+$/.test(t) ? t.replace(",", ".") : t);
   return Number.isFinite(n) ? n : null;
@@ -56,14 +74,14 @@ export function tableToSeries(table: Table, layout: Layout, select?: readonly st
   const posCount = byRow ? width : grid.length;
 
   const labels: string[] = [];
-  for (let p = 1; p < posCount; p++) labels.push(byRow ? at(0, p) : at(p, 0));
+  for (let p = 1; p < posCount; p++) labels.push(stripLinks(byRow ? at(0, p) : at(p, 0)));
 
   const all: Series[] = [];
   for (let l = 1; l < lineCount; l++) {
     const values: (number | null)[] = [];
     for (let p = 1; p < posCount; p++) values.push(cellNumber(byRow ? at(l, p) : at(p, l)));
     if (values.every((v) => v === null)) continue;
-    all.push({ name: (byRow ? at(l, 0) : at(0, l)) || `Series ${all.length + 1}`, values });
+    all.push({ name: stripLinks(byRow ? at(l, 0) : at(0, l)) || `Series ${all.length + 1}`, values });
   }
 
   if (all.length === 0 || labels.length === 0) {
