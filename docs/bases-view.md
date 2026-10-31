@@ -18,7 +18,7 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 | Largest categories to keep | `topN` | Keep only this many categories, by value. 0 keeps all. |
 | Label for the rest | `other` | With the option above, adds the dropped categories together under this label. Left empty, they are left out. |
 | Order first | `categoryOrder` | Comma-separated labels to place first, in this order. The rest follow by Sort. |
-| Category colors | `categoryColors` | One `label: colour` line per category, for single-series bar, pie and doughnut charts. Any CSS colour works, including `var(--color-green)`. |
+| Category colors | `categoryColors` | One `label: color` line per category, for single-series bar, pie and doughnut charts. Any CSS color works, including `var(--color-green)`. |
 | Skip empty categories | `skipEmpty` | Leave out notes with no category value. Otherwise they are counted under `(none)`, placed last. |
 
 When the base is grouped, each group becomes its own series: one bar per group within each category, and a legend.

@@ -28,7 +28,7 @@ Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 
 
 ## What Chartwork takes care of
 
-- **Theme colours.** Text, grid lines and series follow your theme, light or dark, and redraw when you switch. In a Bases view or a script, any CSS colour sets a category apart, such as `var(--color-green)`.
+- **Theme colors.** Text, grid lines and series follow your theme, light or dark, and redraw when you switch. In a Bases view or a script, any CSS color sets a category apart, such as `var(--color-green)`.
 - **Values on the bars** of a bar chart with one series.
 - **Even horizontal bars.** The chart grows taller with each category, so bars keep one thickness.
 - **Order and trimming.** In a Bases view or a script: sort by value or label, put chosen categories first, keep the largest few and add the rest up under one label.

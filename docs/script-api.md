@@ -41,7 +41,7 @@ A bad or unknown field throws an error naming it, such as `chartwork: series[0].
 |---|---|---|
 | `kind` | `"bar"`, `"line"`, `"pie"`, `"doughnut"`, `"radar"`, `"polarArea"` | Required. A radar takes its spokes from `labels` and draws one shape per series. A polar area draws one segment per label, sized by the first series |
 | `labels` | string[] | Required. One per category |
-| `series` | `{name, values, color?, fill?}[]` | Required. `values` has one number or `null` per label. `color` is one colour or one per label. `fill` fills the area under a line; a radar is filled unless `fill` is `false` |
+| `series` | `{name, values, color?, fill?}[]` | Required. `values` has one number or `null` per label. `color` is one color or one per label. `fill` fills the area under a line; a radar is filled unless `fill` is `false` |
 | `title` | string | Shown above the chart |
 | `horizontal` | boolean | Bars run sideways |
 | `stacked` | boolean | Stack the series |
@@ -50,17 +50,17 @@ A bad or unknown field throws an error naming it, such as `chartwork: series[0].
 | `order` | string[] | Labels to place first; the rest follow by `sort` |
 | `topN` | number | Keep the N largest categories by the first series |
 | `other` | string | With `topN`, sums the dropped categories under this label |
-| `categoryColors` | `{label: colour}` | Colour per category, for single-series bar, pie, doughnut and polar area charts |
+| `categoryColors` | `{label: color}` | Color per category, for single-series bar, pie, doughnut and polar area charts |
 | `valueTitle` | string | Title for the value axis |
 | `beginAtZero` | boolean | Value axis or radar scale starts at zero. Default `true` |
 | `tension` | number | Line curve from 0 to 1. Default 0.2 |
 | `legend` | boolean, `"top"`, `"bottom"`, `"left"`, `"right"` | Default shown for pie, doughnut, polar area and multi-series charts |
 | `barThickness` | number | Pixels per bar on a horizontal chart. Default 28 |
 
-Colours can be any CSS colour, including `var(--color-red)`. Without one, series take the colours listed under Series colors in Chartwork's settings, then `--chart-color-1`, `--chart-color-2` and on from a CSS snippet, else the theme's colours.
+Colors can be any CSS color, including `var(--color-red)`. Without one, series take the colors listed under Series colors in Chartwork's settings, then `--chart-color-1`, `--chart-color-2` and on from a CSS snippet, else the theme's colors.
 
 ## Charts' `renderChart`
 
-Scripts for the Charts plugin call `window.renderChart(config, element)` with a raw Chart.js config, or `{chartOptions: config, width: "60%"}`. Without Charts installed, Chartwork provides it: any Chart.js chart type, sankey and time axes included, with theme colours and square legend keys wherever the config sets none. A colour the config does set can be `var(--color-red)` as well. A failing config shows its error and returns `null`. Annotations draw, in the text colour unless they set their own. New scripts should use `render`, which knows when a note closes.
+Scripts for the Charts plugin call `window.renderChart(config, element)` with a raw Chart.js config, or `{chartOptions: config, width: "60%"}`. Without Charts installed, Chartwork provides it: any Chart.js chart type, sankey and time axes included, with theme colors and square legend keys wherever the config sets none. A color the config does set can be `var(--color-red)` as well. A failing config shows its error and returns `null`. Annotations draw, in the text color unless they set their own. New scripts should use `render`, which knows when a note closes.
 
 <img src="images/render-chart.png" width="560" alt="Four charts from renderChart: a radar of genres by year, a polar area of reading hours by time of day, a line of pages read on a time axis and a scatter of pages by year published">

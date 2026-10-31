@@ -29,7 +29,7 @@ series:
 | `legendPosition` | all | `top`, `bottom`, `left` or `right` |
 | `width` | all | Chart width, as CSS (`60%`) or pixels (`400`) |
 
-Colours come from the theme, or from the list under Series colors in Chartwork's settings. A radar chart takes its spokes from `labels` and draws one shape per series. A `polarArea` chart draws one segment per label, sized by the first series. A bar chart with one series prints each value on its bar, and a horizontal one grows taller with each label so bars keep one thickness.
+Colors come from the theme, or from the list under Series colors in Chartwork's settings. A radar chart takes its spokes from `labels` and draws one shape per series. A `polarArea` chart draws one segment per label, sized by the first series. A bar chart with one series prints each value on its bar, and a horizontal one grows taller with each label so bars keep one thickness.
 
 ## Chart from a table
 
@@ -58,7 +58,7 @@ layout: rows
 
 The first row and column hold the names. Lines without numbers are skipped.
 
-A `sankey` block takes rows of `[from, flow, to]` in the first series, as Charts does, plus optional `priority`, `colorFrom` and `colorTo` maps from node name to a number or CSS colour. Nodes without a colour take the theme's.
+A `sankey` block takes rows of `[from, flow, to]` in the first series, as Charts does, plus optional `priority`, `colorFrom` and `colorTo` maps from node name to a number or CSS color. Nodes without a color take the theme's.
 
 ## Differences from Charts
 
