@@ -4,7 +4,11 @@ Charts in Obsidian, made from your notes. Point a Bases view at a property, type
 
 ![A note with a Bases chart of books by status and a line chart of pages read, in Obsidian's dark theme](docs/images/readme.png)
 
-Docs: [Bases view](docs/bases-view.md), [chart code block](docs/code-block.md), [script function](docs/script-api.md).
+## Docs
+
+- [Bases view](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/bases-view.md)
+- [Chart code block](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/code-block.md)
+- [Script function](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/script-api.md)
 
 ## Three ways to make a chart
 
@@ -14,6 +18,10 @@ Docs: [Bases view](docs/bases-view.md), [chart code block](docs/code-block.md), 
 | `chart` code block | the numbers are in no note, so you type them in | nothing else |
 | Script function | the numbers have to be worked out first, like notes created this month counted by tag | a plugin that runs JavaScript in notes, such as Dataview |
 
+## Requirements
+
+Obsidian 1.10 or later. Chart.js 4 is bundled, so there is nothing else to install for Bases views and code blocks; `main.js` is 210 KB.
+
 ## What Chartwork takes care of
 
 - **Theme colours.** Text, grid lines and series follow your theme, light or dark, and redraw when you switch. In a Bases view or a script, any CSS colour sets a category apart, such as `var(--color-green)`.
@@ -21,4 +29,12 @@ Docs: [Bases view](docs/bases-view.md), [chart code block](docs/code-block.md), 
 - **Even horizontal bars.** The chart grows taller with each category, so bars keep one thickness.
 - **Order and trimming.** In a Bases view or a script: sort by value or label, put chosen categories first, keep the largest few and add the rest up under one label.
 - **Notes made for the Charts plugin.** Its `chart` blocks and `window.renderChart` calls draw as they are. While Charts is enabled, Chartwork leaves them to it.
-- **Small and offline.** One dependency, Chart.js 4, bundled into a 210 KB file. Chartwork reads only the data a view, block or script hands it, writes nothing to your vault and makes no network requests.
+
+## What the plugin accesses
+
+- **Vault, read-only.** Chartwork sees only the data a Bases view, `chart` block or script hands it, and writes nothing. A Bases view's options are saved into its `.base` file by Bases itself.
+- **No network.** The plugin makes no outbound requests.
+
+## Disclaimer
+
+Independent community plugin, not affiliated with Chart.js or the Charts plugin.
