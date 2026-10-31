@@ -108,9 +108,7 @@ void test("labels may be numbers or dates, a missing title gets a name, null is 
 });
 
 void test("unsupported types are rejected with the choices", () => {
-  for (const t of ["scatter", "bubble"]) {
-    assert.match(err({ ...base, type: t }), /bar, line, pie, doughnut, radar, polarArea or sankey/);
-  }
+  assert.match(err({ ...base, type: "bubble" }), /bar, line, pie, doughnut, radar, polarArea, scatter or sankey/);
 });
 
 void test("series keep Charts' stepped, hidden and pointRadius, and the block its spanGaps", () => {
@@ -188,6 +186,51 @@ void test("a sankey block becomes a Chart.js config with from/to/flow rows", () 
   assert.deepEqual(config.data.datasets[0]?.["priority"], { Oil: 1 });
   assert.deepEqual(config.data.datasets[0]?.["colorFrom"], { Oil: "black" });
   assert.equal(r.value.width, "60%");
+});
+
+void test("a scatter block becomes a Chart.js config of {x, y} points", () => {
+  const r = parseChartBlock({
+    type: "Scatter",
+    title: "Height and weight",
+    xTitle: "cm",
+    yMin: 40,
+    legendPosition: "bottom",
+    width: 400,
+    series: [
+      { title: "A", data: [{ x: 160, y: 55 }, [172, 68]], pointRadius: 5 },
+      { data: [{ x: 181, y: 80 }], hidden: true },
+    ],
+  });
+  assert.ok(r.ok && "config" in r.value);
+  const config = r.value.config as unknown as { type: string; data: { datasets: Record<string, unknown>[] }; options: Record<string, unknown> };
+  assert.equal(config.type, "scatter");
+  assert.deepEqual(config.data.datasets, [
+    { label: "A", data: [{ x: 160, y: 55 }, { x: 172, y: 68 }], pointRadius: 5 },
+    { label: "Series 2", data: [{ x: 181, y: 80 }], hidden: true },
+  ]);
+  assert.deepEqual(config.options, {
+    scales: { x: { title: { display: true, text: "cm" } }, y: { min: 40 } },
+    plugins: { legend: { display: true, position: "bottom" }, title: { display: true, text: "Height and weight" } },
+  });
+  assert.equal(r.value.width, "400px");
+});
+
+void test("a scatter block shows a legend for more than one series unless told", () => {
+  const legend = (block: Record<string, unknown>): unknown => {
+    const r = parseChartBlock({ type: "scatter", series: [{ data: [[1, 2]] }], ...block });
+    return r.ok && "config" in r.value ? (r.value.config.options?.plugins?.legend as { display: unknown }).display : "fail";
+  };
+  assert.equal(legend({}), false);
+  assert.equal(legend({ series: [{ data: [[1, 2]] }, { data: [[3, 4]] }] }), true);
+  assert.equal(legend({ legend: true }), true);
+  assert.equal(legend({ legend: false, legendPosition: "left" }), false);
+});
+
+void test("a scatter block with bad points says what is wrong", () => {
+  assert.match(err({ type: "scatter" }), /data of points/);
+  assert.match(err({ type: "scatter", series: [{ title: "A" }] }), /Series 1 needs a data list of points/);
+  assert.match(err({ type: "scatter", series: [{ data: [{ x: 1 }] }] }), /Series 1 has a point without a number for x and y/);
+  assert.match(err({ type: "scatter", series: [{ data: [3] }] }), /without a number/);
 });
 
 void test("a sankey block with bad rows says what is wrong", () => {

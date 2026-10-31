@@ -1,6 +1,7 @@
 import type { ChartConfiguration } from "chart.js";
 import { CHART_KINDS, LEGEND_SIDES, STEPS } from "../engine/spec.ts";
 import type { AxisId, AxisSpec, ChartKind, ChartSpec, Series } from "../engine/spec.ts";
+import { applyAxis } from "../engine/config.ts";
 import { isObj, isOneOf } from "../engine/guards.ts";
 import { LAYOUTS } from "./table.ts";
 import type { Layout } from "./table.ts";
@@ -31,7 +32,7 @@ export interface RawBlock {
 
 export type ParseResult = { ok: true; value: ParsedBlock | RawBlock } | { ok: false; error: string };
 
-const KIND_LIST = "bar, line, pie, doughnut, radar, polarArea or sankey";
+const KIND_LIST = "bar, line, pie, doughnut, radar, polarArea, scatter or sankey";
 
 /** Every key the parser reads; any other key in a block is ignored. */
 export const BLOCK_KEYS: readonly string[] = [
@@ -174,6 +175,56 @@ function parseSankey(input: Record<string, unknown>): ParseResult {
   return { ok: true, value: width ? { config, width } : { config } };
 }
 
+// Charts hands a scatter series' data to Chart.js as it is, so a point is
+// {x, y}, and Chart.js reads an [x, y] pair the same. Points share no labels,
+// so the block becomes a Chart.js config directly, as a sankey does.
+function parseScatter(input: Record<string, unknown>): ParseResult {
+  const rawSeries = input["series"];
+  if (!Array.isArray(rawSeries) || rawSeries.length === 0) {
+    return fail("A scatter block needs series, each with a title and data of points, like data: [{x: 1, y: 2}].");
+  }
+  const datasets: Record<string, unknown>[] = [];
+  for (const [i, raw] of (rawSeries as unknown[]).entries()) {
+    if (!isObj(raw) || !Array.isArray(raw["data"])) {
+      return fail(`Series ${i + 1} needs a data list of points, like data: [{x: 1, y: 2}, {x: 3, y: 5}].`);
+    }
+    const data: { x: number; y: number }[] = [];
+    for (const point of raw["data"] as unknown[]) {
+      const [x, y] = Array.isArray(point) ? point as unknown[] : isObj(point) ? [point["x"], point["y"]] : [];
+      const px = num(x);
+      const py = num(y);
+      if (px === undefined || py === undefined) {
+        return fail(`Series ${i + 1} has a point without a number for x and y: ${JSON.stringify(point)}.`);
+      }
+      data.push({ x: px, y: py });
+    }
+    const dataset: Record<string, unknown> = { label: label(raw["title"]) ?? `Series ${i + 1}`, data };
+    if (bool(raw["hidden"]) === true) dataset["hidden"] = true;
+    const radius = num(raw["pointRadius"]);
+    if (radius !== undefined && radius >= 0) dataset["pointRadius"] = radius;
+    datasets.push(dataset);
+  }
+
+  // Both axes hold values, so xTitle and yTitle each name their own
+  const scales: Record<string, unknown> = {};
+  for (const id of ["x", "y"] as const) {
+    const t = input[`${id}Title`];
+    scales[id] = applyAxis(typeof t === "string" && t ? { title: { display: true, text: t } } : {}, parseAxis(input, id));
+  }
+  const legend = bool(input["legend"]);
+  const side = input["legendPosition"];
+  const plugins: Record<string, unknown> = {
+    legend: isOneOf(LEGEND_SIDES, side) && legend !== false
+      ? { display: true, position: side }
+      : { display: legend ?? datasets.length > 1 },
+  };
+  const title = label(input["title"]);
+  if (title) plugins["title"] = { display: true, text: title };
+  const config = { type: "scatter", data: { datasets }, options: { scales, plugins } } as unknown as ChartConfiguration;
+  const width = blockWidth(input);
+  return { ok: true, value: width ? { config, width } : { config } };
+}
+
 export function parseChartBlock(input: unknown): ParseResult {
   if (!isObj(input)) return fail("The chart block is empty or is not a list of options. Start with type: bar.");
 
@@ -181,6 +232,7 @@ export function parseChartBlock(input: unknown): ParseResult {
   if (!rawType) return fail(`The chart block needs a type: ${KIND_LIST}.`);
   const lower = rawType.toLowerCase();
   if (lower === "sankey") return parseSankey(input);
+  if (lower === "scatter") return parseScatter(input);
   // Charts spells it polarArea, but a block in any case is meant the same
   const kind = CHART_KINDS.find((k) => k.toLowerCase() === lower);
   if (!kind) {

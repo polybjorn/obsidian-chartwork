@@ -165,7 +165,7 @@ function valueLabelsPlugin(style: LabelStyle): Plugin {
   };
 }
 
-function applyAxis(scale: Obj, axis: AxisSpec | undefined): Obj {
+export function applyAxis(scale: Record<string, unknown>, axis: AxisSpec | undefined): Record<string, unknown> {
   if (!axis) return scale;
   const out: Obj = { ...scale };
   if (axis.min !== undefined) out.min = axis.min;

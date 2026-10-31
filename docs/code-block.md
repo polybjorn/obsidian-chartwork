@@ -14,11 +14,11 @@ series:
 
 <img src="images/code-block.png" width="560" alt="A line chart of pages read per month, drawn from a chart code block">
 
-`type`, `labels` and `series` are required. Each series has a `title` and a `data` list with one value per label; `null` leaves a gap. A series also takes `hidden: true` to start switched off in the legend (bar, line, radar), `pointRadius: 0` to hide its dots (line, radar), and `stepped` to draw steps on a line (`true`, `after` or `middle`).
+`type`, `labels` and `series` are required. Each series has a `title` and a `data` list with one value per label; `null` leaves a gap. A series also takes `hidden: true` to start switched off in the legend (bar, line, radar, scatter), `pointRadius: 0` to hide its dots (line, radar, scatter), and `stepped` to draw steps on a line (`true`, `after` or `middle`).
 
 | Key | Applies to | What it does |
 |---|---|---|
-| `type` | all | `bar`, `line`, `pie`, `doughnut`, `radar`, `polarArea` or `sankey` |
+| `type` | all | `bar`, `line`, `pie`, `doughnut`, `radar`, `polarArea`, `scatter` or `sankey` |
 | `title` | all | Shown above the chart |
 | `indexAxis: y` | bar, line | Horizontal bars |
 | `stacked: true` | bar, line | Stack the series |
@@ -26,12 +26,12 @@ series:
 | `tension` | line | Curve, 0 for straight segments. Default 0.2 |
 | `spanGaps: true` | line, radar | Join the line across a missing value, or a blank table cell |
 | `beginAtZero` | bar, line, radar | Start the value axis at zero. Default `true` |
-| `xTitle` / `yTitle` | bar, line | Title for the value axis (`xTitle` when the bars are horizontal) |
-| `xMin`, `xMax`, `yMin`, `yMax` | bar, line | Axis range. `x` runs across and `y` up, as drawn; the label axis takes a label |
-| `xReverse` / `yReverse` | bar, line | Run the axis the other way |
-| `xDisplay` / `yDisplay` | bar, line | `false` hides the axis |
-| `xTickDisplay` / `yTickDisplay` | bar, line | `false` hides the tick labels |
-| `xTickPadding` / `yTickPadding` | bar, line | Pixels between the tick labels and the axis |
+| `xTitle` / `yTitle` | bar, line, scatter | Title for the value axis (`xTitle` when the bars are horizontal). A scatter takes both |
+| `xMin`, `xMax`, `yMin`, `yMax` | bar, line, scatter | Axis range. `x` runs across and `y` up, as drawn; the label axis takes a label |
+| `xReverse` / `yReverse` | bar, line, scatter | Run the axis the other way |
+| `xDisplay` / `yDisplay` | bar, line, scatter | `false` hides the axis |
+| `xTickDisplay` / `yTickDisplay` | bar, line, scatter | `false` hides the tick labels |
+| `xTickPadding` / `yTickPadding` | bar, line, scatter | Pixels between the tick labels and the axis |
 | `rMin` / `rMax` | radar, polarArea | Scale range |
 | `labelColors: true` | bar | One color per label, as in a pie |
 | `valueLabels` | bar, line, pie, doughnut, polarArea | `true` prints each value on its bar, slice or point. `false` hides them on a single-series bar chart, where they show by default |
@@ -69,6 +69,8 @@ layout: rows
 The first row and column hold the names. Lines without numbers are skipped.
 
 A `sankey` block takes rows of `[from, flow, to]` in the first series, as Charts does, plus optional `priority`, `colorFrom` and `colorTo` maps from node name to a number or CSS color. Nodes without a color take the theme's.
+
+A `scatter` block has no `labels`. Each series' `data` is a list of points, `{x: 160, y: 55}` as Charts writes them or `[160, 55]`.
 
 ## Differences from Charts
 
