@@ -1,6 +1,6 @@
 # Chartwork
 
-Charts in Obsidian, made from your notes. Point a Bases view at a property, type numbers into a code block, or hand numbers over from a script, and Chartwork draws them in your theme's colours, light or dark. A chart looks like part of the note it sits in, with no settings to tune first.
+Turn your notes into charts. Make one from a Bases view, a code block or a script. Charts match your theme, light or dark, with nothing to set up.
 
 <img src="docs/images/readme.png" width="560" alt="Four charts in Obsidian's dark theme: a doughnut of books by genre and a bar chart of pages by author from Bases, a stacked bar chart of reading hours by weekday and a line chart of pages per month from code blocks">
 
