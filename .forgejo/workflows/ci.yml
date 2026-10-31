@@ -1,0 +1,63 @@
+# Forge-only until the first release; the GitHub copy and its release
+# workflow join then, the same way as obsidian-readest-highlights.
+#
+# ci-actions is cloned through $GITHUB_SERVER_URL and its scripts run directly,
+# not through `uses:`. That form needs the CI host written out, and this file
+# will reach GitHub with the history, where the denylist gate refuses the host.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['[0-9]*']
+  pull_request:
+    branches: [main]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  attribution:
+    runs-on: docker
+    timeout-minutes: 5
+    steps:
+      - name: Fetch ci-actions
+        run: git clone -q --depth 1 --branch v1 "$GITHUB_SERVER_URL/bjorn/ci-actions.git" "${RUNNER_TEMP:-/tmp}/ci-actions"
+      - name: Self-test the pattern
+        run: bash "${RUNNER_TEMP:-/tmp}/ci-actions/attribution/check-attribution.sh" selftest
+      - name: Check the commits and the PR description
+        env:
+          TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_SHA: ${{ github.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BEFORE: ${{ github.event.before }}
+          # Once synced, forge issue numbers would collide with GitHub's, so a
+          # `closes #N` would close GitHub's #N too. Commits write
+          # `bjorn/obsidian-chartwork#N` instead.
+          QUALIFIED_REFS: "true"
+        run: GITHUB_ACTION_PATH="${RUNNER_TEMP:-/tmp}/ci-actions/attribution" bash "${RUNNER_TEMP:-/tmp}/ci-actions/attribution/run.sh"
+
+  test:
+    runs-on: docker
+    timeout-minutes: 10
+    steps:
+      - name: Fetch ci-actions
+        run: git clone -q --depth 1 --branch v1 "$GITHUB_SERVER_URL/bjorn/ci-actions.git" "${RUNNER_TEMP:-/tmp}/ci-actions"
+      - name: Checkout
+        env:
+          TOKEN: ${{ github.token }}
+        run: bash "${RUNNER_TEMP:-/tmp}/ci-actions/checkout/checkout.sh"
+      # Offline against the runner's /osv cache, so the package list never
+      # reaches osv.dev. It reads the lockfile, so it sits ahead of npm ci.
+      # A finding to live with goes in osv-scanner.toml as [[IgnoredVulns]].
+      - name: Self-test the OSV gate
+        run: bash "${RUNNER_TEMP:-/tmp}/ci-actions/osv-scan/selftest.sh"
+      - name: Known vulnerabilities in dependencies
+        run: bash "${RUNNER_TEMP:-/tmp}/ci-actions/osv-scan/scan.sh"
+      - run: npm ci
+        timeout-minutes: 5
+      - run: npm run build
+      - run: npm run lint
+      - run: npm test

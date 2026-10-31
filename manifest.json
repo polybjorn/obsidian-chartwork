@@ -1,0 +1,10 @@
+{
+  "id": "chartwork",
+  "name": "Chartwork",
+  "version": "0.0.0",
+  "minAppVersion": "1.10.0",
+  "description": "Charts from Bases views, code blocks and scripts, drawn in your theme's colours.",
+  "author": "polybjorn",
+  "authorUrl": "https://github.com/polybjorn",
+  "isDesktopOnly": false
+}

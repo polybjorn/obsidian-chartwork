@@ -1,0 +1,6 @@
+node_modules
+# Built output goes to releases, not the repo
+main.js
+*.map
+data.json
+.DS_Store
