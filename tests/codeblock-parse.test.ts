@@ -100,5 +100,19 @@ void test("invalid input gives readable errors", () => {
   assert.match(err({ ...base, series: [{ title: "S" }] }), /data list/);
   assert.match(err({ ...base, series: [{ data: [1, "x"] }] }), /not a number/);
   assert.match(err({ ...base, indexAxis: "z" }), /indexAxis/);
-  assert.match(err({ type: "bar", id: "table" }), /table/);
+  assert.match(err({ type: "bar", id: "" }), /block id/);
+  assert.match(err({ type: "bar", id: "t", layout: "diagonal" }), /layout/);
+  assert.match(err({ type: "bar", id: "t", select: [{}] }), /select/);
+});
+
+void test("a block with id: refers to a table and needs no labels or series", () => {
+  const { spec, table } = ok({ type: "bar", id: "^sales", layout: "rows", select: ["Data2", 3], file: "Notes.md", fill: true });
+  assert.deepEqual(table, { id: "sales", layout: "rows", select: ["Data2", "3"], file: "Notes.md", fill: true });
+  assert.deepEqual(spec.labels, []);
+  assert.deepEqual(spec.series, []);
+  assert.equal(ok({ type: "bar", id: "t" }).table?.layout, "columns");
+});
+
+void test("series given next to id: win over the table", () => {
+  assert.equal(ok({ ...base, id: "t" }).table, undefined);
 });

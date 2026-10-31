@@ -31,9 +31,36 @@ series:
 
 Colours come from the theme, or from the list under Series colors in Chartwork's settings. A radar chart takes its spokes from `labels` and draws one shape per series. A `polarArea` chart draws one segment per label, sized by the first series. A bar chart with one series prints each value on its bar, and a horizontal one grows taller with each label so bars keep one thickness.
 
+## Chart from a table
+
+Put a block id on the line after a table, then name it with `id`.
+
+````markdown
+|       | Q1 | Q2 | Q3 |
+| ----- | -- | -- | -- |
+| Books | 12 | 9  | 14 |
+| Films | 4  | 7  | 5  |
+^reading
+
+```chart
+type: bar
+id: reading
+layout: rows
+```
+````
+
+| Key | What it does |
+|---|---|
+| `id` | The table's block id |
+| `layout` | `rows`: each row is a series. `columns` (default): each column is a series |
+| `select` | Rows or columns to draw, such as `[Books]`. Default all |
+| `file` | The note holding the table, if not this one |
+
+The first row and column hold the names. Lines without numbers are skipped.
+
 ## Differences from Charts
 
-- Charts' `sankey` type, and charts built from a table with `id:`, show a message saying they are not supported yet.
+- Charts' `sankey` type shows a message saying it is not supported yet.
 - Keys not listed above are ignored. Raw Chart.js options in the block have no effect; use [the script function](script-api.md) for those.
 - While Charts is enabled, Chartwork leaves `chart` blocks to it, and says so once. Disable Charts and reload to switch over.
 

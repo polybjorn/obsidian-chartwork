@@ -1,11 +1,25 @@
 import { CHART_KINDS, LEGEND_SIDES } from "../engine/spec.ts";
 import type { ChartKind, ChartSpec, Series } from "../engine/spec.ts";
 import { isObj, isOneOf } from "../engine/guards.ts";
+import { LAYOUTS } from "./table.ts";
+import type { Layout } from "./table.ts";
+
+/** Where a table-backed block finds its numbers; labels and series come from the table. */
+export interface TableRef {
+  id: string;
+  /** Note holding the table, as a link path. Absent means the note the block sits in. */
+  file?: string;
+  layout: Layout;
+  select?: string[];
+  fill?: boolean;
+}
 
 export interface ParsedBlock {
   spec: ChartSpec;
   /** Any CSS width from the block, for the host element. */
   width?: string;
+  /** Set when the block names a table with id:. The spec then has no labels or series yet. */
+  table?: TableRef;
 }
 
 export type ParseResult = { ok: true; value: ParsedBlock } | { ok: false; error: string };
@@ -17,6 +31,7 @@ const KIND_LIST = "bar, line, pie, doughnut, radar or polarArea";
 export const BLOCK_KEYS: readonly string[] = [
   "type", "labels", "series", "indexAxis", "stacked", "fill", "tension",
   "beginAtZero", "xTitle", "yTitle", "legend", "legendPosition", "width",
+  "id", "file", "layout", "select",
 ];
 
 function fail(error: string): ParseResult {
@@ -35,6 +50,13 @@ function bool(v: unknown): boolean | undefined {
   return typeof v === "boolean" ? v : undefined;
 }
 
+// Radar shapes read as areas, so they fill unless the block says not to,
+// while a line fills only when asked
+export function seriesFill(kind: ChartKind, fill: boolean | undefined): boolean | undefined {
+  if (kind === "radar") return fill ?? true;
+  return kind === "line" && fill ? true : undefined;
+}
+
 function parseSeries(raw: unknown, index: number, kind: ChartKind, fill: boolean | undefined): Series | string {
   if (!isObj(raw)) return `Series ${index + 1} must have a title and data.`;
   const data = raw["data"];
@@ -47,9 +69,26 @@ function parseSeries(raw: unknown, index: number, kind: ChartKind, fill: boolean
   }
   const title = label(raw["title"]);
   const series: Series = { name: title ?? `Series ${index + 1}`, values };
-  if (kind === "line" && fill) series.fill = true;
-  if (kind === "radar") series.fill = fill ?? true;
+  const f = seriesFill(kind, fill);
+  if (f !== undefined) series.fill = f;
   return series;
+}
+
+function parseTableRef(input: Record<string, unknown>, fill: boolean | undefined): TableRef | string {
+  const id = typeof input["id"] === "string" ? input["id"].trim().replace(/^\^/, "") : "";
+  if (!id) return "id must be the block id of a table, like id: sales.";
+  const layout = input["layout"] ?? "columns";
+  if (!isOneOf(LAYOUTS, layout)) return `layout must be rows or columns, not ${JSON.stringify(layout)}.`;
+  const ref: TableRef = { id, layout };
+  if (fill !== undefined) ref.fill = fill;
+  if (typeof input["file"] === "string" && input["file"].trim()) ref.file = input["file"].trim();
+  const select = input["select"];
+  if (select !== undefined) {
+    const names = (Array.isArray(select) ? select : [select]).map(label);
+    if (names.some((n) => n === undefined)) return "select must be a list of row or column names, like select: [Data2].";
+    ref.select = names as string[];
+  }
+  return ref;
 }
 
 export function parseChartBlock(input: unknown): ParseResult {
@@ -67,29 +106,33 @@ export function parseChartBlock(input: unknown): ParseResult {
     return fail(`Unknown chart type "${rawType}". Use ${KIND_LIST}.`);
   }
 
-  if (input["id"] !== undefined && input["series"] === undefined) {
-    return fail("Charts from a table (id:) are not supported yet. Give the block labels and series.");
-  }
-
-  const rawLabels = input["labels"];
-  if (!Array.isArray(rawLabels)) return fail("The chart block needs labels, like labels: [Mon, Tue].");
-  const labels: string[] = [];
-  for (const l of rawLabels) {
-    const s = label(l);
-    if (s === undefined) return fail(`A label is not text or a number: ${JSON.stringify(l)}.`);
-    labels.push(s);
-  }
-
-  const rawSeries = input["series"];
-  if (!Array.isArray(rawSeries) || rawSeries.length === 0) {
-    return fail("The chart block needs series, each with a title and data.");
-  }
   const fill = bool(input["fill"]);
+  let table: TableRef | undefined;
+  let labels: string[] = [];
   const series: Series[] = [];
-  for (let i = 0; i < rawSeries.length; i++) {
-    const s = parseSeries(rawSeries[i], i, kind, fill);
-    if (typeof s === "string") return fail(s);
-    series.push(s);
+
+  if (input["id"] !== undefined && input["series"] === undefined) {
+    const ref = parseTableRef(input, fill);
+    if (typeof ref === "string") return fail(ref);
+    table = ref;
+  } else {
+    const rawLabels = input["labels"];
+    if (!Array.isArray(rawLabels)) return fail("The chart block needs labels, like labels: [Mon, Tue].");
+    for (const l of rawLabels) {
+      const s = label(l);
+      if (s === undefined) return fail(`A label is not text or a number: ${JSON.stringify(l)}.`);
+      labels.push(s);
+    }
+
+    const rawSeries = input["series"];
+    if (!Array.isArray(rawSeries) || rawSeries.length === 0) {
+      return fail("The chart block needs series, each with a title and data.");
+    }
+    for (let i = 0; i < rawSeries.length; i++) {
+      const s = parseSeries(rawSeries[i], i, kind, fill);
+      if (typeof s === "string") return fail(s);
+      series.push(s);
+    }
   }
 
   const spec: ChartSpec = { kind, labels, series };
@@ -117,5 +160,8 @@ export function parseChartBlock(input: unknown): ParseResult {
   if (typeof input["width"] === "string") width = input["width"];
   else if (typeof input["width"] === "number") width = `${input["width"]}px`;
 
-  return { ok: true, value: width ? { spec, width } : { spec } };
+  const value: ParsedBlock = { spec };
+  if (width) value.width = width;
+  if (table) value.table = table;
+  return { ok: true, value };
 }
