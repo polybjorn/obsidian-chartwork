@@ -12,7 +12,7 @@ series:
 ```
 ````
 
-![A line chart of pages read per month, drawn from a chart code block](images/code-block.png)
+<img src="images/code-block.png" width="560" alt="A line chart of pages read per month, drawn from a chart code block">
 
 `type`, `labels` and `series` are required. Each series has a `title` and a `data` list with one value per label; `null` leaves a gap.
 

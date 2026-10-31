@@ -2,7 +2,7 @@
 
 Charts in Obsidian, made from your notes. Point a Bases view at a property, type numbers into a code block, or hand numbers over from a script, and Chartwork draws them in your theme's colours, light or dark. A chart looks like part of the note it sits in, with no settings to tune first.
 
-![A note with a Bases chart of books by status and a line chart of pages read, in Obsidian's dark theme](docs/images/readme.png)
+<img src="docs/images/readme.png" width="560" alt="A note with a Bases chart of books by status and a line chart of pages read, in Obsidian's dark theme">
 
 ## Docs
 

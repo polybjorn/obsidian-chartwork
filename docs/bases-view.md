@@ -2,7 +2,7 @@
 
 Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu of any base, or of a `base` code block in a note, and set it up in the view's options. Each note in the base is one row; the chart counts the rows, or adds up a property, per category.
 
-![A Bases chart view of books by genre with its options open](images/bases-view.png)
+<img src="images/bases-view.png" width="560" alt="A Bases chart view of books by genre with its options open">
 
 ## Options
 

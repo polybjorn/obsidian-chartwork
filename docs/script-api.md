@@ -10,7 +10,7 @@ window.chartwork.render(dv.container, {
 }, dv.component);
 ```
 
-![The pie chart this script draws](images/script.png)
+<img src="images/script.png" width="560" alt="The pie chart this script draws">
 
 A script usually counts first, here this month's notes by tag:
 
