@@ -26,3 +26,28 @@ CI never runs Obsidian, so run these against the build about to be tagged:
 10. When the change touches an Obsidian API, repeat 1 and 2 on the stable
     release in a separate profile (`--user-data-dir`) with `docs/demo-vault`,
     since `minAppVersion` stays at stable.
+
+## Release
+
+The forge's `github-sync` job copies `main` and each tag to GitHub. A tag landing there starts `.github/workflows/release.yml`, which builds, attests the build and uploads `main.js`, `manifest.json` and `styles.css` to a GitHub release. The tag's section in `CHANGELOG.md` becomes the release notes. Tags carry no `v`, since Obsidian needs the tag to equal the manifest version.
+
+1. Run the test plan above.
+2. Rename `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`.
+3. `npm version X.Y.Z --git-tag-version=false` sets the version in `package.json`, `manifest.json` and `versions.json`.
+4. Commit, tag and push:
+
+   ```sh
+   git add CHANGELOG.md package.json package-lock.json manifest.json versions.json
+   git commit -m "chore: release X.Y.Z"
+   git tag -a X.Y.Z -m "X.Y.Z"
+   git push origin main X.Y.Z
+   ```
+
+## Beta releases
+
+A tag like `0.2.0-beta.1` publishes a GitHub pre-release that only [BRAT](https://github.com/TfTHacker/obsidian42-brat) users get. Obsidian's updater reads `manifest.json` on `main` and fetches the release it names, so a beta reaches nobody else while `main` stays at the last stable version.
+
+1. Add a `## [0.2.0-beta.1]` section to `CHANGELOG.md` above the last release. It becomes the release notes; without one, GitHub writes them from the commits.
+2. Tag the commit on `main` without bumping the version: `git tag -a 0.2.0-beta.1 -m 0.2.0-beta.1 && git push origin 0.2.0-beta.1`. Don't run `npm version`, which writes `manifest.json` and `versions.json`. The release workflow sets the version in the uploaded `manifest.json`.
+3. Testers run "BRAT: Add a beta plugin for testing" with `polybjorn/obsidian-chartwork` and pick the beta. BRAT then follows each new one.
+4. For the stable release, fold the beta sections into one `## [0.2.0]` section and release as above.
