@@ -29,7 +29,7 @@ series:
 | `legendPosition` | all | `top`, `bottom`, `left` or `right` |
 | `width` | all | Chart width, as CSS (`60%`) or pixels (`400`) |
 
-Colours come from the theme. A bar chart with one series prints each value on its bar, and a horizontal one grows taller with each label so bars keep one thickness.
+Colours come from the theme, or from the list under Series colors in Chartwork's settings. A bar chart with one series prints each value on its bar, and a horizontal one grows taller with each label so bars keep one thickness.
 
 ## Differences from Charts
 

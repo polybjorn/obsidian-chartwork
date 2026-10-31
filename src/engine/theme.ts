@@ -49,10 +49,15 @@ function styleSource(el: HTMLElement): HTMLElement {
 }
 
 // Canvas does not resolve CSS variables, so every value is read off the element.
-export function readTheme(el: HTMLElement): Theme {
+export function readTheme(el: HTMLElement, userColors: string[] = []): Theme {
   const cs = getComputedStyle(styleSource(el));
   const get = (name: string): string => cs.getPropertyValue(name).trim();
-  const palette = PALETTE_FALLBACK.map(([fallbackVar, hex], i) => {
+  // A listed colour takes its slot ahead of the CSS variables; slots it does
+  // not reach keep the theme's, and a longer list extends the palette
+  const palette = Array.from({ length: Math.max(PALETTE_FALLBACK.length, userColors.length) }, (_, i) => {
+    const own = userColors[i];
+    if (own) return resolveColor(own, el);
+    const [fallbackVar, hex] = PALETTE_FALLBACK[i] ?? ["", ""];
     return normalizeColor(get(`--chart-color-${i + 1}`) || get(fallbackVar) || hex, el);
   });
   return {

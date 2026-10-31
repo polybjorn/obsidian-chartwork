@@ -55,7 +55,7 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
     try {
       // Built before the old chart goes, so a spec that fails to build
       // leaves nothing half drawn
-      const { config, height } = build(readTheme(wrapper), wrapper);
+      const { config, height } = build(readTheme(wrapper, ctx.seriesColors?.()), wrapper);
       chart?.destroy();
       chart = null;
       error?.remove();

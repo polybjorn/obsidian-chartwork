@@ -61,6 +61,11 @@ export interface RenderContext {
    * destroyed once its element leaves the document for good.
    */
   loose?: boolean;
+  /**
+   * The user's default series colours, read at each draw so a change in
+   * settings shows on the next redraw. Absent means the theme alone.
+   */
+  seriesColors?: () => string[];
 }
 
 export interface ChartHandle {

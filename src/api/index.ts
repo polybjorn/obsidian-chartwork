@@ -17,9 +17,9 @@ declare global {
   }
 }
 
-export function installApi(plugin: Plugin): void {
+export function installApi(plugin: Plugin, seriesColors: () => string[]): void {
   // A chart the plugin owns would otherwise stay until the plugin unloads
-  const ctx = (owner: Component) => ({ app: plugin.app, owner, loose: owner === plugin });
+  const ctx = (owner: Component) => ({ app: plugin.app, owner, seriesColors, loose: owner === plugin });
 
   const api: ChartworkApi = {
     version: plugin.manifest.version,

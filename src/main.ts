@@ -3,12 +3,27 @@ import { installApi } from "./api/index.ts";
 import { registerChartView } from "./bases/view.ts";
 import { registerChartBlock } from "./codeblock/processor.ts";
 import { registerCompat } from "./compat/command.ts";
+import { readSettings } from "./settings.ts";
+import type { ChartworkSettings } from "./settings.ts";
+import { ChartworkSettingTab } from "./settings-tab.ts";
 
 export default class ChartworkPlugin extends Plugin {
-  override onload(): void {
-    registerChartView(this);
-    installApi(this);
-    registerChartBlock(this);
+  settings: ChartworkSettings = { seriesColors: [] };
+
+  override async onload(): Promise<void> {
+    this.settings = readSettings(await this.loadData());
+    const colors = (): string[] => this.settings.seriesColors;
+    registerChartView(this, colors);
+    installApi(this, colors);
+    registerChartBlock(this, colors);
     registerCompat(this);
+    this.addSettingTab(new ChartworkSettingTab(this));
+  }
+
+  async setSeriesColors(seriesColors: string[]): Promise<void> {
+    this.settings = { ...this.settings, seriesColors };
+    await this.saveData(this.settings);
+    // Charts redraw from the theme on this event, and the palette is part of it
+    this.app.workspace.trigger("css-change");
   }
 }

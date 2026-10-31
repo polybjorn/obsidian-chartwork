@@ -57,7 +57,7 @@ A bad or unknown field throws an error naming it, such as `chartwork: series[0].
 | `legend` | boolean, `"top"`, `"bottom"`, `"left"`, `"right"` | Default shown for pie, doughnut and multi-series charts |
 | `barThickness` | number | Pixels per bar on a horizontal chart. Default 28 |
 
-Colours can be any CSS colour, including `var(--color-red)`. Without one, series take `--chart-color-1`, `--chart-color-2` and on from a CSS snippet, else the theme's colours.
+Colours can be any CSS colour, including `var(--color-red)`. Without one, series take the colours listed under Series colors in Chartwork's settings, then `--chart-color-1`, `--chart-color-2` and on from a CSS snippet, else the theme's colours.
 
 ## Charts' `renderChart`
 

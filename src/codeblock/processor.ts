@@ -4,7 +4,7 @@ import { chartsEnabled } from "../compat/charts.ts";
 import { renderSpec, showError } from "../engine/index.ts";
 import { parseChartBlock } from "./parse.ts";
 
-export function registerChartBlock(plugin: Plugin): void {
+export function registerChartBlock(plugin: Plugin, seriesColors: () => string[]): void {
   if (chartsEnabled(plugin)) return;
 
   plugin.registerMarkdownCodeBlockProcessor("chart", (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
@@ -25,7 +25,7 @@ export function registerChartBlock(plugin: Plugin): void {
     const host = el.createDiv({ cls: "chartwork-block" });
     if (result.value.width) host.setCssProps({ width: result.value.width });
     try {
-      renderSpec(host, result.value.spec, { app: plugin.app, owner });
+      renderSpec(host, result.value.spec, { app: plugin.app, owner, seriesColors });
     } catch (e) {
       host.remove();
       showError(el, e instanceof Error ? e.message : "The chart failed to render.");

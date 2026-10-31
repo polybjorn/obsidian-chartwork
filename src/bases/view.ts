@@ -97,10 +97,12 @@ function text(config: BasesViewConfig, key: string): string {
 class ChartView extends BasesView {
   type = CHART_VIEW_TYPE;
   private readonly host: HTMLElement;
+  private readonly seriesColors: () => string[];
   private handle: ChartHandle | null = null;
 
-  constructor(controller: QueryController, containerEl: HTMLElement) {
+  constructor(controller: QueryController, containerEl: HTMLElement, seriesColors: () => string[]) {
     super(controller);
+    this.seriesColors = seriesColors;
     this.host = containerEl.createDiv({ cls: "chartwork-bases" });
   }
 
@@ -155,7 +157,7 @@ class ChartView extends BasesView {
       return;
     }
     this.host.empty();
-    this.handle = renderSpec(this.host, spec, { app: this.app, owner: this });
+    this.handle = renderSpec(this.host, spec, { app: this.app, owner: this, seriesColors: this.seriesColors });
   }
 
   private row(entry: BasesEntry, x: BasesPropertyId, y: BasesPropertyId | null, group?: string): Row {
@@ -174,11 +176,11 @@ class ChartView extends BasesView {
   }
 }
 
-export function registerChartView(plugin: Plugin): void {
+export function registerChartView(plugin: Plugin, seriesColors: () => string[]): void {
   plugin.registerBasesView(CHART_VIEW_TYPE, {
     name: "Chart",
     icon: "lucide-chart-column",
-    factory: (controller, containerEl) => new ChartView(controller, containerEl),
+    factory: (controller, containerEl) => new ChartView(controller, containerEl, seriesColors),
     options: viewOptions,
   });
 }
