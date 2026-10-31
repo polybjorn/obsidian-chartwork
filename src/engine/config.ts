@@ -10,8 +10,6 @@ export const DEFAULT_BAR_THICKNESS = 28;
 const DEFAULT_HEIGHT = 300;
 // Only reached with an empty palette, which readTheme never returns
 const FALLBACK_COLOR = "#888888";
-// Chart.js draws legend keys 40 px wide, longer than most of the labels they mark
-const LEGEND_KEY = { boxWidth: 12, boxHeight: 12 };
 
 // Chart.js parses colours itself and knows no color-mix(), so translucency is
 // added to the hex or rgb() value that readTheme normalised the theme to.
@@ -29,15 +27,37 @@ export function withAlpha(color: string, alpha: number): string {
 
 const RADIAL = new Set(["radar", "polarArea"]);
 
+// Legend, ticks and value labels sit a step under the body text, as a caption
+// does. Chart.js reads no font off a chart's root options, so each text element
+// names its own.
+function smallSize(theme: Theme): number {
+  return Math.round(theme.fontSize * 0.85);
+}
+
+function textFont(theme: Theme): Obj {
+  return { family: theme.font, size: smallSize(theme) };
+}
+
+// Chart.js draws legend keys 40 px wide, longer than most of the labels they
+// mark, so a key is a square a little under the text's height
+function legendLabels(theme: Theme): Obj {
+  const box = Math.round(smallSize(theme) * 0.85);
+  return { color: theme.text, font: textFont(theme), boxWidth: box, boxHeight: box };
+}
+
+function titleFont(theme: Theme): Obj {
+  return { family: theme.font, size: theme.fontSize, weight: "bold" };
+}
+
 function radialScale(theme: Theme): { ticks: Obj; grid: Obj; angleLines: Obj; pointLabels: Obj } {
   return {
     // Above the data and on the page colour, so a number stays readable where
     // a shape or segment covers it; Chart.js's own white backdrop shows on a
     // dark theme
-    ticks: { color: theme.text, backdropColor: theme.background, z: 1 },
+    ticks: { color: theme.text, font: textFont(theme), backdropColor: theme.background, z: 1 },
     grid: { color: theme.grid },
     angleLines: { color: theme.grid },
-    pointLabels: { color: theme.text },
+    pointLabels: { color: theme.text, font: textFont(theme) },
   };
 }
 
@@ -67,6 +87,7 @@ interface LabelStyle {
   /** Where a label goes: past the end of a bar, above a point, or inside a slice. */
   shape: "bar" | "line" | "arc";
   color: string;
+  size: number;
   /** Drawn around slice and point labels, which sit on colored slices and lines. */
   halo: string;
   font: string;
@@ -94,7 +115,7 @@ function valueLabelsPlugin(style: LabelStyle): Plugin {
     afterDatasetsDraw(chart) {
       const ctx = chart.ctx;
       ctx.save();
-      ctx.font = `bold 12px ${style.font}`;
+      ctx.font = `bold ${style.size}px ${style.font}`;
       ctx.fillStyle = style.color;
       ctx.strokeStyle = style.halo;
       ctx.lineWidth = 3;
@@ -215,7 +236,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
 
   const maxLabel = Math.max(0, ...data.series.flatMap((s) => s.values.map((v) => (v === null ? 0 : String(v).length))));
   const padding = labelsOn && labelShape !== "arc"
-    ? horizontal ? { right: 12 + maxLabel * 8 } : { top: 20 }
+    ? horizontal ? { right: 12 + maxLabel * Math.ceil(smallSize(theme) * 0.65) } : { top: smallSize(theme) + 8 }
     : undefined;
 
   const plugins: Obj = {
@@ -224,16 +245,16 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
         ? spec.kind === "pie" || spec.kind === "doughnut" || spec.kind === "polarArea" || data.series.length > 1
         : spec.legend !== false,
       ...(typeof spec.legend === "string" ? { position: spec.legend } : {}),
-      labels: { color: theme.text, ...LEGEND_KEY },
+      labels: legendLabels(theme),
     },
-    title: { display: Boolean(spec.title), text: spec.title ?? "", color: theme.text },
+    title: { display: Boolean(spec.title), text: spec.title ?? "", color: theme.text, font: titleFont(theme) },
   };
 
   const options: Obj = {
     responsive: true,
     maintainAspectRatio: false,
     color: theme.text,
-    font: { family: theme.font },
+    font: textFont(theme),
     plugins,
   };
   if (padding) options.layout = { padding };
@@ -244,13 +265,13 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
       beginAtZero: spec.beginAtZero ?? true,
       grace: "5%",
       stacked,
-      ticks: { color: theme.text, ...(integers ? { precision: 0 } : {}) },
+      ticks: { color: theme.text, font: textFont(theme), ...(integers ? { precision: 0 } : {}) },
       grid: { color: theme.grid },
     };
-    if (spec.valueTitle) valueAxis.title = { display: true, text: spec.valueTitle, color: theme.text };
+    if (spec.valueTitle) valueAxis.title = { display: true, text: spec.valueTitle, color: theme.text, font: textFont(theme) };
     const categoryAxis: Obj = {
       stacked,
-      ticks: { color: theme.text },
+      ticks: { color: theme.text, font: textFont(theme) },
       grid: horizontal ? { display: false } : { color: theme.grid },
     };
     options.indexAxis = horizontal ? "y" : "x";
@@ -277,7 +298,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     options,
     plugins: labelsOn && labelShape
       ? [valueLabelsPlugin({
-        shape: labelShape, color: theme.text, halo: theme.background, font: theme.font, horizontal, stacked,
+        shape: labelShape, color: theme.text, size: smallSize(theme), halo: theme.background, font: theme.font, horizontal, stacked,
         reversed: spec.axes?.[horizontal ? "x" : "y"]?.reverse === true,
       })]
       : [],
@@ -351,6 +372,7 @@ function sankeyDataset(d: Obj, theme: Theme): Obj {
   return {
     ...d,
     color: d.color ?? theme.text,
+    font: d.font ?? textFont(theme),
     borderColor: d.borderColor ?? theme.text,
     colorFrom: endpoint("from", d.colorFrom),
     colorTo: endpoint("to", d.colorTo),
@@ -361,16 +383,16 @@ function sankeyDataset(d: Obj, theme: Theme): Obj {
 export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): ChartConfiguration {
   const type = String(config.type);
   const axis = {
-    ticks: { color: theme.text },
+    ticks: { color: theme.text, font: textFont(theme) },
     grid: { color: theme.grid },
-    title: { color: theme.text },
+    title: { color: theme.text, font: textFont(theme) },
   };
   const defaults: Obj = {
     color: theme.text,
-    font: { family: theme.font },
+    font: textFont(theme),
     plugins: {
-      legend: { labels: { color: theme.text, ...LEGEND_KEY } },
-      title: { color: theme.text },
+      legend: { labels: legendLabels(theme) },
+      title: { color: theme.text, font: titleFont(theme) },
     },
   };
   const options: Obj = config.options ?? {};

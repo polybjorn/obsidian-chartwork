@@ -11,6 +11,7 @@ const theme: Theme = {
   grid: "#ddd",
   background: "#fff",
   font: "Inter",
+  fontSize: 20,
   palette: ["#p1", "#p2", "#p3"],
 };
 
@@ -52,7 +53,7 @@ void test("value labels default on for a single-series bar only", () => {
   assert.equal(buildConfig({ ...spec, kind: "radar", valueLabels: true }, theme).plugins?.length, 0);
   // Slice labels sit inside the chart, so they take no padding
   assert.equal(at(opts({ ...spec, kind: "pie", valueLabels: true }), "layout.padding"), undefined);
-  assert.deepEqual(at(opts({ ...spec, kind: "line", valueLabels: true }), "layout.padding"), { top: 20 });
+  assert.deepEqual(at(opts({ ...spec, kind: "line", valueLabels: true }), "layout.padding"), { top: 25 });
 });
 
 void test("a radar draws one translucent shape per series on a themed radial scale", () => {
@@ -118,7 +119,7 @@ void test("theme text colour reaches axes, legend and title", () => {
   assert.equal(at(o, "scales.x.title.text"), "Count");
   assert.equal(at(o, "plugins.title.color"), "#111");
   assert.equal(at(o, "plugins.legend.labels.color"), "#111");
-  assert.equal(at(o, "plugins.legend.labels.boxWidth"), 12);
+  assert.equal(at(o, "plugins.legend.labels.boxWidth"), 14);
 });
 
 void test("horizontal height scales with bar count", () => {
@@ -151,7 +152,7 @@ void test("theme fill keeps what the caller set and does not mutate the input", 
   assert.equal(at(o, "scales.x.ticks.color"), "#111");
   assert.equal(at(o, "plugins.title.color"), "#111");
   assert.equal(at(o, "plugins.legend.labels.boxWidth"), 30);
-  assert.equal(at(o, "plugins.legend.labels.boxHeight"), 12);
+  assert.equal(at(o, "plugins.legend.labels.boxHeight"), 14);
   assert.deepEqual(ds.map((d) => d.backgroundColor), ["#p1", "hotpink"]);
 });
 
@@ -250,6 +251,19 @@ void test("a gap stays a gap and does not break integer detection", () => {
   const c = buildConfig({ ...spec, kind: "line", series: [{ name: "n", values: [2, null] }] }, theme);
   assert.deepEqual(at(c, "data.datasets.0.data"), [2, null]);
   assert.equal(at(c.options, "scales.y.ticks.precision"), 0);
+});
+
+void test("chart text follows the note's text size, a step smaller outside the title", () => {
+  const o = opts({ ...spec, title: "t" });
+  const small = { family: "Inter", size: 17 };
+  assert.deepEqual(at(o, "plugins.legend.labels.font"), small);
+  assert.deepEqual(at(o, "scales.x.ticks.font"), small);
+  assert.deepEqual(at(o, "scales.y.ticks.font"), small);
+  assert.deepEqual(at(o, "plugins.title.font"), { family: "Inter", size: 20, weight: "bold" });
+  assert.deepEqual(at(o, "layout.padding"), { top: 25 });
+  const raw = fillThemeDefaults({ type: "bar", data: { datasets: [] }, options: { plugins: { legend: { labels: { font: { size: 9 } } } } } }, theme);
+  assert.deepEqual(at(raw.options, "plugins.legend.labels.font"), { size: 9, family: "Inter" });
+  assert.deepEqual(at(raw.options, "scales.x.ticks.font"), small);
 });
 
 void test("withAlpha turns hex and rgb into rgba and leaves other forms alone", () => {

@@ -7,8 +7,12 @@ export interface Theme {
   /** Slice borders, so adjacent arcs separate against the page. */
   background: string;
   font: string;
+  /** The note's body text size in pixels, which chart titles match. */
+  fontSize: number;
   palette: string[];
 }
+
+const DEFAULT_TEXT_SIZE = 16;
 
 const PALETTE_FALLBACK: [string, string][] = [
   ["--color-blue", "#4e79a7"],
@@ -66,6 +70,7 @@ export function readTheme(el: HTMLElement, userColors: string[] = []): Theme {
     grid: get("--background-modifier-border") || "rgba(128, 128, 128, 0.3)",
     background: get("--background-primary") || "transparent",
     font: get("--font-interface") || "sans-serif",
+    fontSize: Number.parseFloat(get("--font-text-size")) || DEFAULT_TEXT_SIZE,
     palette,
   };
 }
