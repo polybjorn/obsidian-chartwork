@@ -14,6 +14,23 @@ import { readTheme, resolveColor, resolveConfigColors, resolveSpecColors } from 
 import type { Theme } from "./theme.ts";
 
 let registered = false;
+
+// Chart.js holds back a chart's first update until its canvas is in the page,
+// and scripts draw before theirs is, so a config it rejects throws later from
+// a listener of its own. That update routes the error back to the chart's
+// error box; one during construction still throws to the caller.
+class GuardedChart extends Chart {
+  onUpdateError?: (e: unknown) => void;
+
+  override update(...args: Parameters<Chart["update"]>): void {
+    try {
+      super.update(...args);
+    } catch (e) {
+      if (!this.onUpdateError) throw e;
+      this.onUpdateError(e);
+    }
+  }
+}
 function registerOnce(): void {
   if (registered) return;
   registered = true;
@@ -75,6 +92,17 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
   let error: HTMLElement | null = null;
   let destroyed = false;
 
+  const fail = (e: unknown): void => {
+    // Chart.js keeps a chart that threw while drawing, and refuses the
+    // canvas to the next one until it is destroyed
+    Chart.getChart(canvas)?.destroy();
+    chart = null;
+    canvas.hide();
+    wrapper.setCssProps({ height: "" });
+    error?.remove();
+    error = showError(wrapper, errorText(e));
+  };
+
   const redraw = (): void => {
     if (destroyed) return;
     try {
@@ -91,16 +119,11 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
       // moments later, which would catch each chart part way through its
       // opening animation
       if (wrapper.closest(".print")) config.options = { ...config.options, animation: false };
-      chart = new Chart(canvas, config);
+      const made = new GuardedChart(canvas, config);
+      made.onUpdateError = fail;
+      chart = made;
     } catch (e) {
-      // Chart.js keeps a chart that threw while drawing, and refuses the
-      // canvas to the next one until it is destroyed
-      Chart.getChart(canvas)?.destroy();
-      chart = null;
-      canvas.hide();
-      wrapper.setCssProps({ height: "" });
-      error?.remove();
-      error = showError(wrapper, errorText(e));
+      fail(e);
     }
   };
 
