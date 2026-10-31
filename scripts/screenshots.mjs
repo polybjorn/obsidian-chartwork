@@ -3,7 +3,7 @@
 // apart from the Obsidian you have open: its own vault list, settings and
 // single-instance lock. Run with `npm run screenshots` (macOS).
 import { spawn } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -11,14 +11,20 @@ const ROOT = resolve(import.meta.dirname, "..");
 const OUT = join(ROOT, "docs/images");
 const OBSIDIAN = process.env.OBSIDIAN_BIN ?? "/Applications/Obsidian.app/Contents/MacOS/Obsidian";
 const PORT = 9333;
-// 900 CSS px at 2x gives 1800 px images, sharp on high-density screens
-const VIEWPORT = { width: 900, height: 1100, deviceScaleFactor: 2, mobile: false };
+// Drawn at 2x so the images stay sharp on high-density screens. A narrow
+// window keeps the chart's text large once the image is scaled to the page
+const VIEWPORT = { width: 640, height: 1100, deviceScaleFactor: 2, mobile: false };
+// Margin around a chart; the menu is cropped to its own edge, since what
+// shows past it is the chart underneath
+const PAD = { chart: [8, 20], menu: [0, 0] };
 const THEMES = { light: "moonstone", dark: "obsidian" };
 
+// crop: "chart" frames the chart alone, "menu" the Bases view options
 const SHOTS = [
-  { file: "Genres.md", name: "theme", themes: ["light", "dark"], chart: ".chartwork-bases" },
-  { file: "Reading.md", name: "bases-view", themes: ["light"], chart: ".chartwork-bases", options: true },
-  { file: "Savings.md", name: "code-block", themes: ["light"], chart: ".chartwork-block" },
+  { file: "Reading.md", name: "theme", themes: ["light", "dark"], chart: ".chartwork-bases", crop: "chart" },
+  { file: "Genres.md", name: "bases-view", themes: ["light"], chart: ".chartwork-bases", crop: "menu" },
+  { file: "Pages read.md", name: "code-block", themes: ["light"], chart: ".chartwork-block", crop: "chart" },
+  { file: "Script.md", name: "script", themes: ["light"], chart: ".chartwork-script", crop: "chart", script: true },
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -107,6 +113,21 @@ async function press(cdp, expression) {
   }
 }
 
+// The demo vault has no Dataview, so the note's dataviewjs block runs here
+// against a stand-in dv. The picture comes from the very code the note shows
+async function runScript(cdp, file) {
+  const note = readFileSync(join(ROOT, "docs/demo-vault", file), "utf8");
+  const code = note.match(/```dataviewjs\n([\s\S]*?)```/)[1];
+  await cdp.evaluate(`(() => {
+    const host = ${visible(".workspace-leaf.mod-active .markdown-preview-sizer")};
+    host.querySelector(".chartwork-script")?.remove();
+    const container = document.createElement("div");
+    container.className = "chartwork-script";
+    host.append(container);
+    new Function("dv", ${JSON.stringify(code)})({ container });
+  })()`);
+}
+
 async function shoot(cdp, shot, theme) {
   await cdp.evaluate(`app.changeTheme(${JSON.stringify(THEMES[theme])})`);
   await cdp.evaluate(`(async () => {
@@ -115,9 +136,16 @@ async function shoot(cdp, shot, theme) {
     const leaf = app.workspace.getLeaf(false);
     await leaf.openFile(app.vault.getFileByPath(${JSON.stringify(shot.file)}), { state: { mode: "preview" } });
   })()`);
+  if (shot.script) {
+    await waitFor(() => cdp.evaluate(`!!${visible(".workspace-leaf.mod-active .markdown-preview-sizer")}`), shot.file);
+    // The preview renders in passes and drops what it did not render itself,
+    // so the chart goes in once it has settled
+    await sleep(1500);
+    await runScript(cdp, shot.file);
+  }
   const sel = `.workspace-leaf.mod-active ${shot.chart} canvas`;
   await waitFor(() => cdp.evaluate(`!!${visible(sel)}`), `${shot.chart} in ${shot.file}`);
-  if (shot.options) {
+  if (shot.crop === "menu") {
     // The options sit behind the icon on the active view's row in the view menu
     await press(cdp, visible(".workspace-leaf.mod-active .bases-toolbar-views-menu .text-icon-button"));
     const icon = ".bases-toolbar-menu-item.mod-active .bases-toolbar-menu-item-icon";
@@ -135,22 +163,19 @@ async function shoot(cdp, shot, theme) {
   // Chart.js animates in, and a theme change redraws after css-change
   await sleep(1500);
   // The theme switch redraws the chart, so the canvas can be briefly absent
+  const frame = shot.crop === "menu" ? `document.querySelector(".menu")` : visible(sel);
   const clip = await waitFor(() => cdp.evaluate(`(() => {
-    const view = document.querySelector(".workspace-leaf.mod-active .view-content");
-    const canvas = ${visible(sel)};
-    if (!view || !canvas) return null;
-    const leaf = view.getBoundingClientRect();
-    const chart = canvas.getBoundingClientRect();
-    const menu = document.querySelector(".menu, .popover")?.getBoundingClientRect();
-    const bottom = Math.max(chart.bottom, menu ? menu.bottom : 0) + 32;
-    // Trim the right edge, where the overlay scrollbar shows
-    return { x: leaf.left, y: leaf.top, width: leaf.width - 16, height: Math.min(bottom, leaf.bottom) - leaf.top, scale: 1 };
+    const el = ${frame};
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    const [v, h] = ${JSON.stringify(PAD[shot.crop])};
+    return { x: r.left - h, y: r.top - v, width: r.width + 2 * h, height: r.height + 2 * v, scale: 1 };
   })()`), "the chart's position");
   const { data } = await cdp.send("Page.captureScreenshot", { format: "png", clip });
   const file = join(OUT, `${shot.name}${shot.themes.length > 1 ? `-${theme}` : ""}.png`);
   writeFileSync(file, Buffer.from(data, "base64"));
   console.log(`Wrote ${file.slice(ROOT.length + 1)}`);
-  if (shot.options) {
+  if (shot.crop === "menu") {
     for (const type of ["keyDown", "keyUp"]) {
       await cdp.send("Input.dispatchKeyEvent", { type, key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
     }

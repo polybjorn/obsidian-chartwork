@@ -5,16 +5,14 @@ For numbers that live in no note, type them into a `chart` code block. The forma
 ````markdown
 ```chart
 type: line
-labels: [Jan, Feb, Mar, Apr, May, Jun]
+labels: [Jan, Feb, Mar, Apr]
 series:
-  - title: Saved
-    data: [120, 180, 150, 260, 240, 310]
-  - title: Spent
-    data: [90, 110, 160, 140, 120, 135]
+  - title: Pages read
+    data: [320, 450, 280, 510]
 ```
 ````
 
-![A line chart with two series, Saved and Spent, drawn from a chart code block](images/code-block.png)
+![A line chart of pages read per month, drawn from a chart code block](images/code-block.png)
 
 `type`, `labels` and `series` are required. Each series has a `title` and a `data` list with one value per label; `null` leaves a gap.
 
