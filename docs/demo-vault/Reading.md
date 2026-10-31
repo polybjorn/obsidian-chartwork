@@ -16,3 +16,13 @@ views:
       - "to read: var(--color-yellow)"
       - "dropped: var(--color-base-50)"
 ```
+
+## Pages read
+
+```chart
+type: line
+labels: [Jan, Feb, Mar, Apr]
+series:
+  - title: Pages read
+    data: [320, 450, 280, 510]
+```

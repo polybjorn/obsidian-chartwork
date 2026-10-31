@@ -1,6 +1,18 @@
 # Script function
 
-For numbers that have to be worked out first, call `window.chartwork.render` from any plugin that runs JavaScript in notes, such as Dataview:
+Call `window.chartwork.render` from a plugin that runs JavaScript in notes, such as Dataview:
+
+```js
+window.chartwork.render(dv.container, {
+  kind: "pie",
+  labels: ["Read", "Reading", "To read"],
+  series: [{ name: "Books", values: [7, 2, 5] }],
+}, dv.component);
+```
+
+![The pie chart this script draws](images/script.png)
+
+Usually the script works the numbers out first, here journal days counted by mood:
 
 ```js
 const counts = {};

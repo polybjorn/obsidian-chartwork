@@ -1,8 +1,10 @@
-// Renders the README screenshots from docs/demo-vault in a separate Obsidian
-// instance driven over the DevTools protocol. Its own --user-data-dir keeps it
-// apart from the Obsidian you have open: its own vault list, settings and
-// single-instance lock. Run with `npm run screenshots` (macOS).
-import { spawn } from "node:child_process";
+// Renders the README and docs screenshots from docs/demo-vault in a separate
+// Obsidian instance driven over the DevTools protocol. Its own --user-data-dir
+// keeps it apart from the Obsidian you have open: its own vault list, settings
+// and single-instance lock. Each image is the whole window as macOS draws it,
+// with rounded corners and shadow, so the terminal running it needs Screen
+// Recording access. Run with `npm run screenshots` (macOS).
+import { execFileSync, spawn } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -11,20 +13,15 @@ const ROOT = resolve(import.meta.dirname, "..");
 const OUT = join(ROOT, "docs/images");
 const OBSIDIAN = process.env.OBSIDIAN_BIN ?? "/Applications/Obsidian.app/Contents/MacOS/Obsidian";
 const PORT = 9333;
-// Drawn at 2x so the images stay sharp on high-density screens. A narrow
-// window keeps the chart's text large once the image is scaled to the page
-const VIEWPORT = { width: 640, height: 1100, deviceScaleFactor: 2, mobile: false };
-// Margin around a chart; the menu is cropped to its own edge, since what
-// shows past it is the chart underneath
-const PAD = { chart: [8, 20], menu: [0, 0] };
+// The window's content size in points; a Retina screen captures it at 2x
+const WINDOW = { width: 1100, height: 780 };
 const THEMES = { light: "moonstone", dark: "obsidian" };
 
-// crop: "chart" frames the chart alone, "menu" the Bases view options
 const SHOTS = [
-  { file: "Reading.md", name: "theme", themes: ["light", "dark"], chart: ".chartwork-bases", crop: "chart" },
-  { file: "Genres.md", name: "bases-view", themes: ["light"], chart: ".chartwork-bases", crop: "menu" },
-  { file: "Pages read.md", name: "code-block", themes: ["light"], chart: ".chartwork-block", crop: "chart" },
-  { file: "Script.md", name: "script", themes: ["light"], chart: ".chartwork-script", crop: "chart", script: true },
+  { file: "Reading.md", name: "readme", theme: "dark", chart: ".chartwork-bases" },
+  { file: "Genres.md", name: "bases-view", theme: "light", chart: ".chartwork-bases", menu: true },
+  { file: "Pages read.md", name: "code-block", theme: "light", chart: ".chartwork-block" },
+  { file: "Script.md", name: "script", theme: "light", chart: ".chartwork-script", script: true },
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -114,25 +111,42 @@ async function press(cdp, expression) {
 }
 
 // The demo vault has no Dataview, so the note's dataviewjs block runs here
-// against a stand-in dv. The picture comes from the very code the note shows
+// against a stand-in dv, and its code is hidden the way Dataview replaces it.
+// The picture comes from the very code the note holds
 async function runScript(cdp, file) {
   const note = readFileSync(join(ROOT, "docs/demo-vault", file), "utf8");
   const code = note.match(/```dataviewjs\n([\s\S]*?)```/)[1];
   await cdp.evaluate(`(() => {
     const host = ${visible(".workspace-leaf.mod-active .markdown-preview-sizer")};
     host.querySelector(".chartwork-script")?.remove();
+    const code = host.querySelector("code.language-dataviewjs").closest(".el-pre, pre");
     const container = document.createElement("div");
     container.className = "chartwork-script";
-    host.append(container);
+    code.after(container);
+    code.style.display = "none";
     new Function("dv", ${JSON.stringify(code)})({ container });
   })()`);
 }
 
-async function shoot(cdp, shot, theme) {
-  await cdp.evaluate(`app.changeTheme(${JSON.stringify(THEMES[theme])})`);
+// The window id macOS gives the app's normal-level window, for screencapture
+function windowId(pid) {
+  const jxa = `ObjC.import("CoreGraphics");
+    const list = ObjC.castRefToObject($.CGWindowListCopyWindowInfo($.kCGWindowListOptionOnScreenOnly, 0));
+    let id = 0;
+    for (let i = 0; i < list.count; i++) {
+      const w = list.objectAtIndex(i);
+      const get = (k) => ObjC.unwrap(w.objectForKey(k));
+      if (get("kCGWindowOwnerPID") === ${pid} && get("kCGWindowLayer") === 0) id = get("kCGWindowNumber");
+    }
+    id;`;
+  const id = Number(execFileSync("osascript", ["-l", "JavaScript", "-e", jxa]).toString().trim());
+  if (!id) throw new Error("No Obsidian window found to capture");
+  return id;
+}
+
+async function shoot(cdp, shot, id) {
+  await cdp.evaluate(`app.changeTheme(${JSON.stringify(THEMES[shot.theme])})`);
   await cdp.evaluate(`(async () => {
-    app.workspace.leftSplit.collapse();
-    app.workspace.rightSplit.collapse();
     const leaf = app.workspace.getLeaf(false);
     await leaf.openFile(app.vault.getFileByPath(${JSON.stringify(shot.file)}), { state: { mode: "preview" } });
   })()`);
@@ -145,7 +159,7 @@ async function shoot(cdp, shot, theme) {
   }
   const sel = `.workspace-leaf.mod-active ${shot.chart} canvas`;
   await waitFor(() => cdp.evaluate(`!!${visible(sel)}`), `${shot.chart} in ${shot.file}`);
-  if (shot.crop === "menu") {
+  if (shot.menu) {
     // The options sit behind the icon on the active view's row in the view menu
     await press(cdp, visible(".workspace-leaf.mod-active .bases-toolbar-views-menu .text-icon-button"));
     const icon = ".bases-toolbar-menu-item.mod-active .bases-toolbar-menu-item-icon";
@@ -163,19 +177,18 @@ async function shoot(cdp, shot, theme) {
   // Chart.js animates in, and a theme change redraws after css-change
   await sleep(1500);
   // The theme switch redraws the chart, so the canvas can be briefly absent
-  const frame = shot.crop === "menu" ? `document.querySelector(".menu")` : visible(sel);
-  const clip = await waitFor(() => cdp.evaluate(`(() => {
-    const el = ${frame};
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    const [v, h] = ${JSON.stringify(PAD[shot.crop])};
-    return { x: r.left - h, y: r.top - v, width: r.width + 2 * h, height: r.height + 2 * v, scale: 1 };
-  })()`), "the chart's position");
-  const { data } = await cdp.send("Page.captureScreenshot", { format: "png", clip });
-  const file = join(OUT, `${shot.name}${shot.themes.length > 1 ? `-${theme}` : ""}.png`);
-  writeFileSync(file, Buffer.from(data, "base64"));
+  await waitFor(() => cdp.evaluate(`!!${visible(sel)}`), `${shot.chart} after the redraw`);
+  // An unfocused window draws its buttons grey
+  await cdp.evaluate(`(() => {
+    const remote = require("@electron/remote");
+    remote.app.focus({ steal: true });
+    remote.getCurrentWindow().focus();
+  })()`);
+  await sleep(300);
+  const file = join(OUT, `${shot.name}.png`);
+  execFileSync("screencapture", ["-x", "-l", String(id), file]);
   console.log(`Wrote ${file.slice(ROOT.length + 1)}`);
-  if (shot.crop === "menu") {
+  if (shot.menu) {
     for (const type of ["keyDown", "keyUp"]) {
       await cdp.send("Input.dispatchKeyEvent", { type, key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
     }
@@ -196,9 +209,15 @@ try {
     await app.plugins.enablePluginAndSave("chartwork");
   })()`);
   await waitFor(() => cdp.evaluate(`!!app.plugins.plugins.chartwork`), "Chartwork to load");
-  await cdp.send("Emulation.setDeviceMetricsOverride", VIEWPORT);
+  await cdp.evaluate(`(() => {
+    const win = require("@electron/remote").getCurrentWindow();
+    win.setContentSize(${WINDOW.width}, ${WINDOW.height});
+    win.center();
+  })()`);
+  await sleep(500);
+  const id = windowId(app.pid);
   mkdirSync(OUT, { recursive: true });
-  for (const shot of SHOTS) for (const theme of shot.themes) await shoot(cdp, shot, theme);
+  for (const shot of SHOTS) await shoot(cdp, shot, id);
 } finally {
   cdp?.close();
   app.kill();

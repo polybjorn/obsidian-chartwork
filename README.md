@@ -1,54 +1,26 @@
 # Chartwork
 
-Charts in Obsidian, made from your notes and drawn in your theme's colours, light or dark.
+Charts in Obsidian, made from your notes. Point a Bases view at a property, type numbers into a code block, or hand numbers over from a script, and Chartwork draws them in your theme's colours, light or dark. A chart looks like part of the note it sits in, with no settings to tune first.
 
-| Light theme | Dark theme |
-|---|---|
-| ![Bar chart of books by reading status, light theme](docs/images/theme-light.png) | ![The same chart in the dark theme](docs/images/theme-dark.png) |
+![A note with a Bases chart of books by status and a line chart of pages read, in Obsidian's dark theme](docs/images/readme.png)
+
+Docs: [Bases view](docs/bases-view.md), [chart code block](docs/code-block.md), [script function](docs/script-api.md).
 
 > Not released yet; it runs my own vault.
 
-There are three ways to make a chart.
+## Three ways to make a chart
 
-**From note properties, in a Bases view.** Add a view to a base, pick **Chart** as its layout and choose the property to count by, like a book's `genre`. No code.
+| Way | Use it when | Needs |
+|---|---|---|
+| Bases view | the numbers are note properties, like books counted by status or hours summed by project | Bases, built into Obsidian |
+| `chart` code block | the numbers are in no note, so you type them in | nothing else |
+| Script function | the numbers have to be worked out first, like notes created this month counted by tag | a plugin that runs JavaScript in notes, such as Dataview |
 
-<img src="docs/images/bases-view.png" width="240" alt="The options of a Bases chart view: layout, category property, aggregation, chart type, horizontal bars and title">
+## What Chartwork takes care of
 
-**From numbers you type in,** in a `chart` code block:
-
-````markdown
-```chart
-type: line
-labels: [Jan, Feb, Mar, Apr]
-series:
-  - title: Pages read
-    data: [320, 450, 280, 510]
-```
-````
-
-<img src="docs/images/code-block.png" width="440" alt="The line chart this block draws">
-
-**From a script.** A script works out the numbers, and Chartwork draws them. This needs a plugin that runs JavaScript in notes, such as Dataview.
-
-```js
-window.chartwork.render(dv.container, {
-  kind: "pie",
-  labels: ["Read", "Reading", "To read"],
-  series: [{ name: "Books", values: [7, 2, 5] }],
-}, dv.component);
-```
-
-<img src="docs/images/script.png" width="440" alt="The pie chart this script draws">
-
-## Good to know
-
-- Text, grid lines and colours follow your theme, and a chart redraws when you switch between light and dark.
-- Bar charts print each value on its bar.
-- Notes written for the Charts plugin keep working.
-- Chartwork writes nothing to your vault and makes no network requests.
-
-## Docs
-
-- [Bases view](docs/bases-view.md): every option, including sorting, colours and keeping the largest few categories
-- [Chart code block](docs/code-block.md): every key, and what differs from Charts
-- [Script function](docs/script-api.md): everything `window.chartwork.render` takes
+- **Your theme's colours.** Text, grid lines and series follow the theme, so a chart stays readable in light and dark and redraws when you switch. In a Bases view or a script, any CSS colour sets a category or series apart, including the theme's own, like `var(--color-green)`.
+- **Values on the bars.** A bar chart with one series prints each value on its bar.
+- **Even horizontal bars.** A horizontal chart grows taller with each category, so bars keep one thickness from note to note.
+- **Order and trimming.** In a Bases view or a script, sort by value or label, put chosen categories first, keep the largest few and add the rest up under one label.
+- **Notes made for the Charts plugin.** Chartwork draws its `chart` blocks and `window.renderChart` calls as they are, and leaves both to Charts while it is enabled.
+- **Nothing leaves your vault.** Chartwork only sees the data a Bases view, code block or script hands it. It writes nothing to your vault and makes no network requests; Chart.js 4 is bundled.
