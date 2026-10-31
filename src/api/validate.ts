@@ -1,12 +1,12 @@
 import { isObj, isOneOf } from "../engine/guards.ts";
 import type { Obj } from "../engine/guards.ts";
-import { AXIS_IDS, CHART_KINDS, LEGEND_SIDES, SORTS, STEPS } from "../engine/spec.ts";
+import { AXIS_IDS, CHART_KINDS, DATE_UNITS, ISO_DATE, LEGEND_SIDES, SORTS, STEPS } from "../engine/spec.ts";
 import type { AxisSpec, ChartSpec, Series } from "../engine/spec.ts";
 
 const SPEC_KEYS = [
   "kind", "labels", "series", "title", "horizontal", "stacked", "valueLabels", "sort", "order",
   "topN", "other", "categoryColors", "labelColors", "valueTitle", "beginAtZero", "tension", "legend",
-  "barThickness", "axes", "spanGaps", "referenceLines", "average",
+  "barThickness", "axes", "spanGaps", "referenceLines", "average", "dateUnit",
   "bestFit", "bestFitTitle", "bestFitNumber",
 ] as const;
 const SERIES_KEYS = ["name", "values", "color", "fill", "stepped", "hidden", "pointRadius"] as const;
@@ -176,6 +176,15 @@ export function validateSpec(input: unknown): ChartSpec {
   if (input.topN !== undefined && !Number.isInteger(input.topN)) fail("topN", "a whole number", input.topN);
   if (input.sort !== undefined && !isOneOf(SORTS, input.sort)) {
     throw new Error(`chartwork: sort must be one of ${SORTS.join(", ")}, got ${JSON.stringify(input.sort)}`);
+  }
+  if (input.dateUnit !== undefined) {
+    if (!isOneOf(DATE_UNITS, input.dateUnit)) {
+      throw new Error(`chartwork: dateUnit must be one of ${DATE_UNITS.join(", ")}, got ${JSON.stringify(input.dateUnit)}`);
+    }
+    const bad = labels.findIndex((l) => !ISO_DATE.test(l));
+    if (bad >= 0) {
+      throw new Error(`chartwork: with dateUnit, labels must be ISO dates such as 2026-01-31, got ${JSON.stringify(labels[bad])} at labels[${bad}]`);
+    }
   }
   const out = { ...input, labels, series: allSeries } as unknown as ChartSpec;
   if (input.order !== undefined) out.order = strList(input.order, "order");

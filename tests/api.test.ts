@@ -123,6 +123,8 @@ const bad: [string, (s: Record<string, unknown>) => void, RegExp][] = [
   ["title", (s) => { s.title = 3; }, /title must be a string/],
   ["horizontal", (s) => { s.horizontal = "true"; }, /horizontal must be a boolean/],
   ["sort", (s) => { s.sort = "random"; }, /sort must be one of/],
+  ["dateUnit", (s) => { s.dateUnit = "hour"; }, /dateUnit must be one of day, week/],
+  ["dateUnit labels", (s) => { s.dateUnit = "day"; s.labels = ["2026-01-02", "Jan 3"]; }, /labels must be ISO dates.*"Jan 3" at labels\[1\]/],
   ["axes type", (s) => { s.axes = [1]; }, /axes must be an object/],
   ["axis id", (s) => { s.axes = { z: {} }; }, /unknown field axes\.z/],
   ["axis key", (s) => { s.axes = { y: { minimum: 0 } }; }, /unknown field axes\.y\.minimum/],

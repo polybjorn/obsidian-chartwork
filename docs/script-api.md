@@ -70,6 +70,7 @@ The handle's `update` takes the shape the chart was made with: a spec for a spec
 | `order` | string[] | Labels to place first; the rest follow by `sort` |
 | `topN` | number | Keep the N largest categories by the first series |
 | `other` | string | With `topN`, sums the dropped categories under this label |
+| `dateUnit` | `"day"`, `"week"`, `"month"`, `"year"` | Bar and line: the labels are ISO dates such as `2026-03-02`, drawn on a time axis in steps of this unit, in date order. `sort`, `order` and `topN` are ignored |
 | `categoryColors` | `{label: color}` | Color per category, for single-series bar, pie, doughnut and polar area charts |
 | `labelColors` | boolean | Bars take one color per label |
 | `valueTitle` | string | Title for the value axis |

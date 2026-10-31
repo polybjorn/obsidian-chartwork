@@ -1,11 +1,22 @@
 import type { ArcElement, BarElement, ChartConfiguration, ChartDataset, Plugin } from "chart.js";
-import { allIntegers, prepareData } from "./data.ts";
+import { allIntegers, onTimeAxis, prepareData } from "./data.ts";
 import type { PreparedData, PreparedSeries } from "./data.ts";
 import { isPlain } from "./guards.ts";
 import { barHoldsLabel, formatLabel, insidePlot } from "./labels.ts";
 import type { Obj } from "./guards.ts";
-import type { AxisSpec, ChartSpec, Stepped } from "./spec.ts";
+import type { AxisSpec, ChartSpec, DateUnit, Stepped } from "./spec.ts";
 import type { Theme } from "./theme.ts";
+
+const TOOLTIP_FORMATS: Record<DateUnit, string> = {
+  day: "ll",
+  week: "[Week of] ll",
+  month: "MMMM YYYY",
+  year: "YYYY",
+};
+
+function timeAxis(unit: DateUnit): Obj {
+  return { type: "time", time: { unit, isoWeekday: true, tooltipFormat: TOOLTIP_FORMATS[unit] } };
+}
 
 export const DEFAULT_BAR_THICKNESS = 28;
 const DEFAULT_HEIGHT = 300;
@@ -433,6 +444,11 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
       ticks: { color: theme.text, font: textFont(theme) },
       grid: horizontal ? { display: false } : { color: theme.grid },
     };
+    if (spec.dateUnit && onTimeAxis(spec)) {
+      Object.assign(categoryAxis, timeAxis(spec.dateUnit));
+      // A time axis runs upward, but sideways bars read top-down like a list
+      if (horizontal) categoryAxis.reverse = true;
+    }
     options.indexAxis = horizontal ? "y" : "x";
     options.scales = {
       x: applyAxis(horizontal ? valueAxis : categoryAxis, spec.axes?.x),

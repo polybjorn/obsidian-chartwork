@@ -8,10 +8,11 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 
 | Option | Key in the `.base` file | What it does |
 |---|---|---|
-| Category property | `x` | The property that names each bar or slice. A list property puts a note in every category it lists. Links show as the note name, tags without the `#`. |
-| Aggregation | `aggregation` | `count` (the default) counts notes, `sum` adds up the value property, `average` averages it. |
-| Value property | `y` | The number to sum or average. Hidden while counting. Text that reads as a number, like `"412"` or `3,5`, counts as one; anything else is skipped. |
+| Category property | `x` | The property that names each bar or slice. A list property puts a note in every category it lists. Links show as the note name, tags without the `#`. A date property groups by date, see [Dates](#dates). |
+| Aggregation | `aggregation` | `count` (the default) counts notes, `sum` adds up the value property, `average` averages it, `min` and `max` keep the smallest or largest. |
+| Value property | `y` | The number to sum, average, or take the smallest or largest of. Hidden while counting. Text that reads as a number, like `"412"` or `3,5`, counts as one; anything else is skipped. |
 | Chart type | `kind` | `bar`, `line`, `pie` or `doughnut`. |
+| Group dates by | `dateUnit` | `day` (the default), `week`, `month` or `year`, when the category is a date. |
 | Horizontal bars | `horizontal` | Bars run sideways, and the chart grows taller with each category so bars keep the same thickness. |
 | Title | `title` | Shown above the chart. |
 | Sort | `categorySort` | `none` keeps the order categories first appear in, `value` puts the largest first, `label` sorts by name. |
@@ -24,6 +25,24 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 When the base is grouped, each group becomes its own series: one bar per group within each category, and a legend.
 
 Bases keeps `sort` and `order` for its own settings, which is why Chartwork's are named `categorySort` and `categoryOrder`.
+
+## Dates
+
+When every category value is a date, a date and time, or a note named like `2026-03-02`, the notes are grouped by day, week, month or year. Weeks start on Monday. The time and time zone of a value are left out, so a run logged at 23:40 counts on its own day. Notes with no date are left out.
+
+Bar and line charts then draw on a time axis: the categories run in date order, spaced by time, so a missing week shows as a gap rather than closing up. With count or sum, a period with no notes shows as 0; with average, min or max it has no point, and a line runs past it. Sort, Order first and Largest categories to keep do not apply on a time axis. Pie and doughnut slices are labeled `2026-03-02`, `2026-W10`, `2026-03` or `2026`.
+
+If any category value is not a date, the property is charted as plain categories.
+
+This counts daily notes per week, by their file names:
+
+```yaml
+views:
+  - type: chartwork-chart
+    name: Notes per week
+    x: file.name
+    dateUnit: week
+```
 
 ## Mapping values to labels
 

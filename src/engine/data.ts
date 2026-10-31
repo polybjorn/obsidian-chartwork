@@ -16,9 +16,17 @@ export interface PreparedData {
   series: PreparedSeries[];
 }
 
+export function onTimeAxis(spec: ChartSpec): boolean {
+  return spec.dateUnit !== undefined && (spec.kind === "bar" || spec.kind === "line");
+}
+
 function sortIndices(indices: number[], spec: ChartSpec, key: (i: number) => number): number[] {
   const mode = spec.topN !== undefined ? "value" : (spec.sort ?? "none");
   if (mode === "value") return [...indices].sort((a, b) => key(b) - key(a));
+  if (mode === "label" && spec.dateUnit !== undefined) {
+    const at = (i: number): string => spec.labels[i] ?? "";
+    return [...indices].sort((a, b) => (at(a) < at(b) ? -1 : at(a) > at(b) ? 1 : 0));
+  }
   if (mode === "label") return [...indices].sort((a, b) => (spec.labels[a] ?? "").localeCompare(spec.labels[b] ?? ""));
   return indices;
 }
@@ -31,6 +39,12 @@ function sortIndices(indices: number[], spec: ChartSpec, key: (i: number) => num
 export function prepareData(spec: ChartSpec): PreparedData {
   const value = (s: number, i: number): number | null => spec.series[s]?.values[i] ?? null;
   const first = (i: number): number => value(0, i) ?? 0;
+
+  // A line joins its points in data order, so on a time axis anything but
+  // date order zigzags; ISO dates sort as text
+  if (onTimeAxis(spec)) {
+    spec = { ...spec, sort: "label", topN: undefined, order: undefined };
+  }
 
   let kept = spec.labels.map((_, i) => i);
   let dropped: number[] = [];

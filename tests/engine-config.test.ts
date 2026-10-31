@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { prepareData } from "../src/engine/data.ts";
 import { bestFitValues, buildConfig, chartHeight, fillThemeDefaults, withAlpha, wrapTitle } from "../src/engine/config.ts";
 import type { Theme } from "../src/engine/theme.ts";
 import { parseVarRef, resolveConfigColors } from "../src/engine/theme.ts";
@@ -426,4 +427,16 @@ void test("a title brings its wrap plugin, a radar with rMax its clip, and neith
   const radar: ChartSpec = { kind: "radar", labels: ["a", "b", "c"], series: [{ name: "n", values: [1, 9, 2] }] };
   assert.deepEqual(ids(radar), []);
   assert.deepEqual(ids({ ...radar, axes: { r: { max: 5 } } }), ["chartworkRadialClip"]);
+});
+
+void test("dateUnit draws bar and line labels on a time axis in date order", () => {
+  const dated: ChartSpec = {
+    kind: "line", labels: ["2026-03-01", "2026-01-01"], series: [{ name: "n", values: [3, 1] }],
+    dateUnit: "month", sort: "value", topN: 1,
+  };
+  assert.equal(at(opts(dated), "scales.x.type"), "time");
+  assert.equal(at(opts(dated), "scales.x.time.unit"), "month");
+  assert.deepEqual(prepareData(dated).labels, ["2026-01-01", "2026-03-01"]);
+  assert.equal(at(opts({ ...dated, kind: "bar", horizontal: true }), "scales.y.reverse"), true);
+  assert.equal(at(opts({ ...dated, kind: "pie" }), "scales"), undefined);
 });

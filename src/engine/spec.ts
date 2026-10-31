@@ -12,6 +12,12 @@ export type Sort = (typeof SORTS)[number];
 export const LEGEND_SIDES = ["top", "bottom", "left", "right"] as const;
 export type LegendSide = (typeof LEGEND_SIDES)[number];
 
+export const DATE_UNITS = ["day", "week", "month", "year"] as const;
+export type DateUnit = (typeof DATE_UNITS)[number];
+
+/** An ISO date, optionally with a time: what a time axis reads from a label. */
+export const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?$/;
+
 export const AXIS_IDS = ["x", "y", "r"] as const;
 export type AxisId = (typeof AXIS_IDS)[number];
 
@@ -87,6 +93,11 @@ export interface ChartSpec {
   barThickness?: number;
   /** Bar, line: dashed lines across the chart where an axis reads these values, or these labels on the label axis. */
   referenceLines?: Partial<Record<"x" | "y", (number | string)[]>>;
+  /**
+   * Bar, line: the labels are ISO dates, drawn on a time axis in steps of this
+   * unit, in date order. Sort, order and topN are ignored.
+   */
+  dateUnit?: DateUnit;
   /** Bar, line: a dashed line at each series' mean, in its color. */
   average?: boolean;
   /** Line: a straight trend line fitted to one series by least squares. */

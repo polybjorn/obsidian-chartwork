@@ -12,18 +12,16 @@ import {
   type QueryController,
   type Value,
 } from "obsidian";
-import { CHART_KINDS, SORTS, errorText, isOneOf, renderSpec, showError, type ChartHandle } from "../engine/index.ts";
+import { CHART_KINDS, DATE_UNITS, SORTS, errorText, isOneOf, renderSpec, showError, type ChartHandle } from "../engine/index.ts";
 import {
+  AGGREGATIONS,
   NONE_LABEL,
   aggregateRows,
   parseCategoryColors,
-  type Aggregation,
   type Row,
 } from "./aggregate.ts";
 
 export const CHART_VIEW_TYPE = "chartwork-chart";
-
-const AGGREGATIONS: Aggregation[] = ["count", "sum", "average"];
 
 function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
   return [
@@ -33,7 +31,7 @@ function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
       key: "aggregation",
       displayName: "Aggregation",
       default: "count",
-      options: { count: "Count", sum: "Sum", average: "Average" },
+      options: { count: "Count", sum: "Sum", average: "Average", min: "Minimum", max: "Maximum" },
     },
     {
       type: "property",
@@ -48,6 +46,13 @@ function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
       displayName: "Chart type",
       default: "bar",
       options: { bar: "Bar", line: "Line", pie: "Pie", doughnut: "Doughnut" },
+    },
+    {
+      type: "dropdown",
+      key: "dateUnit",
+      displayName: "Group dates by",
+      default: "day",
+      options: { day: "Day", week: "Week", month: "Month", year: "Year" },
     },
     { type: "toggle", key: "horizontal", displayName: "Horizontal bars", default: false },
     { type: "text", key: "title", displayName: "Title" },
@@ -120,7 +125,7 @@ class ChartView extends BasesView {
     if (!x) return this.showMessage("Choose a category property in the view options.");
 
     const aggregationValue = this.config.get("aggregation");
-    const aggregation = AGGREGATIONS.find((a) => a === aggregationValue) ?? "count";
+    const aggregation = isOneOf(AGGREGATIONS, aggregationValue) ? aggregationValue : "count";
     const y = aggregation === "count" ? null : this.config.getAsPropertyId("y");
     if (aggregation !== "count" && !y) {
       return this.showMessage("Choose a value property in the view options.");
@@ -135,6 +140,7 @@ class ChartView extends BasesView {
     }
 
     const kindValue = this.config.get("kind");
+    const unitValue = this.config.get("dateUnit");
     const sortValue = this.config.get("categorySort");
     const topN = Number(this.config.get("topN"));
     const spec = aggregateRows(rows, {
@@ -148,6 +154,7 @@ class ChartView extends BasesView {
       order: text(this.config, "categoryOrder").split(",").map((s) => s.trim()).filter(Boolean),
       categoryColors: parseCategoryColors(this.config.get("categoryColors")),
       skipEmpty: this.config.get("skipEmpty") === true,
+      dateUnit: isOneOf(DATE_UNITS, unitValue) ? unitValue : "day",
       seriesName: y ? this.config.getDisplayName(y) : undefined,
       valueTitle: y ? this.config.getDisplayName(y) : undefined,
     });
