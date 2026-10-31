@@ -1,0 +1,3 @@
+[default]
+# Dataview's start-of-month date keyword
+extend-ignore-re = ['dv\.date\("som"\)']
