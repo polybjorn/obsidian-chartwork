@@ -220,7 +220,7 @@ export function bestFitValues(values: (number | null)[]): number[] | undefined {
 // The label axis reads a bare number as a position, so a number that is also a
 // label, such as a year, goes in as the label. An average follows its series:
 // the legend switching the series off hides its line too.
-function referenceAnnotations(spec: ChartSpec, theme: Theme, data: PreparedData, horizontal: boolean): Obj[] {
+function referenceAnnotations(spec: ChartSpec, theme: Theme, data: PreparedData, horizontal: boolean, stacked: boolean): Obj[] {
   const lines: Obj[] = [];
   const labelAxis = horizontal ? "y" : "x";
   for (const id of ["x", "y"] as const) {
@@ -230,14 +230,23 @@ function referenceAnnotations(spec: ChartSpec, theme: Theme, data: PreparedData,
     }
   }
   if (!spec.average) return lines;
-  data.series.forEach((s, si) => {
+  const means = data.series.map((s) => {
     const values = s.values.filter((v): v is number => v !== null);
-    if (values.length === 0) return;
+    return values.length === 0 ? undefined : values.reduce((sum, v) => sum + v, 0) / values.length;
+  });
+  // A stacked series is drawn on top of the ones below it, so its line sits
+  // on top of their means too
+  let below = 0;
+  data.series.forEach((_, si) => {
+    const mean = means[si];
+    if (mean === undefined) return;
+    const base = below;
+    below += mean;
     const color = colorFor(spec, theme, data, si);
     lines.push({
       type: "line",
       scaleID: horizontal ? "x" : "y",
-      value: values.reduce((sum, v) => sum + v, 0) / values.length,
+      value: stacked ? base + mean : mean,
       borderColor: Array.isArray(color) ? theme.text : color,
       borderWidth: 1.5,
       borderDash: REFERENCE_DASH,
@@ -245,6 +254,81 @@ function referenceAnnotations(spec: ChartSpec, theme: Theme, data: PreparedData,
     });
   });
   return lines;
+}
+
+/**
+ * Greedy word wrap. A word wider than the room stays on a line of its own
+ * rather than being cut. `width` measures one string in pixels.
+ */
+export function wrapTitle(text: string, room: number, width: (s: string) => number): string | string[] {
+  if (width(text) <= room) return text;
+  const lines: string[] = [];
+  let line = "";
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && width(next) > room) {
+      lines.push(line);
+      line = word;
+    } else line = next;
+  }
+  if (line) lines.push(line);
+  return lines.length > 1 ? lines : text;
+}
+
+// Chart.js squeezes a single-line title into the chart's width, so the lines
+// are chosen here on every layout, since a resize changes the width.
+function titleWrapPlugin(text: string, font: string): Plugin {
+  return {
+    id: "chartworkTitleWrap",
+    beforeLayout(chart) {
+      const block = (chart as unknown as { titleBlock?: { options: { text: string | string[] } } }).titleBlock;
+      if (!block) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.font = font;
+      // The title block pads 10 px on each side
+      block.options.text = wrapTitle(text, chart.width - 20, (s) => ctx.measureText(s).width);
+      ctx.restore();
+    },
+  };
+}
+
+// A value past a fixed rMax would otherwise draw over the point labels. A
+// radar's grid is a polygon, so a circular clip would leave arcs bulging out
+// between the spokes.
+function radialClipPlugin(polygon: boolean): Plugin {
+  return {
+    id: "chartworkRadialClip",
+    beforeDatasetsDraw(chart) {
+      const r = chart.scales.r as unknown as {
+        xCenter: number;
+        yCenter: number;
+        drawingArea: number;
+        getPointPosition(i: number, distance: number): { x: number; y: number };
+      } | undefined;
+      if (!r) return;
+      const ctx = chart.ctx;
+      // A little over the ring so its own line is not trimmed
+      const reach = r.drawingArea + 1;
+      ctx.save();
+      ctx.beginPath();
+      const count = chart.data.labels?.length ?? 0;
+      if (polygon && count >= 3) {
+        for (let i = 0; i < count; i++) {
+          const { x, y } = r.getPointPosition(i, reach);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+      } else {
+        ctx.arc(r.xCenter, r.yCenter, reach, 0, Math.PI * 2);
+      }
+      ctx.clip();
+    },
+    afterDatasetsDraw(chart) {
+      if (chart.scales.r) chart.ctx.restore();
+    },
+  };
 }
 
 export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
@@ -265,7 +349,8 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
         data: s.values,
         borderColor: c,
         backgroundColor: s.fill ? withAlpha(c ?? FALLBACK_COLOR, 0.25) : c,
-        fill: s.fill === true,
+        // Stacked, each area fills down to the series below it, as it is drawn
+        fill: s.fill === true ? (stacked ? (si === 0 ? "origin" : "-1") : true) : false,
         tension: spec.tension ?? 0.2,
         spanGaps: spec.spanGaps === true,
         ...lineExtras(s),
@@ -330,7 +415,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     plugins,
   };
   if (padding) options.layout = { padding };
-  const annotations = cartesian ? referenceAnnotations(spec, theme, data, horizontal) : [];
+  const annotations = cartesian ? referenceAnnotations(spec, theme, data, horizontal, stacked) : [];
   if (annotations.length > 0) plugins.annotation = { annotations };
 
   if (cartesian) {
@@ -366,16 +451,20 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     };
   }
 
+  const extra: Plugin[] = [];
+  if (spec.title) extra.push(titleWrapPlugin(spec.title, `bold ${theme.fontSize}px ${theme.font}`));
+  if (RADIAL.has(spec.kind) && spec.axes?.r?.max !== undefined) extra.push(radialClipPlugin(spec.kind === "radar"));
+
   return {
     type: spec.kind,
     data: { labels: data.labels, datasets },
     options,
-    plugins: labelsOn && labelShape
+    plugins: [...extra, ...(labelsOn && labelShape
       ? [valueLabelsPlugin({
         shape: labelShape, color: theme.text, size: smallSize(theme), halo: theme.background, font: theme.font, horizontal, stacked,
         reversed: spec.axes?.[horizontal ? "x" : "y"]?.reverse === true, seriesCount: data.series.length,
       })]
-      : [],
+      : [])],
   };
 }
 

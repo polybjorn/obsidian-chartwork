@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { bestFitValues, buildConfig, chartHeight, fillThemeDefaults, withAlpha } from "../src/engine/config.ts";
+import { bestFitValues, buildConfig, chartHeight, fillThemeDefaults, withAlpha, wrapTitle } from "../src/engine/config.ts";
 import type { Theme } from "../src/engine/theme.ts";
 import { parseVarRef, resolveConfigColors } from "../src/engine/theme.ts";
 import type { ChartSpec } from "../src/engine/spec.ts";
@@ -397,4 +397,33 @@ void test("bestFit adds a dashed trend line for the chosen series, on line chart
   assert.equal(buildConfig({ ...line, kind: "bar" }, theme).data.datasets.length, 2);
   const one: ChartSpec = { kind: "line", labels: ["a", "b"], bestFit: true, series: [{ name: "n", values: [1, 2] }] };
   assert.equal(at(opts(one), "plugins.legend.display"), true);
+});
+
+void test("stacked averages sit on top of the series below, stacked line fills run to the previous series", () => {
+  const stackedLine: ChartSpec = { kind: "line", labels: ["a", "b"], stacked: true, average: true,
+    series: [{ name: "n", values: [2, 4], fill: true }, { name: "m", values: [1, 3], fill: true }, { name: "o", values: [1, 1] }] };
+  const lines = at(opts(stackedLine), "plugins.annotation.annotations") as Record<string, unknown>[];
+  assert.deepEqual(lines.map((l) => l.value), [3, 5, 6]);
+  const fills = buildConfig(stackedLine, theme).data.datasets.map((d) => (d as unknown as Record<string, unknown>).fill);
+  assert.deepEqual(fills, ["origin", "-1", false]);
+  const flat = buildConfig({ ...stackedLine, stacked: false }, theme).data.datasets.map((d) => (d as unknown as Record<string, unknown>).fill);
+  assert.deepEqual(flat, [true, true, false]);
+  const unstacked = at(opts({ ...stackedLine, stacked: false }), "plugins.annotation.annotations") as Record<string, unknown>[];
+  assert.deepEqual(unstacked.map((l) => l.value), [3, 2, 1]);
+});
+
+void test("wrapTitle breaks at words to fit, leaves a fitting title alone", () => {
+  const w = (s: string): number => s.length * 10;
+  assert.equal(wrapTitle("short title", 200, w), "short title");
+  assert.deepEqual(wrapTitle("aaa bbb ccc ddd", 80, w), ["aaa bbb", "ccc ddd"]);
+  assert.deepEqual(wrapTitle("a verylongwordhere b", 60, w), ["a", "verylongwordhere", "b"]);
+  assert.equal(wrapTitle("unbreakable", 50, w), "unbreakable");
+});
+
+void test("a title brings its wrap plugin, a radar with rMax its clip, and neither without", () => {
+  const ids = (s: ChartSpec): string[] => (buildConfig(s, theme).plugins ?? []).map((p) => p.id);
+  assert.deepEqual(ids({ ...spec, title: "T", valueLabels: false }), ["chartworkTitleWrap"]);
+  const radar: ChartSpec = { kind: "radar", labels: ["a", "b", "c"], series: [{ name: "n", values: [1, 9, 2] }] };
+  assert.deepEqual(ids(radar), []);
+  assert.deepEqual(ids({ ...radar, axes: { r: { max: 5 } } }), ["chartworkRadialClip"]);
 });

@@ -19,10 +19,10 @@ series:
 | Key | Applies to | What it does |
 |---|---|---|
 | `type` | all | `bar`, `line`, `pie`, `doughnut`, `radar`, `polarArea`, `scatter` or `sankey` |
-| `title` | all | Shown above the chart |
+| `title` | all | Shown above the chart. A title wider than the chart wraps onto more lines |
 | `indexAxis: y` | bar, line | Horizontal bars |
 | `stacked: true` | bar, line | Stack the series |
-| `fill` | line, radar | `true` fills the area under each line. Radar shapes are filled unless `fill: false` |
+| `fill` | line, radar | `true` fills the area under each line, and with `stacked: true` each area down to the series below it. Radar shapes are filled unless `fill: false` |
 | `tension` | line | Curve, 0 for straight segments. Default 0.2 |
 | `spanGaps: true` | line, radar | Join the line across a missing value, or a blank table cell |
 | `beginAtZero` | bar, line, radar | Start the value axis at zero. Default `true` |
@@ -33,11 +33,11 @@ series:
 | `xTickDisplay` / `yTickDisplay` | bar, line, scatter | `false` hides the tick labels |
 | `xTickPadding` / `yTickPadding` | bar, line, scatter | Pixels between the tick labels and the axis |
 | `xLine` / `yLine` | bar, line | A dashed line across the chart at a value, or at a label on the label axis. Takes a list, like `yLine: [4, 6]` |
-| `average: true` | bar, line | A dashed line at each series' average, in the series color |
+| `average: true` | bar, line | A dashed line at each series' average, in the series color. With `stacked: true` the line sits at the average of the stack up to that series, where the series is drawn |
 | `bestFit: true` | line | A dashed straight trend line through the first series. Works with text labels and table charts |
 | `bestFitNumber` | line | Which series the trend line follows, counting from 0 |
 | `bestFitTitle` | line | Legend name of the trend line. Default `Line of Best Fit` |
-| `rMin` / `rMax` | radar, polarArea | Scale range |
+| `rMin` / `rMax` | radar, polarArea | Scale range. With `rMax` set, a value above it is drawn up to the outer ring and no further |
 | `labelColors: true` | bar | One color per label, as in a pie |
 | `valueLabels` | bar, line, pie, doughnut, polarArea | `true` prints each value on its bar, slice or point. `false` hides them on a single-series bar chart, where they show by default. Values use the same number format as the axis ticks. A zero bar, a point outside the axis range and a stacked segment too short for its value get no label |
 | `legend` | all | `false` hides the legend, `true` shows it |
