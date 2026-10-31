@@ -23,7 +23,7 @@ export default tseslint.config(
   {
     plugins: { obsidianmd },
     rules: {
-      "obsidianmd/ui/sentence-case": ["error", { brands: ["Chartwork", "Obsidian", "Bases", "Chart.js"] }],
+      "obsidianmd/ui/sentence-case": ["error", { brands: ["Chartwork", "Charts", "Obsidian", "Bases", "Chart.js"] }],
     },
   },
   // The plugin runs on mobile, where Node builtins do not exist; tests only

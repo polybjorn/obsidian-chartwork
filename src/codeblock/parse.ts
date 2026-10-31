@@ -13,6 +13,12 @@ type Obj = Record<string, unknown>;
 const KINDS: readonly string[] = ["bar", "line", "pie", "doughnut"];
 const UNSUPPORTED = ["radar", "polararea", "sankey"];
 
+/** Every key the parser reads; any other key in a block is ignored. */
+export const BLOCK_KEYS: readonly string[] = [
+  "type", "labels", "series", "indexAxis", "stacked", "fill", "tension",
+  "beginAtZero", "xTitle", "yTitle", "legend", "legendPosition", "width",
+];
+
 function isObj(v: unknown): v is Obj {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }

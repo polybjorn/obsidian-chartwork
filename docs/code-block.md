@@ -35,6 +35,8 @@ Colours come from the theme. A bar chart with one series prints each value on it
 
 - Charts' `radar`, `polarArea` and `sankey` types, and charts built from a table with `id:`, show a message saying they are not supported yet.
 - Keys not listed above are ignored. Raw Chart.js options in the block have no effect; use [the script function](script-api.md) for those.
-- While Charts is enabled, Chartwork leaves `chart` blocks to it. Disable Charts and reload to switch over.
+- While Charts is enabled, Chartwork leaves `chart` blocks to it, and says so once. Disable Charts and reload to switch over.
+
+Before removing Charts, run **Check chart blocks and scripts** from the command palette. It lists every block Chartwork can't draw or draws without some of its keys, and every script that calls `renderChart`, with a link to each line.
 
 A block with a mistake shows what is wrong in place of the chart, such as "Series 2 has a value that is not a number".

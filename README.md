@@ -28,9 +28,9 @@ Obsidian 1.10 or later. Chart.js 4 is bundled, so there is nothing else to insta
 - **Values on the bars** of a bar chart with one series.
 - **Even horizontal bars.** The chart grows taller with each category, so bars keep one thickness.
 - **Order and trimming.** In a Bases view or a script: sort by value or label, put chosen categories first, keep the largest few and add the rest up under one label.
-- **Notes made for the Charts plugin.** Its `chart` blocks and `window.renderChart` calls draw as they are. While Charts is enabled, Chartwork leaves them to it.
+- **Notes made for the Charts plugin.** Its `chart` blocks and `window.renderChart` calls draw as they are, and the command **Check chart blocks and scripts** lists any that won't. While Charts is enabled, Chartwork leaves them to it and says so once.
 
 ## What the plugin accesses
 
-- **Vault, read-only.** Chartwork sees only the data a Bases view, `chart` block or script hands it, and writes nothing. A Bases view's options are saved into its `.base` file by Bases itself.
+- **Vault, read-only.** Chartwork sees only the data a Bases view, `chart` block or script hands it, and writes nothing. The check command reads your notes to find chart blocks and scripts. A Bases view's options are saved into its `.base` file by Bases itself.
 - **No network.** The plugin makes no outbound requests.
