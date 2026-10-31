@@ -36,9 +36,9 @@ Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 
 - **Dates on a time axis.** A Bases view groups dates by day, week, month or year, with a gap where nothing happened.
 - **Order and trimming.** In a Bases view or a script: sort by value or label, put chosen categories first, keep the largest few and add the rest up under one label.
 
-## Compared with other chart plugins
+## Instead of other chart plugins
 
-Chartwork draws the `chart` blocks and `renderChart` scripts of [Charts](https://github.com/phibr0/obsidian-charts), which has had no release since January 2024, as they are on Chart.js 4, and leaves them to Charts while it is enabled. Unlike [Tracker](https://github.com/pyrochlore/obsidian-tracker) and [Bases Charts](https://github.com/mProjectsCode/obsidian-bases-charts-plugin), it totals dates by day, week, month or year and counts and adds up notes per category, and unlike Bases Charts it draws pie charts. Charts' chart-builder menu and image export, and Tracker's month calendar and streak summaries, are not in Chartwork.
+Notes written for [Charts](https://github.com/phibr0/obsidian-charts) work without changes, so you no longer need Charts. The Bases view counts notes and adds up values by category or by day, week, month or year. That does the job of [Bases Charts](https://github.com/mProjectsCode/obsidian-bases-charts-plugin) and most of what people use [Tracker](https://github.com/pyrochlore/obsidian-tracker) for. Tracker's month calendar and streak summaries, and Charts' chart builder and image export, are not in Chartwork.
 
 ## What the plugin accesses
 
