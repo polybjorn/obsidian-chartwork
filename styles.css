@@ -34,12 +34,9 @@
 
 /* Export to PDF lays the note out at the page's width without redrawing the
    charts, so a canvas keeps the width it was drawn at; shrinking it keeps the
-   whole chart on the page */
+   whole chart on the page. The box keeps its height: an auto height feeds
+   each Chart.js resize back into the next, so charts print at random sizes */
 @media print {
-  .chartwork-chart {
-    height: auto !important;
-  }
-
   .chartwork-chart canvas {
     max-width: 100% !important;
     height: auto !important;
