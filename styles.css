@@ -31,3 +31,17 @@
 .chartwork-notice-actions {
   margin-top: var(--size-4-2);
 }
+
+/* Export to PDF lays the note out at the page's width without redrawing the
+   charts, so a canvas keeps the width it was drawn at; shrinking it keeps the
+   whole chart on the page */
+@media print {
+  .chartwork-chart {
+    height: auto !important;
+  }
+
+  .chartwork-chart canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}

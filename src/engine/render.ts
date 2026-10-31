@@ -69,6 +69,10 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
       error = null;
       canvas.show();
       if (height !== undefined) wrapper.setCssProps({ height: `${height}px` });
+      // Export to PDF draws the note into a print container and prints it
+      // moments later, which would catch each chart part way through its
+      // opening animation
+      if (wrapper.closest(".print")) config.options = { ...config.options, animation: false };
       chart = new Chart(canvas, config);
     } catch (e) {
       // Chart.js keeps a chart that threw while drawing, and refuses the
