@@ -8,9 +8,13 @@ Charts in Obsidian, made from your notes, in three ways that are drawn alike and
 | `chart` code block | the numbers are in no note, so you type them in | nothing else |
 | JavaScript function | the numbers have to be worked out first, like notes created this month counted by tag | a plugin that runs JavaScript in notes, such as Dataview |
 
+| Light theme | Dark theme |
+|---|---|
+| ![Horizontal bar chart of books by genre in a Bases view, light theme](docs/images/theme-light.png) | ![The same chart in the dark theme](docs/images/theme-dark.png) |
+
 Chartwork only sees the data Obsidian passes to a view, or that a code block or script hands it. It writes nothing to your vault and makes no network requests; Chart.js 4 is bundled.
 
-> Not released yet. It runs my own vault; a first release follows once it has screenshots.
+> Not released yet; it runs my own vault.
 
 ## Why another chart plugin
 
@@ -37,6 +41,8 @@ views:
       - "Reading: rgb(173,247,182)"
       - "Yes: rgb(158,202,225)"
 ```
+
+![A Bases chart view with its options open: category property, aggregation, chart type, horizontal bars and title](docs/images/bases-view.png)
 
 Notes created this month, counted by tag, is a script in my vault. With Charts it went through a 57-line helper that themed and labelled a raw Chart.js config. With Chartwork the script only works out the numbers:
 
