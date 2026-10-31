@@ -1,3 +1,4 @@
+import { isPlain } from "./guards.ts";
 import type { ChartSpec } from "./spec.ts";
 
 export interface Theme {
@@ -93,4 +94,23 @@ export function resolveSpecColors(spec: ChartSpec, el: HTMLElement): ChartSpec {
     );
   }
   return out;
+}
+
+const COLOR_KEY = /colou?r/i;
+
+/**
+ * Copy of a raw Chart.js config with each `var(--x)` under a colour key
+ * (`backgroundColor`, `colorFrom` and the like, with the arrays and name maps
+ * inside them) passed through `resolve`. Other keys keep theirs, since a
+ * `var()` in `font.family` is no colour.
+ */
+export function resolveConfigColors<T>(value: T, resolve: (color: string) => string, colorKey = false): T {
+  if (typeof value === "string") {
+    return (colorKey && parseVarRef(value) ? resolve(value) : value) as T;
+  }
+  if (Array.isArray(value)) return value.map((v: unknown) => resolveConfigColors(v, resolve, colorKey)) as T;
+  if (!isPlain(value)) return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([k, v]) => [k, resolveConfigColors(v, resolve, colorKey || COLOR_KEY.test(k))]),
+  ) as T;
 }

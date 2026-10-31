@@ -8,7 +8,7 @@ import { installDateAdapter } from "./date-adapter.ts";
 import { errorText, showError } from "./error.ts";
 import { isGone } from "./lifecycle.ts";
 import type { ChartHandle, ChartSpec, RenderContext } from "./spec.ts";
-import { readTheme, resolveSpecColors } from "./theme.ts";
+import { readTheme, resolveColor, resolveConfigColors, resolveSpecColors } from "./theme.ts";
 import type { Theme } from "./theme.ts";
 
 let registered = false;
@@ -149,7 +149,9 @@ export function renderSpec(el: HTMLElement, spec: ChartSpec, ctx: RenderContext)
  * config fails to draw, with the error shown in its place.
  */
 export function renderConfig(el: HTMLElement, config: ChartConfiguration, ctx: RenderContext, width?: string): ChartHandle | null {
-  const view = mount(el, ctx, (theme) => ({ config: fillThemeDefaults(config, theme) }), width);
+  const view = mount(el, ctx, (theme, wrapper) => ({
+    config: fillThemeDefaults(resolveConfigColors(config, (c) => resolveColor(c, wrapper)), theme),
+  }), width);
   if (view.failed()) return null;
   return { update: () => view.redraw(), destroy: () => view.destroy() };
 }

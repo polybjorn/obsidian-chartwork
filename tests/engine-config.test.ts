@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildConfig, chartHeight, fillThemeDefaults, withAlpha } from "../src/engine/config.ts";
 import type { Theme } from "../src/engine/theme.ts";
-import { parseVarRef } from "../src/engine/theme.ts";
+import { parseVarRef, resolveConfigColors } from "../src/engine/theme.ts";
 import type { ChartSpec } from "../src/engine/spec.ts";
 import type { ChartConfiguration } from "chart.js";
 
@@ -248,4 +248,25 @@ void test("theme fill colours sankey nodes by name, then by palette", () => {
   assert.equal(pick("colorFrom", 0), "#p1");
   assert.equal(pick("colorFrom", 1), "navy");
   assert.equal(pick("colorTo", 0), "#p2");
+});
+
+void test("var() colours in a raw config resolve under colour keys only", () => {
+  const config = {
+    type: "sankey",
+    data: { datasets: [{
+      data: [{ from: "a", to: "b", flow: 1 }],
+      colorFrom: { a: "var(--color-red)", b: "navy" },
+      backgroundColor: ["var(--color-blue)", "#fff"],
+      label: "var(--not-a-colour)",
+    }] },
+    options: { font: { family: "var(--font-text)" }, plugins: { legend: { labels: { color: "var(--text-muted)" } } } },
+  };
+  const out = resolveConfigColors(config, (c) => `resolved ${c}`);
+  const ds = out.data.datasets[0]!;
+  assert.deepEqual(ds.colorFrom, { a: "resolved var(--color-red)", b: "navy" });
+  assert.deepEqual(ds.backgroundColor, ["resolved var(--color-blue)", "#fff"]);
+  assert.equal(ds.label, "var(--not-a-colour)");
+  assert.equal(out.options.font.family, "var(--font-text)");
+  assert.equal(out.options.plugins.legend.labels.color, "resolved var(--text-muted)");
+  assert.equal(config.data.datasets[0]!.colorFrom.a, "var(--color-red)");
 });
