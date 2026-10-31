@@ -1,14 +1,22 @@
 # Chartwork
 
-Charts in Obsidian, made from your notes. Pick properties in a Bases view, type numbers into a code block, or compute them in a script. All three are drawn the same way and take their colours from your theme, light or dark.
+Charts in Obsidian, made from your notes, in three ways that are drawn alike and take their colours from your theme, light or dark:
 
-> Early development. Nothing is released yet, and this page describes what the first version is meant to do.
+| Way | Use it when | Needs |
+|---|---|---|
+| Bases view | the numbers are note properties, like books counted by status or hours summed by project | Bases, built into Obsidian |
+| `chart` code block | the numbers are in no note, so you type them in | nothing else |
+| JavaScript function | the numbers have to be worked out first, like notes created this month counted by tag | a plugin that runs JavaScript in notes, such as Dataview |
+
+Chartwork only sees the data Obsidian passes to a view, or that a code block or script hands it. It writes nothing to your vault and makes no network requests; Chart.js 4 is bundled.
+
+> Not released yet. It runs my own vault; a first release follows once it has screenshots.
 
 ## Why another chart plugin
 
-The most installed chart plugin, Charts, has had no release since January 2024 and still ships Chart.js 3. Newer plugins draw charts from Bases views, and do that well, but only that: none of them can chart numbers you computed yourself or typed in by hand.
+The most installed chart plugin, Charts, has had no release since January 2024 and still ships Chart.js 3. Newer plugins chart Bases views well, but nothing else.
 
-My own vault needs all three, and each chart there carries the same extra code to look right: reading the theme's colours so text stays readable on a dark background, putting the value on each bar, keeping horizontal bars the same thickness from one note to the next. Chartwork does that part itself, so a chart only has to say what to show.
+My vault needs all three, and each chart there carried the same extra code to look right: theme colours so text stays readable on dark, the value on each bar, horizontal bars of one thickness from note to note. Chartwork does that itself, so a chart only says what to show.
 
 Two charts from my vault show the difference. Books counted by reading status took 87 lines of Dataview JavaScript with Charts. With Chartwork it is a Bases view embedded in the note, most of it set up in the view's options:
 
@@ -48,16 +56,10 @@ window.chartwork.render(dv.container, {
 
 If you use Charts now, Chartwork reads Charts' `chart` blocks and `window.renderChart` calls as they are, so switching shouldn't mean editing your notes. While Charts is enabled, Chartwork leaves both to it.
 
-## Three ways to make a chart
+## Docs
 
-| Way | Use it when | Needs |
-|---|---|---|
-| Bases view | the numbers are note properties, like books counted by status or hours summed by project | Bases, built into Obsidian |
-| `chart` code block | the numbers are in no note, so you type them in | nothing else |
-| JavaScript function | the numbers have to be worked out first, like notes created this month counted by tag | a plugin that runs JavaScript in notes, such as Dataview |
-
-Most people will only need the Bases view. The other two cover what Bases can't express.
-
-Chartwork only sees the data Obsidian passes to a view, or that a code block or script hands it. It writes nothing to your vault and makes no network requests; Chart.js 4 is bundled.
+- [Bases view](docs/bases-view.md): every option, and how to chart a formula when the property's values need renaming
+- [Chart code block](docs/code-block.md): the YAML keys, and what differs from Charts
+- [Script function](docs/script-api.md): the full spec for `window.chartwork.render`, and Charts' `renderChart`
 
 Licensed under [MIT](LICENSE).
