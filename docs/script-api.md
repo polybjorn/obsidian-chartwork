@@ -12,19 +12,20 @@ window.chartwork.render(dv.container, {
 
 ![The pie chart this script draws](images/script.png)
 
-Usually the script works the numbers out first, here journal days counted by mood:
+Usually the script works the numbers out first, here notes created this month counted by tag:
 
 ```js
 const counts = {};
-for (const page of dv.pages('"Journal"')) {
-  const mood = page.mood ?? "unknown";
-  counts[mood] = (counts[mood] ?? 0) + 1;
+for (const page of dv.pages().where((p) => p.file.ctime >= dv.date("som"))) {
+  for (const tag of page.file.tags) counts[tag] = (counts[tag] ?? 0) + 1;
 }
 window.chartwork.render(dv.container, {
   kind: "bar",
+  horizontal: true,
   labels: Object.keys(counts),
-  series: [{ name: "Days", values: Object.values(counts) }],
+  series: [{ name: "Notes", values: Object.values(counts) }],
   sort: "value",
+  topN: 10,
 }, dv.component);
 ```
 
