@@ -23,8 +23,6 @@ CI never runs Obsidian, so run these against the build about to be tagged:
    keeps its own layout, with no chart styling left behind.
 9. A base embedded in a canvas draws at a steady size, with no scrollbars
    and no y axis that keeps growing.
-10. The open requests the README's comparison section links to are still
-    open. Drop a claim whose request has closed.
-11. When the change touches an Obsidian API, repeat 1 and 2 on the stable
+10. When the change touches an Obsidian API, repeat 1 and 2 on the stable
     release in a separate profile (`--user-data-dir`) with `docs/demo-vault`,
     since `minAppVersion` stays at stable.
