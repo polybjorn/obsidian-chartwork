@@ -1,12 +1,11 @@
 // Renders the README and docs screenshots from docs/demo-vault in a separate
 // Obsidian instance driven over the DevTools protocol. Its own --user-data-dir
 // keeps it apart from the Obsidian you have open: its own vault list, settings
-// and single-instance lock. A window image is the whole window as macOS draws
-// it, with rounded corners and shadow, so the terminal running it needs Screen
-// Recording access. A gallery image is the note's charts alone, in a grid.
-// Run with `npm run screenshots` (macOS), or name shots to render only those:
-// `npm run screenshots -- readme render-chart`.
-import { execFileSync, spawn } from "node:child_process";
+// and single-instance lock. An image is the note's charts alone, two to a row,
+// or with `crop`, that part of the page as drawn. Window chrome would double
+// each image's height in the docs. Run with `npm run screenshots`, or name
+// shots to render only those: `npm run screenshots -- readme render-chart`.
+import { spawn } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -19,20 +18,22 @@ const PORT = 9333;
 const WINDOW = { width: 1100, height: 780 };
 // The demo vault's note names are short, so the file list needs little room
 const SIDEBAR = 180;
-// Room under a fitted chart, so the status bar does not cover it
-const FIT_MARGIN = 72;
 const THEMES = { light: "moonstone", dark: "obsidian" };
-// Gallery charts are drawn this wide, so their text stays readable once the
+// Charts in a grid are drawn this wide, so their text stays readable once the
 // grid is scaled down to the README's width
-const GALLERY_LINE_WIDTH = 400;
-const GALLERY_GAP = 32;
+const GRID_LINE_WIDTH = 400;
+// Space around and between charts
+const GAP = 32;
+// Less around a crop, which would otherwise take in the text above it
+const CROP_PAD = 12;
 
 const SHOTS = [
-  { file: "Library.md", name: "readme", theme: "dark", gallery: 4 },
-  { file: "Genres.md", name: "bases-view", theme: "light", chart: ".chartwork-bases", menu: true },
-  { file: "Pages read.md", name: "code-block", theme: "light", chart: ".chartwork-block", fit: true },
-  { file: "Script.md", name: "script", theme: "light", chart: ".chartwork-script", script: true, fit: true },
-  { file: "Raw config.md", name: "render-chart", theme: "light", script: true, gallery: 4 },
+  { file: "Library.md", name: "readme", theme: "dark", charts: 4 },
+  // The toolbar shows the chart is a Bases view
+  { file: "Genres.md", name: "bases-view", theme: "light", charts: 1, crop: [".bases-toolbar", ".chartwork-bases"] },
+  { file: "Pages read.md", name: "code-block", theme: "light", charts: 1 },
+  { file: "Script.md", name: "script", theme: "light", script: true, charts: 1 },
+  { file: "Raw config.md", name: "render-chart", theme: "light", script: true, charts: 4 },
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -109,18 +110,6 @@ function prepare() {
   return { work, vault, profile };
 }
 
-// A real pointer press: Obsidian's menus react to mousedown, which a DOM
-// click() never sends
-async function press(cdp, expression) {
-  const at = await cdp.evaluate(`(() => {
-    const r = (${expression}).getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  })()`);
-  for (const type of ["mousePressed", "mouseReleased"]) {
-    await cdp.send("Input.dispatchMouseEvent", { type, ...at, button: "left", clickCount: 1 });
-  }
-}
-
 // The demo vault has no Dataview, so the note's dataviewjs block runs here
 // against a stand-in dv, and its code is hidden the way Dataview replaces it.
 // The picture comes from the very code the note holds
@@ -139,40 +128,20 @@ async function runScript(cdp, file) {
   })()`);
 }
 
-// The window id macOS gives the app's normal-level window, for screencapture
-function windowId(pid) {
-  const jxa = `ObjC.import("CoreGraphics");
-    const list = ObjC.castRefToObject($.CGWindowListCopyWindowInfo($.kCGWindowListOptionOnScreenOnly, 0));
-    let id = 0;
-    for (let i = 0; i < list.count; i++) {
-      const w = list.objectAtIndex(i);
-      const get = (k) => ObjC.unwrap(w.objectForKey(k));
-      if (get("kCGWindowOwnerPID") === ${pid} && get("kCGWindowLayer") === 0) id = get("kCGWindowNumber");
-    }
-    id;`;
-  const id = Number(execFileSync("osascript", ["-l", "JavaScript", "-e", jxa]).toString().trim());
-  if (!id) throw new Error("No Obsidian window found to capture");
-  return id;
-}
-
-async function resize(cdp, height) {
-  await cdp.evaluate(`require("@electron/remote").getCurrentWindow().setContentSize(${WINDOW.width}, ${height})`);
-  await sleep(500);
+function write(shot, base64) {
+  const file = join(OUT, `${shot.name}.png`);
+  writeFileSync(file, Buffer.from(base64, "base64"));
+  console.log(`Wrote ${file.slice(ROOT.length + 1)}`);
 }
 
 // The charts' own canvases, two to a row on the theme's background. Each
-// canvas is already at the screen's pixel density, so the grid is too
-async function gallery(cdp, shot) {
-  const sel = ".workspace-leaf.mod-active .markdown-reading-view canvas";
-  await waitFor(() => cdp.evaluate(`[...document.querySelectorAll(${JSON.stringify(sel)})]
-    .filter((c) => c.getBoundingClientRect().height > 0).length >= ${shot.gallery}`), `${shot.gallery} charts in ${shot.file}`);
-  // Chart.js animates in, and a theme change redraws after css-change
-  await sleep(1500);
+// canvas is already at the screen's pixel density, so the image is too
+async function grid(cdp, shot, sel) {
   const png = await cdp.evaluate(`(() => {
     const charts = [...document.querySelectorAll(${JSON.stringify(sel)})]
       .filter((c) => c.getBoundingClientRect().height > 0);
-    const gap = ${GALLERY_GAP} * window.devicePixelRatio;
-    const cols = 2;
+    const gap = ${GAP} * window.devicePixelRatio;
+    const cols = Math.min(2, charts.length);
     const rows = Math.ceil(charts.length / cols);
     const cellW = Math.max(...charts.map((c) => c.width));
     const cellH = Math.max(...charts.map((c) => c.height));
@@ -189,15 +158,30 @@ async function gallery(cdp, shot) {
     });
     return out.toDataURL("image/png").split(",")[1];
   })()`);
-  const file = join(OUT, `${shot.name}.png`);
-  writeFileSync(file, Buffer.from(png, "base64"));
-  console.log(`Wrote ${file.slice(ROOT.length + 1)}`);
+  write(shot, png);
 }
 
-async function shoot(cdp, shot, id) {
+// The smallest box around the crop's elements, as the page draws it
+async function crop(cdp, shot) {
+  const box = await cdp.evaluate(`(() => {
+    const rects = ${JSON.stringify(shot.crop)}
+      .map((s) => [...document.querySelectorAll(s)].find((e) => e.getBoundingClientRect().height > 0))
+      .filter(Boolean)
+      .map((e) => e.getBoundingClientRect());
+    const left = Math.min(...rects.map((r) => r.left)) - ${CROP_PAD};
+    const top = Math.min(...rects.map((r) => r.top)) - ${CROP_PAD};
+    const right = Math.max(...rects.map((r) => r.right)) + ${CROP_PAD};
+    const bottom = Math.max(...rects.map((r) => r.bottom)) + ${CROP_PAD};
+    return { x: left, y: top, width: right - left, height: bottom - top, scale: 1 };
+  })()`);
+  const { data } = await cdp.send("Page.captureScreenshot", { format: "png", clip: box, captureBeyondViewport: false });
+  write(shot, data);
+}
+
+async function shoot(cdp, shot) {
   await cdp.evaluate(`app.changeTheme(${JSON.stringify(THEMES[shot.theme])})`);
-  // Obsidian's readable line length, so the charts lay out at gallery size
-  await cdp.evaluate(`document.body.style.setProperty("--file-line-width", ${JSON.stringify(shot.gallery ? `${GALLERY_LINE_WIDTH}px` : "")})`);
+  // Obsidian's readable line length, so charts in a grid lay out at grid size
+  await cdp.evaluate(`document.body.style.setProperty("--file-line-width", ${JSON.stringify(shot.charts > 1 ? `${GRID_LINE_WIDTH}px` : "")})`);
   await cdp.evaluate(`(async () => {
     const leaf = app.workspace.getLeaf(false);
     await leaf.openFile(app.vault.getFileByPath(${JSON.stringify(shot.file)}), { state: { mode: "preview" } });
@@ -209,50 +193,12 @@ async function shoot(cdp, shot, id) {
     await sleep(1500);
     await runScript(cdp, shot.file);
   }
-  if (shot.gallery) return gallery(cdp, shot);
-  const sel = `.workspace-leaf.mod-active ${shot.chart} canvas`;
-  await waitFor(() => cdp.evaluate(`!!${visible(sel)}`), `${shot.chart} in ${shot.file}`);
-  if (shot.menu) {
-    // The options sit behind the icon on the active view's row in the view menu
-    await press(cdp, visible(".workspace-leaf.mod-active .bases-toolbar-views-menu .text-icon-button"));
-    const icon = ".bases-toolbar-menu-item.mod-active .bases-toolbar-menu-item-icon";
-    await waitFor(() => cdp.evaluate(`!!document.querySelector(${JSON.stringify(icon)})`), "the view menu");
-    await press(cdp, `document.querySelector(${JSON.stringify(icon)})`);
-    await sleep(300);
-    // The menu focuses the view name, selected. Blurring it closes the menu, so
-    // hide the selection and caret instead
-    await cdp.evaluate(`(() => {
-      const input = document.activeElement;
-      input?.setSelectionRange?.(input.value.length, input.value.length);
-      if (input) input.style.caretColor = "transparent";
-    })()`);
-  }
+  const sel = ".workspace-leaf.mod-active .markdown-reading-view canvas";
+  await waitFor(() => cdp.evaluate(`[...document.querySelectorAll(${JSON.stringify(sel)})]
+    .filter((c) => c.getBoundingClientRect().height > 0).length >= ${shot.charts}`), `${shot.charts} charts in ${shot.file}`);
   // Chart.js animates in, and a theme change redraws after css-change
   await sleep(1500);
-  // The theme switch redraws the chart, so the canvas can be briefly absent
-  await waitFor(() => cdp.evaluate(`!!${visible(sel)}`), `${shot.chart} after the redraw`);
-  // A short note leaves the lower half of the window empty, so the window ends
-  // under the chart. Only the height changes, so the chart keeps its size
-  if (shot.fit) {
-    const bottom = await cdp.evaluate(`Math.ceil(${visible(sel)}.getBoundingClientRect().bottom)`);
-    await resize(cdp, Math.min(WINDOW.height, bottom + FIT_MARGIN));
-  }
-  // An unfocused window draws its buttons grey
-  await cdp.evaluate(`(() => {
-    const remote = require("@electron/remote");
-    remote.app.focus({ steal: true });
-    remote.getCurrentWindow().focus();
-  })()`);
-  await sleep(300);
-  const file = join(OUT, `${shot.name}.png`);
-  execFileSync("screencapture", ["-x", "-l", String(id), file]);
-  console.log(`Wrote ${file.slice(ROOT.length + 1)}`);
-  if (shot.fit) await resize(cdp, WINDOW.height);
-  if (shot.menu) {
-    for (const type of ["keyDown", "keyUp"]) {
-      await cdp.send("Input.dispatchKeyEvent", { type, key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
-    }
-  }
+  await (shot.crop ? crop(cdp, shot) : grid(cdp, shot, sel));
 }
 
 const { work, vault, profile } = prepare();
@@ -276,10 +222,9 @@ try {
     app.workspace.leftSplit.setSize(${SIDEBAR});
   })()`);
   await sleep(500);
-  const id = windowId(app.pid);
   mkdirSync(OUT, { recursive: true });
   const only = process.argv.slice(2);
-  for (const shot of SHOTS) if (only.length === 0 || only.includes(shot.name)) await shoot(cdp, shot, id);
+  for (const shot of SHOTS) if (only.length === 0 || only.includes(shot.name)) await shoot(cdp, shot);
 } finally {
   cdp?.close();
   app.kill();
