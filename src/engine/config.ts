@@ -253,6 +253,38 @@ function annotationDefaults(options: Obj, theme: Theme): Obj {
   return { ...options, plugins: { ...plugins, annotation: { ...block, annotations } } };
 }
 
+// Sankey nodes take palette colours in order of first appearance. A plain
+// object for colorFrom or colorTo maps node names to colours, as Charts' block
+// writes it; Chart.js itself only takes a colour or a function there.
+function sankeyDataset(d: Obj, theme: Theme): Obj {
+  const rows = Array.isArray(d.data) ? d.data : [];
+  const order: string[] = [];
+  for (const row of rows) {
+    if (!isPlain(row)) continue;
+    for (const key of [row.from, row.to]) {
+      if (typeof key === "string" && !order.includes(key)) order.push(key);
+    }
+  }
+  const fallback = (node: unknown): string =>
+    theme.palette[order.indexOf(String(node)) % theme.palette.length] ?? FALLBACK_COLOR;
+  const endpoint = (side: "from" | "to", given: unknown): unknown => {
+    if (given !== undefined && !isPlain(given)) return given;
+    const named = isPlain(given) ? given : {};
+    return (ctx: { dataset: { data: Obj[] }; dataIndex: number }): string => {
+      const node = ctx.dataset.data[ctx.dataIndex]?.[side];
+      const color = named[String(node)];
+      return typeof color === "string" ? color : fallback(node);
+    };
+  };
+  return {
+    ...d,
+    color: d.color ?? theme.text,
+    borderColor: d.borderColor ?? theme.text,
+    colorFrom: endpoint("from", d.colorFrom),
+    colorTo: endpoint("to", d.colorTo),
+  };
+}
+
 /** Theme colours for a raw Chart.js config, without touching anything it already sets. */
 export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): ChartConfiguration {
   const type = String(config.type);
@@ -288,6 +320,7 @@ export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): Cha
   const paint = (i: number): string => theme.palette[i % theme.palette.length] ?? FALLBACK_COLOR;
   const datasets = config.data.datasets.map((ds, i) => {
     const d = ds as unknown as Obj;
+    if (type === "sankey") return sankeyDataset(d, theme);
     if (PER_POINT.has(type)) {
       const n = Array.isArray(d.data) ? d.data.length : 0;
       return {

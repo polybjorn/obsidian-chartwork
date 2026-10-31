@@ -1,6 +1,7 @@
 import { Component, Events } from "obsidian";
 import { Chart, registerables } from "chart.js";
 import type { ChartConfiguration } from "chart.js";
+import { Flow, SankeyController } from "chartjs-chart-sankey";
 import annotationPlugin from "chartjs-plugin-annotation";
 import { buildConfig, chartHeight, fillThemeDefaults } from "./config.ts";
 import { installDateAdapter } from "./date-adapter.ts";
@@ -15,7 +16,7 @@ function registerOnce(): void {
   if (registered) return;
   registered = true;
   // Every chart type and axis, since a config written for Charts may use any
-  Chart.register(...registerables, annotationPlugin);
+  Chart.register(...registerables, annotationPlugin, SankeyController, Flow);
   installDateAdapter();
 }
 

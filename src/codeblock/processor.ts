@@ -1,7 +1,7 @@
 import { MarkdownRenderChild, parseYaml } from "obsidian";
 import type { MarkdownPostProcessorContext, Plugin } from "obsidian";
 import { chartsEnabled } from "../compat/charts.ts";
-import { renderSpec, showError } from "../engine/index.ts";
+import { renderConfig, renderSpec, showError } from "../engine/index.ts";
 import type { ChartHandle, ChartSpec } from "../engine/index.ts";
 import { parseChartBlock, seriesFill } from "./parse.ts";
 import type { ParsedBlock, TableRef } from "./parse.ts";
@@ -13,7 +13,13 @@ import { tableToSeries } from "./table.ts";
  * note holding the table changes. An error replaces the chart in place and
  * the next good read brings the chart back.
  */
-function renderTableBlock(plugin: Plugin, el: HTMLElement, block: ParsedBlock & { table: TableRef }, ctx: MarkdownPostProcessorContext): void {
+function renderTableBlock(
+  plugin: Plugin,
+  el: HTMLElement,
+  block: ParsedBlock & { table: TableRef },
+  ctx: MarkdownPostProcessorContext,
+  seriesColors: () => string[],
+): void {
   const { table: ref } = block;
   const owner = new MarkdownRenderChild(el);
   ctx.addChild(owner);
@@ -57,7 +63,7 @@ function renderTableBlock(plugin: Plugin, el: HTMLElement, block: ParsedBlock & 
     host = el.createDiv({ cls: "chartwork-block" });
     if (block.width) host.setCssProps({ width: block.width });
     try {
-      handle = renderSpec(host, spec, { app, owner });
+      handle = renderSpec(host, spec, { app, owner, seriesColors });
     } catch (e) {
       fail(e instanceof Error ? e.message : "The chart failed to render.");
     }
@@ -89,8 +95,8 @@ export function registerChartBlock(plugin: Plugin, seriesColors: () => string[])
       showError(el, result.error);
       return;
     }
-    if (result.value.table) {
-      renderTableBlock(plugin, el, { ...result.value, table: result.value.table }, ctx);
+    if ("table" in result.value && result.value.table) {
+      renderTableBlock(plugin, el, { ...result.value, table: result.value.table }, ctx, seriesColors);
       return;
     }
     const owner = new MarkdownRenderChild(el);
@@ -98,7 +104,9 @@ export function registerChartBlock(plugin: Plugin, seriesColors: () => string[])
     const host = el.createDiv({ cls: "chartwork-block" });
     if (result.value.width) host.setCssProps({ width: result.value.width });
     try {
-      renderSpec(host, result.value.spec, { app: plugin.app, owner, seriesColors });
+      const value = result.value;
+      if ("config" in value) renderConfig(host, value.config, { app: plugin.app, owner, seriesColors });
+      else renderSpec(host, value.spec, { app: plugin.app, owner, seriesColors });
     } catch (e) {
       host.remove();
       showError(el, e instanceof Error ? e.message : "The chart failed to render.");

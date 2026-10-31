@@ -18,7 +18,7 @@ series:
 
 | Key | Applies to | What it does |
 |---|---|---|
-| `type` | all | `bar`, `line`, `pie`, `doughnut`, `radar` or `polarArea` |
+| `type` | all | `bar`, `line`, `pie`, `doughnut`, `radar`, `polarArea` or `sankey` |
 | `indexAxis: y` | bar, line | Horizontal bars |
 | `stacked: true` | bar, line | Stack the series |
 | `fill` | line, radar | `true` fills the area under each line. Radar shapes are filled unless `fill: false` |
@@ -58,9 +58,10 @@ layout: rows
 
 The first row and column hold the names. Lines without numbers are skipped.
 
+A `sankey` block takes rows of `[from, flow, to]` in the first series, as Charts does, plus optional `priority`, `colorFrom` and `colorTo` maps from node name to a number or CSS colour. Nodes without a colour take the theme's.
+
 ## Differences from Charts
 
-- Charts' `sankey` type shows a message saying it is not supported yet.
 - Keys not listed above are ignored. Raw Chart.js options in the block have no effect; use [the script function](script-api.md) for those.
 - While Charts is enabled, Chartwork leaves `chart` blocks to it, and says so once. Disable Charts and reload to switch over.
 

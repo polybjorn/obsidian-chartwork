@@ -24,7 +24,7 @@ series:
 ```
 ````
 
-Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 is bundled, so Bases views and code blocks need nothing else installed. The plugin is about 230 KB, almost all of it Chart.js.
+Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 is bundled, so Bases views and code blocks need nothing else installed. The plugin is about 290 KB, almost all of it Chart.js and its sankey and annotation plugins.
 
 ## What Chartwork takes care of
 
@@ -35,9 +35,7 @@ Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 
 
 ## Coming from Charts
 
-Your `chart` blocks and `renderChart` scripts draw as they are, with everything above on top, and the command **Check chart blocks and scripts** lists any that won't. While Charts is enabled, Chartwork leaves them to it.
-
-**Not there yet:** sankey charts. Charts' chart-builder menu and image export are left out.
+Your `chart` blocks and `renderChart` scripts draw as they are, with everything above on top, and the command **Check chart blocks and scripts** lists any that won't. While Charts is enabled, Chartwork leaves them to it. Charts' chart-builder menu and image export are left out.
 
 ## What the plugin accesses
 

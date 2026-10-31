@@ -7,6 +7,7 @@ import type { ParsedBlock } from "../src/codeblock/parse.ts";
 function ok(input: unknown): ParsedBlock {
   const r = parseChartBlock(input);
   assert.ok(r.ok, r.ok ? "" : r.error);
+  assert.ok("spec" in r.value);
   return r.value;
 }
 
@@ -85,8 +86,8 @@ void test("labels may be numbers or dates, a missing title gets a name, null is 
 });
 
 void test("unsupported types are rejected with the choices", () => {
-  for (const t of ["sankey", "scatter"]) {
-    assert.match(err({ ...base, type: t }), /bar, line, pie, doughnut, radar or polarArea/);
+  for (const t of ["scatter", "bubble"]) {
+    assert.match(err({ ...base, type: t }), /bar, line, pie, doughnut, radar, polarArea or sankey/);
   }
 });
 
@@ -115,4 +116,32 @@ void test("a block with id: refers to a table and needs no labels or series", ()
 
 void test("series given next to id: win over the table", () => {
   assert.equal(ok({ ...base, id: "t" }).table, undefined);
+});
+
+void test("a sankey block becomes a Chart.js config with from/to/flow rows", () => {
+  const r = parseChartBlock({
+    type: "sankey",
+    width: "60%",
+    series: [{
+      data: [["Oil", 15, "Energy"], ["Coal", 25, "Energy"]],
+      priority: { Oil: 1 },
+      colorFrom: { Oil: "black" },
+    }],
+  });
+  assert.ok(r.ok && "config" in r.value);
+  const config = r.value.config as unknown as { type: string; data: { datasets: Record<string, unknown>[] } };
+  assert.equal(config.type, "sankey");
+  assert.deepEqual(config.data.datasets[0]?.["data"], [
+    { from: "Oil", to: "Energy", flow: 15 },
+    { from: "Coal", to: "Energy", flow: 25 },
+  ]);
+  assert.deepEqual(config.data.datasets[0]?.["priority"], { Oil: 1 });
+  assert.deepEqual(config.data.datasets[0]?.["colorFrom"], { Oil: "black" });
+  assert.equal(r.value.width, "60%");
+});
+
+void test("a sankey block with bad rows says what is wrong", () => {
+  assert.match(err({ type: "sankey" }), /rows of \[from, flow, to\]/);
+  assert.match(err({ type: "sankey", series: [{ data: [["a", "x", "b"]] }] }), /number for the flow/);
+  assert.match(err({ type: "sankey", series: [{ data: [["a", 1]] }] }), /\[from, flow, to\]/);
 });

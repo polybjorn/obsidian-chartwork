@@ -34,9 +34,9 @@ void test("a chart fence shown inside a longer fence is an example, not a chart"
 });
 
 void test("a block in a callout is read without the quote markers", () => {
-  const findings = check('> [!note]\n> ```chart\n> {"type": "sankey"}\n> ```\n');
+  const findings = check('> [!note]\n> ```chart\n> {"type": "scatter"}\n> ```\n');
   assert.equal(findings[0]?.line, 1);
-  assert.match(findings[0]?.message ?? "", /sankey/);
+  assert.match(findings[0]?.message ?? "", /scatter/);
 });
 
 void test("tilde fences count", () => {

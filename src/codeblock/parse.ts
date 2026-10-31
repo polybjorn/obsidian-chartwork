@@ -1,3 +1,4 @@
+import type { ChartConfiguration } from "chart.js";
 import { CHART_KINDS, LEGEND_SIDES } from "../engine/spec.ts";
 import type { ChartKind, ChartSpec, Series } from "../engine/spec.ts";
 import { isObj, isOneOf } from "../engine/guards.ts";
@@ -22,10 +23,15 @@ export interface ParsedBlock {
   table?: TableRef;
 }
 
-export type ParseResult = { ok: true; value: ParsedBlock } | { ok: false; error: string };
+/** A block that goes straight to Chart.js because it has no labels-and-series shape. */
+export interface RawBlock {
+  config: ChartConfiguration;
+  width?: string;
+}
 
-const UNSUPPORTED = ["sankey"];
-const KIND_LIST = "bar, line, pie, doughnut, radar or polarArea";
+export type ParseResult = { ok: true; value: ParsedBlock | RawBlock } | { ok: false; error: string };
+
+const KIND_LIST = "bar, line, pie, doughnut, radar, polarArea or sankey";
 
 /** Every key the parser reads; any other key in a block is ignored. */
 export const BLOCK_KEYS: readonly string[] = [
@@ -91,15 +97,48 @@ function parseTableRef(input: Record<string, unknown>, fill: boolean | undefined
   return ref;
 }
 
+function blockWidth(input: Record<string, unknown>): string | undefined {
+  if (typeof input["width"] === "string") return input["width"];
+  if (typeof input["width"] === "number") return `${input["width"]}px`;
+  return undefined;
+}
+
+// Charts writes a sankey as rows of [from, flow, to] under the first series,
+// with priority, colorFrom and colorTo as maps from node name. The shape has
+// no labels or per-label values, so it becomes a Chart.js config directly.
+function parseSankey(input: Record<string, unknown>): ParseResult {
+  const series = input["series"];
+  const first: unknown = Array.isArray(series) ? series[0] : undefined;
+  if (!isObj(first) || !Array.isArray(first["data"]) || first["data"].length === 0) {
+    return fail("A sankey block needs series with rows of [from, flow, to], like data: [[Oil, 15, Energy]].");
+  }
+  const data: { from: string; to: string; flow: number }[] = [];
+  for (const row of first["data"] as unknown[]) {
+    const [from, flow, to] = Array.isArray(row) ? row as unknown[] : [];
+    const a = label(from);
+    const b = label(to);
+    if (a === undefined || b === undefined || typeof flow !== "number" || !Number.isFinite(flow)) {
+      return fail(`A sankey row must be [from, flow, to] with a number for the flow: ${JSON.stringify(row)}.`);
+    }
+    data.push({ from: a, to: b, flow });
+  }
+  const dataset: Record<string, unknown> = { data };
+  for (const key of ["priority", "colorFrom", "colorTo"]) {
+    const map = first[key];
+    if (isObj(map)) dataset[key] = map;
+  }
+  const config = { type: "sankey", data: { datasets: [dataset] } } as unknown as ChartConfiguration;
+  const width = blockWidth(input);
+  return { ok: true, value: width ? { config, width } : { config } };
+}
+
 export function parseChartBlock(input: unknown): ParseResult {
   if (!isObj(input)) return fail("The chart block is empty or is not a list of options. Start with type: bar.");
 
   const rawType = typeof input["type"] === "string" ? input["type"].trim() : "";
   if (!rawType) return fail(`The chart block needs a type: ${KIND_LIST}.`);
   const lower = rawType.toLowerCase();
-  if (UNSUPPORTED.includes(lower)) {
-    return fail(`The chart type "${rawType}" is not supported yet. Use ${KIND_LIST}.`);
-  }
+  if (lower === "sankey") return parseSankey(input);
   // Charts spells it polarArea, but a block in any case is meant the same
   const kind = CHART_KINDS.find((k) => k.toLowerCase() === lower);
   if (!kind) {
@@ -156,11 +195,8 @@ export function parseChartBlock(input: unknown): ParseResult {
   else if (isOneOf(LEGEND_SIDES, side)) spec.legend = side;
   else if (legend === true) spec.legend = true;
 
-  let width: string | undefined;
-  if (typeof input["width"] === "string") width = input["width"];
-  else if (typeof input["width"] === "number") width = `${input["width"]}px`;
-
   const value: ParsedBlock = { spec };
+  const width = blockWidth(input);
   if (width) value.width = width;
   if (table) value.table = table;
   return { ok: true, value };

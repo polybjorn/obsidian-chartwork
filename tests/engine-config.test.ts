@@ -232,3 +232,20 @@ void test("theme fill colours annotations the config left unpainted", () => {
   const listed = fillThemeDefaults({ ...config, options: { plugins: { annotation: { annotations: [{ type: "box" }] } } } } as unknown as ChartConfiguration, theme).options;
   assert.equal(at(listed, "plugins.annotation.annotations.0.borderColor"), "#111");
 });
+
+void test("theme fill colours sankey nodes by name, then by palette", () => {
+  const config = {
+    type: "sankey",
+    data: { datasets: [{
+      data: [{ from: "a", to: "b", flow: 1 }, { from: "c", to: "b", flow: 2 }],
+      colorFrom: { c: "navy" },
+    }] },
+  } as unknown as ChartConfiguration;
+  const ds = fillThemeDefaults(config, theme).data.datasets[0] as unknown as Record<string, unknown>;
+  assert.equal(ds["color"], "#111");
+  const pick = (key: "colorFrom" | "colorTo", i: number) =>
+    (ds[key] as (c: unknown) => string)({ dataset: ds, dataIndex: i });
+  assert.equal(pick("colorFrom", 0), "#p1");
+  assert.equal(pick("colorFrom", 1), "navy");
+  assert.equal(pick("colorTo", 0), "#p2");
+});
