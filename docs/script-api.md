@@ -39,7 +39,7 @@ A bad or unknown field throws an error naming it, such as `chartwork: series[0].
 
 | Field | Type | What it does |
 |---|---|---|
-| `kind` | `"bar"`, `"line"`, `"pie"`, `"doughnut"`, `"radar"` | Required. A radar takes its spokes from `labels` and draws one shape per series |
+| `kind` | `"bar"`, `"line"`, `"pie"`, `"doughnut"`, `"radar"`, `"polarArea"` | Required. A radar takes its spokes from `labels` and draws one shape per series. A polar area draws one segment per label, sized by the first series |
 | `labels` | string[] | Required. One per category |
 | `series` | `{name, values, color?, fill?}[]` | Required. `values` has one number or `null` per label. `color` is one colour or one per label. `fill` fills the area under a line; a radar is filled unless `fill` is `false` |
 | `title` | string | Shown above the chart |
@@ -50,11 +50,11 @@ A bad or unknown field throws an error naming it, such as `chartwork: series[0].
 | `order` | string[] | Labels to place first; the rest follow by `sort` |
 | `topN` | number | Keep the N largest categories by the first series |
 | `other` | string | With `topN`, sums the dropped categories under this label |
-| `categoryColors` | `{label: colour}` | Colour per category, for single-series bar, pie and doughnut charts |
+| `categoryColors` | `{label: colour}` | Colour per category, for single-series bar, pie, doughnut and polar area charts |
 | `valueTitle` | string | Title for the value axis |
 | `beginAtZero` | boolean | Value axis or radar scale starts at zero. Default `true` |
 | `tension` | number | Line curve from 0 to 1. Default 0.2 |
-| `legend` | boolean, `"top"`, `"bottom"`, `"left"`, `"right"` | Default shown for pie, doughnut and multi-series charts |
+| `legend` | boolean, `"top"`, `"bottom"`, `"left"`, `"right"` | Default shown for pie, doughnut, polar area and multi-series charts |
 | `barThickness` | number | Pixels per bar on a horizontal chart. Default 28 |
 
 Colours can be any CSS colour, including `var(--color-red)`. Without one, series take the colours listed under Series colors in Chartwork's settings, then `--chart-color-1`, `--chart-color-2` and on from a CSS snippet, else the theme's colours.

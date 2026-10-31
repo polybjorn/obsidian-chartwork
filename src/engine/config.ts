@@ -46,7 +46,7 @@ export function wantsValueLabels(spec: ChartSpec): boolean {
 function colorFor(spec: ChartSpec, theme: Theme, data: PreparedData, si: number): string | string[] {
   const series = data.series[si];
   const pick = (i: number): string => theme.palette[i % theme.palette.length] ?? FALLBACK_COLOR;
-  const perLabel = spec.kind === "pie" || spec.kind === "doughnut" ||
+  const perLabel = spec.kind === "pie" || spec.kind === "doughnut" || spec.kind === "polarArea" ||
     (spec.kind === "bar" && data.series.length === 1);
 
   if (!perLabel) return (typeof series?.color === "string" ? series.color : undefined) ?? pick(si);
@@ -155,7 +155,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
   const plugins: Obj = {
     legend: {
       display: spec.legend === undefined
-        ? spec.kind === "pie" || spec.kind === "doughnut" || data.series.length > 1
+        ? spec.kind === "pie" || spec.kind === "doughnut" || spec.kind === "polarArea" || data.series.length > 1
         : spec.legend !== false,
       ...(typeof spec.legend === "string" ? { position: spec.legend } : {}),
       labels: { color: theme.text, ...LEGEND_KEY },

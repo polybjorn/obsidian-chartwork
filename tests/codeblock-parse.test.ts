@@ -68,6 +68,10 @@ void test("a radar block fills each shape unless fill is false", () => {
   assert.equal(ok({ ...radar, fill: false }).spec.series[0]?.fill, false);
 });
 
+void test("polarArea is read in any case", () => {
+  for (const t of ["polarArea", "polararea", "PolarArea"]) assert.equal(ok({ ...base, type: t }).spec.kind, "polarArea");
+});
+
 void test("width accepts a string or a number of pixels", () => {
   assert.equal(ok({ ...base, width: "40%" }).width, "40%");
   assert.equal(ok({ ...base, width: 300 }).width, "300px");
@@ -81,8 +85,8 @@ void test("labels may be numbers or dates, a missing title gets a name, null is 
 });
 
 void test("unsupported types are rejected with the choices", () => {
-  for (const t of ["polarArea", "sankey", "scatter"]) {
-    assert.match(err({ ...base, type: t }), /bar, line, pie, doughnut or radar/);
+  for (const t of ["sankey", "scatter"]) {
+    assert.match(err({ ...base, type: t }), /bar, line, pie, doughnut, radar or polarArea/);
   }
 });
 

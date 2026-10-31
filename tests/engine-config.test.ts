@@ -67,6 +67,20 @@ void test("a radar draws one translucent shape per series on a themed radial sca
   assert.equal(at(o, "plugins.legend.display"), true);
 });
 
+void test("a polar area colours each segment by category on a themed radial scale", () => {
+  const polar: ChartSpec = { kind: "polarArea", labels: ["a", "b"], series: [{ name: "n", values: [3, 5] }], categoryColors: { b: "#c0ffee" } };
+  const config = buildConfig(polar, theme);
+  const ds = config.data.datasets as unknown as { backgroundColor: string[]; borderColor: string }[];
+  assert.equal(config.type, "polarArea");
+  assert.deepEqual(ds[0]?.backgroundColor, ["#p1", "#c0ffee"]);
+  assert.equal(ds[0]?.borderColor, "#fff");
+  const o = config.options;
+  assert.equal(at(o, "scales.r.grid.color"), "#ddd");
+  assert.equal(at(o, "scales.r.pointLabels.color"), "#111");
+  assert.equal(at(o, "scales.r.ticks.backdropColor"), "transparent");
+  assert.equal(at(o, "plugins.legend.display"), true);
+});
+
 void test("legend is hidden for one series and shown for several or for pie", () => {
   assert.equal(at(opts(spec), "plugins.legend.display"), false);
   const two = { ...spec, series: [...spec.series, { name: "m", values: [1, 2] }] };

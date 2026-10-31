@@ -3,7 +3,7 @@ import type { App, Component } from "obsidian";
 // Every entry point (Bases view, code block, script) translates its input into
 // a ChartSpec, so theming and layout are decided in the engine alone.
 
-export const CHART_KINDS = ["bar", "line", "pie", "doughnut", "radar"] as const;
+export const CHART_KINDS = ["bar", "line", "pie", "doughnut", "radar", "polarArea"] as const;
 export type ChartKind = (typeof CHART_KINDS)[number];
 
 export const SORTS = ["none", "value", "label"] as const;
@@ -39,7 +39,7 @@ export interface ChartSpec {
   topN?: number;
   /** With topN, sum the dropped categories into one under this label. */
   other?: string;
-  /** Colour per category label, for single-series bar, pie and doughnut charts. */
+  /** Colour per category label, for single-series bar, pie, doughnut and polar area charts. */
   categoryColors?: Record<string, string>;
   /** Axis title for the values. */
   valueTitle?: string;
@@ -47,7 +47,7 @@ export interface ChartSpec {
   beginAtZero?: boolean;
   /** Line curve, 0 for straight segments. Defaults to 0.2. */
   tension?: number;
-  /** Show the legend, or show it on one side. Defaults to shown when there is more than one series, and for pie and doughnut. */
+  /** Show the legend, or show it on one side. Defaults to shown when there is more than one series, and for pie, doughnut and polar area. */
   legend?: boolean | LegendSide;
   /** Horizontal bars: pixels per bar, so height follows the bar count. */
   barThickness?: number;

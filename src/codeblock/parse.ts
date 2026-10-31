@@ -10,8 +10,8 @@ export interface ParsedBlock {
 
 export type ParseResult = { ok: true; value: ParsedBlock } | { ok: false; error: string };
 
-const UNSUPPORTED = ["polararea", "sankey"];
-const KIND_LIST = "bar, line, pie, doughnut or radar";
+const UNSUPPORTED = ["sankey"];
+const KIND_LIST = "bar, line, pie, doughnut, radar or polarArea";
 
 /** Every key the parser reads; any other key in a block is ignored. */
 export const BLOCK_KEYS: readonly string[] = [
@@ -61,10 +61,11 @@ export function parseChartBlock(input: unknown): ParseResult {
   if (UNSUPPORTED.includes(lower)) {
     return fail(`The chart type "${rawType}" is not supported yet. Use ${KIND_LIST}.`);
   }
-  if (!isOneOf(CHART_KINDS, lower)) {
+  // Charts spells it polarArea, but a block in any case is meant the same
+  const kind = CHART_KINDS.find((k) => k.toLowerCase() === lower);
+  if (!kind) {
     return fail(`Unknown chart type "${rawType}". Use ${KIND_LIST}.`);
   }
-  const kind = lower;
 
   if (input["id"] !== undefined && input["series"] === undefined) {
     return fail("Charts from a table (id:) are not supported yet. Give the block labels and series.");

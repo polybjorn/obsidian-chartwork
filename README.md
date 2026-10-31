@@ -37,7 +37,7 @@ Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 
 
 Your `chart` blocks and `renderChart` scripts draw as they are, with everything above on top, and the command **Check chart blocks and scripts** lists any that won't. While Charts is enabled, Chartwork leaves them to it.
 
-**Not there yet:** polar area and sankey charts, charts from a table, and annotations. Charts' chart-builder menu and image export are left out.
+**Not there yet:** sankey charts, charts from a table, and annotations. Charts' chart-builder menu and image export are left out.
 
 ## What the plugin accesses
 
