@@ -1,9 +1,11 @@
 // Renders the README and docs screenshots from docs/demo-vault in a separate
 // Obsidian instance driven over the DevTools protocol. Its own --user-data-dir
 // keeps it apart from the Obsidian you have open: its own vault list, settings
-// and single-instance lock. Each image is the whole window as macOS draws it,
-// with rounded corners and shadow, so the terminal running it needs Screen
-// Recording access. Run with `npm run screenshots` (macOS).
+// and single-instance lock. A window image is the whole window as macOS draws
+// it, with rounded corners and shadow, so the terminal running it needs Screen
+// Recording access. A gallery image is the note's charts alone, in a grid.
+// Run with `npm run screenshots` (macOS), or name shots to render only those:
+// `npm run screenshots -- readme render-chart`.
 import { execFileSync, spawn } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -20,12 +22,17 @@ const SIDEBAR = 180;
 // Room under a fitted chart, so the status bar does not cover it
 const FIT_MARGIN = 72;
 const THEMES = { light: "moonstone", dark: "obsidian" };
+// Gallery charts are drawn this wide, so their text stays readable once the
+// grid is scaled down to the README's width
+const GALLERY_LINE_WIDTH = 400;
+const GALLERY_GAP = 32;
 
 const SHOTS = [
-  { file: "Reading.md", name: "readme", theme: "dark", chart: ".chartwork-bases" },
+  { file: "Library.md", name: "readme", theme: "dark", gallery: 4 },
   { file: "Genres.md", name: "bases-view", theme: "light", chart: ".chartwork-bases", menu: true },
   { file: "Pages read.md", name: "code-block", theme: "light", chart: ".chartwork-block", fit: true },
   { file: "Script.md", name: "script", theme: "light", chart: ".chartwork-script", script: true, fit: true },
+  { file: "Raw config.md", name: "render-chart", theme: "light", script: true, gallery: 4 },
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -153,8 +160,44 @@ async function resize(cdp, height) {
   await sleep(500);
 }
 
+// The charts' own canvases, two to a row on the theme's background. Each
+// canvas is already at the screen's pixel density, so the grid is too
+async function gallery(cdp, shot) {
+  const sel = ".workspace-leaf.mod-active .markdown-reading-view canvas";
+  await waitFor(() => cdp.evaluate(`[...document.querySelectorAll(${JSON.stringify(sel)})]
+    .filter((c) => c.getBoundingClientRect().height > 0).length >= ${shot.gallery}`), `${shot.gallery} charts in ${shot.file}`);
+  // Chart.js animates in, and a theme change redraws after css-change
+  await sleep(1500);
+  const png = await cdp.evaluate(`(() => {
+    const charts = [...document.querySelectorAll(${JSON.stringify(sel)})]
+      .filter((c) => c.getBoundingClientRect().height > 0);
+    const gap = ${GALLERY_GAP} * window.devicePixelRatio;
+    const cols = 2;
+    const rows = Math.ceil(charts.length / cols);
+    const cellW = Math.max(...charts.map((c) => c.width));
+    const cellH = Math.max(...charts.map((c) => c.height));
+    const out = document.createElement("canvas");
+    out.width = cols * cellW + (cols + 1) * gap;
+    out.height = rows * cellH + (rows + 1) * gap;
+    const ctx = out.getContext("2d");
+    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--background-primary");
+    ctx.fillRect(0, 0, out.width, out.height);
+    charts.forEach((c, i) => {
+      const x = gap + (i % cols) * (cellW + gap) + (cellW - c.width) / 2;
+      const y = gap + Math.floor(i / cols) * (cellH + gap) + (cellH - c.height) / 2;
+      ctx.drawImage(c, x, y);
+    });
+    return out.toDataURL("image/png").split(",")[1];
+  })()`);
+  const file = join(OUT, `${shot.name}.png`);
+  writeFileSync(file, Buffer.from(png, "base64"));
+  console.log(`Wrote ${file.slice(ROOT.length + 1)}`);
+}
+
 async function shoot(cdp, shot, id) {
   await cdp.evaluate(`app.changeTheme(${JSON.stringify(THEMES[shot.theme])})`);
+  // Obsidian's readable line length, so the charts lay out at gallery size
+  await cdp.evaluate(`document.body.style.setProperty("--file-line-width", ${JSON.stringify(shot.gallery ? `${GALLERY_LINE_WIDTH}px` : "")})`);
   await cdp.evaluate(`(async () => {
     const leaf = app.workspace.getLeaf(false);
     await leaf.openFile(app.vault.getFileByPath(${JSON.stringify(shot.file)}), { state: { mode: "preview" } });
@@ -166,6 +209,7 @@ async function shoot(cdp, shot, id) {
     await sleep(1500);
     await runScript(cdp, shot.file);
   }
+  if (shot.gallery) return gallery(cdp, shot);
   const sel = `.workspace-leaf.mod-active ${shot.chart} canvas`;
   await waitFor(() => cdp.evaluate(`!!${visible(sel)}`), `${shot.chart} in ${shot.file}`);
   if (shot.menu) {
@@ -234,7 +278,8 @@ try {
   await sleep(500);
   const id = windowId(app.pid);
   mkdirSync(OUT, { recursive: true });
-  for (const shot of SHOTS) await shoot(cdp, shot, id);
+  const only = process.argv.slice(2);
+  for (const shot of SHOTS) if (only.length === 0 || only.includes(shot.name)) await shoot(cdp, shot, id);
 } finally {
   cdp?.close();
   app.kill();
