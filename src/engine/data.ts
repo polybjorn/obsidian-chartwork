@@ -71,6 +71,16 @@ export function prepareData(spec: ChartSpec): PreparedData {
   const series = spec.series.map((s, si): PreparedSeries => {
     const values = indices.map((i) => value(si, i));
     if (hasOther) values.push(dropped.reduce((sum, i) => sum + (value(si, i) ?? 0), 0));
+    // Summed here, after the arrangement above, so the total follows the order drawn
+    if (spec.cumulative && (spec.kind === "bar" || spec.kind === "line")) {
+      let total = 0;
+      for (let k = 0; k < values.length; k++) {
+        const v = values[k];
+        if (v === null || v === undefined) continue;
+        total += v;
+        values[k] = total;
+      }
+    }
     const out: PreparedSeries = { name: s.name, values };
     if (s.fill !== undefined) out.fill = s.fill;
     if (s.stepped !== undefined) out.stepped = s.stepped;

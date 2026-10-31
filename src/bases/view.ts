@@ -61,6 +61,7 @@ function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
       options: { day: "Day", week: "Week", month: "Month", year: "Year" },
     },
     { type: "toggle", key: "horizontal", displayName: "Horizontal bars", default: false },
+    { type: "toggle", key: "cumulative", displayName: "Running total", default: false },
     { type: "text", key: "title", displayName: "Title" },
     {
       type: "group",
@@ -200,6 +201,7 @@ class ChartView extends BasesView {
       aggregation,
       kind: isOneOf(CHART_KINDS, kindValue) ? kindValue : "bar",
       horizontal: this.config.get("horizontal") === true,
+      cumulative: this.config.get("cumulative") === true,
       title: text(this.config, "title") || undefined,
       sort: isOneOf(SORTS, sortValue) ? sortValue : "none",
       topN: Number.isFinite(topN) ? topN : 0,

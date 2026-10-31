@@ -102,6 +102,8 @@ export interface ChartSpec {
    * unit, in date order. Sort, order and topN are ignored.
    */
   dateUnit?: DateUnit;
+  /** Bar, line: replace each series by its running sum in drawn order, after sort and topN. A null adds nothing and stays a gap. */
+  cumulative?: boolean;
   /** Bar, line: a dashed line at each series' mean, in its color. */
   average?: boolean;
   /** Line: a straight trend line fitted to one series by least squares. */

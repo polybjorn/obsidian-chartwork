@@ -83,6 +83,7 @@ The handle's `update` takes the shape the chart was made with: a spec for a spec
 | `width` | string or number | Chart width, as CSS (`"60%"`) or pixels (`400`). Default is the full width. An update can change it |
 | `referenceLines` | `{x?, y?}` | Bar and line charts: dashed lines across the chart at these values, or at labels on the label axis |
 | `average` | boolean | Bar and line charts: a dashed line at each series' average, in the series color; stacked, at the height the series is drawn |
+| `cumulative` | boolean | Bar and line charts: replace each series by its running sum, in the order drawn (after `sort`, `order` and `topN`, or in date order with `dateUnit`). A `null` adds nothing and stays a gap. Ignored for other kinds |
 | `bestFit` | boolean | Line charts: a dashed straight trend line fitted to one series |
 | `bestFitNumber` | number | Which series `bestFit` follows, counting from 0. Default 0 |
 | `bestFitTitle` | string | Legend name of the trend line. Default `"Line of Best Fit"` |

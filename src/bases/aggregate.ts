@@ -27,6 +27,8 @@ export interface AggregateOptions {
   seriesName?: string;
   /** When every category is a date, bucket by this unit. */
   dateUnit?: DateUnit;
+  /** Bar, line: draw each series as a running total. */
+  cumulative?: boolean;
   /** Series in this order, the rest after them as found. */
   seriesOrder?: string[];
   /** Bounds of the value axis, which is x when horizontal. */
@@ -268,6 +270,7 @@ export function aggregateRows(rows: Row[], opts: AggregateOptions): ChartSpec {
   if (opts.title) spec.title = opts.title;
   if (opts.valueTitle) spec.valueTitle = opts.valueTitle;
   if (opts.horizontal) spec.horizontal = true;
+  if (opts.cumulative && (opts.kind === "bar" || opts.kind === "line")) spec.cumulative = true;
   applyValueScale(spec, opts);
   if (onAxis) return spec;
   if (opts.sort) spec.sort = opts.sort;

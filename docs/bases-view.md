@@ -14,6 +14,7 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 | One series per property | `propertySeries` | Chart every property shown in the base's **Properties** menu, other than the category and the file name, as its own series, with the aggregation above. Count counts the notes that fill each one in. The value property is then hidden. |
 | Chart type | `kind` | `bar`, `line`, `pie` or `doughnut`. |
 | Group dates by | `dateUnit` | `day` (the default), `week`, `month` or `year`, when the category is a date. |
+| Running total | `cumulative` | Bar and line charts: each series becomes its running sum, in the order drawn, after Sort and Largest categories to keep. On a time axis the total runs in date order. A category with no value adds nothing and leaves a gap. Pie and doughnut charts ignore it. |
 | Horizontal bars | `horizontal` | Bars run sideways, and the chart grows taller with each category so bars keep the same thickness. |
 | Title | `title` | Shown above the chart. |
 | Minimum, Maximum | `yMin`, `yMax` | Range of the value axis, which is the horizontal one when bars run sideways. Empty fits the data. Not for pie and doughnut. |

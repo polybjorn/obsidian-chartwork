@@ -104,6 +104,13 @@ void test("an average over dates leaves empty buckets out instead of drawing zer
   assert.deepEqual(spec.series[0]?.values, [81, 79]);
 });
 
+void test("cumulative is set for bar and line only", () => {
+  const rows = [{ x: "a" }, { x: "b" }];
+  assert.equal(aggregateRows(rows, { ...base, cumulative: true }).cumulative, true);
+  assert.equal(aggregateRows(rows, { ...base, kind: "pie", cumulative: true }).cumulative, undefined);
+  assert.equal(aggregateRows(rows, base).cumulative, undefined);
+});
+
 void test("dates only count when every category is one, and a pie gets readable labels", () => {
   const mixed = aggregateRows([{ x: "2026-01-03" }, { x: "soon" }], { ...base, dateUnit: "day" });
   assert.deepEqual(mixed.labels, ["2026-01-03", "soon"]);

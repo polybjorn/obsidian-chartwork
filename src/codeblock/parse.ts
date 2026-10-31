@@ -49,7 +49,7 @@ export const BLOCK_KEYS: readonly string[] = [
   "xMin", "xMax", "xReverse", "xDisplay", "xTickDisplay", "xTickPadding",
   "yMin", "yMax", "yReverse", "yDisplay", "yTickDisplay", "yTickPadding",
   "rMin", "rMax", "spanGaps", "title", "valueLabels", "xLine", "yLine", "average",
-  "bestFit", "bestFitTitle", "bestFitNumber",
+  "bestFit", "bestFitTitle", "bestFitNumber", "cumulative",
 ];
 
 function fail(error: string): ParseResult {
@@ -309,6 +309,7 @@ export function parseChartBlock(input: unknown): ParseResult {
       spec.referenceLines = { ...spec.referenceLines, [id]: at as (number | string)[] };
     }
     if (bool(input["average"]) === true) spec.average = true;
+    if (bool(input["cumulative"]) === true) spec.cumulative = true;
   }
   if (kind === "line" && bool(input["bestFit"]) === true) {
     spec.bestFit = true;

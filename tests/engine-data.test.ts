@@ -62,3 +62,32 @@ void test("detects integer-only data", () => {
   assert.equal(allIntegers([{ values: [1, 2, 3] }, { values: [0] }]), true);
   assert.equal(allIntegers([{ values: [1, 2.5] }]), false);
 });
+
+void test("cumulative sums after sort and topN, in the order drawn", () => {
+  const sorted = prepareData({ ...base, cumulative: true, sort: "value" });
+  assert.deepEqual(sorted.series[0]?.values, [9, 16, 21, 24, 25]);
+  assert.deepEqual(sorted.series[1]?.values, [90, 160, 210, 240, 250]);
+  const top = prepareData({ ...base, cumulative: true, topN: 2, other: "Rest" });
+  assert.deepEqual(top.labels, ["b", "d", "Rest"]);
+  assert.deepEqual(top.series[0]?.values, [9, 16, 25]);
+});
+
+void test("cumulative keeps a null as a gap and adds nothing", () => {
+  const out = prepareData({ kind: "line", labels: ["a", "b", "c"], series: [{ name: "n", values: [2, null, 3] }], cumulative: true });
+  assert.deepEqual(out.series[0]?.values, [2, null, 5]);
+});
+
+void test("cumulative follows date order on a time axis", () => {
+  const out = prepareData({
+    kind: "line", dateUnit: "day", cumulative: true,
+    labels: ["2026-01-03", "2026-01-01", "2026-01-02"],
+    series: [{ name: "n", values: [4, 1, 2] }],
+  });
+  assert.deepEqual(out.labels, ["2026-01-01", "2026-01-02", "2026-01-03"]);
+  assert.deepEqual(out.series[0]?.values, [1, 3, 7]);
+});
+
+void test("cumulative is ignored for pie", () => {
+  const out = prepareData({ ...base, kind: "pie", cumulative: true });
+  assert.deepEqual(out.series[0]?.values, [3, 9, 1, 7, 5]);
+});

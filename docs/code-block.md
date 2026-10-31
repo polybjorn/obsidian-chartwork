@@ -34,6 +34,7 @@ series:
 | `xTickPadding` / `yTickPadding` | bar, line, scatter | Pixels between the tick labels and the axis |
 | `xLine` / `yLine` | bar, line | A dashed line across the chart at a value, or at a label on the label axis. Takes a list, like `yLine: [4, 6]` |
 | `average: true` | bar, line | A dashed line at each series' average, in the series color. With `stacked: true` the line sits at the average of the stack up to that series, where the series is drawn |
+| `cumulative: true` | bar, line | Draw each series as a running total, in label order and after any sorting. A missing value adds nothing and stays a gap. On a date axis the total follows date order |
 | `bestFit: true` | line | A dashed straight trend line through the first series. Works with text labels and table charts |
 | `bestFitNumber` | line | Which series the trend line follows, counting from 0 |
 | `bestFitTitle` | line | Legend name of the trend line. Default `Line of Best Fit` |

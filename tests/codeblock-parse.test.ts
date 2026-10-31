@@ -256,6 +256,13 @@ void test("xLine and yLine take a value or a label, or a list, and average a boo
   assert.equal(pie.average, undefined);
 });
 
+void test("cumulative applies to bar and line charts only", () => {
+  assert.equal(ok({ ...base, cumulative: true }).spec.cumulative, true);
+  assert.equal(ok({ ...base, type: "line", cumulative: true }).spec.cumulative, true);
+  assert.equal(ok({ ...base, type: "pie", cumulative: true }).spec.cumulative, undefined);
+  assert.equal(ok({ ...base }).spec.cumulative, undefined);
+});
+
 void test("bestFit keys apply to line charts, bestFitNumber counting from 0", () => {
   const { spec } = ok({ ...base, type: "line", bestFit: true, bestFitTitle: "Trend", bestFitNumber: 0 });
   assert.deepEqual([spec.bestFit, spec.bestFitTitle, spec.bestFitNumber], [true, "Trend", 0]);

@@ -7,7 +7,7 @@ const SPEC_KEYS = [
   "kind", "labels", "series", "title", "horizontal", "stacked", "valueLabels", "sort", "order",
   "topN", "other", "categoryColors", "labelColors", "valueTitle", "beginAtZero", "tension", "legend",
   "barThickness", "axes", "spanGaps", "referenceLines", "average", "dateUnit",
-  "bestFit", "bestFitTitle", "bestFitNumber", "height", "width",
+  "bestFit", "bestFitTitle", "bestFitNumber", "height", "width", "cumulative",
 ] as const;
 const SERIES_KEYS = ["name", "values", "color", "fill", "stepped", "hidden", "pointRadius"] as const;
 const AXIS_KEYS = ["min", "max", "reverse", "display", "ticks", "tickPadding"] as const;
@@ -159,6 +159,7 @@ export function validateSpec(input: unknown): ChartSpec {
   optBool(input, "spanGaps");
   optBool(input, "labelColors");
   optBool(input, "average");
+  optBool(input, "cumulative");
   optBool(input, "bestFit");
   optStr(input, "bestFitTitle");
   const fitted = input.bestFitNumber;
