@@ -170,7 +170,7 @@ window.chartwork.render(dv.container, {
   type: "line",
   data: {
     datasets: [
-      { label: "Weight", data: raw, showLine: false, pointRadius: 2, borderColor: "var(--text-faint)" },
+      { label: "Weight", data: raw, showLine: false, pointRadius: 2, borderColor: "var(--text-faint)", backgroundColor: "var(--text-faint)" },
       { label: "7-note average", data: average, pointRadius: 0, order: -1 },
     ],
   },
@@ -313,14 +313,16 @@ window.chartwork.render(dv.container, {
   },
   options: {
     scales: {
-      x: { type: "linear", min: -0.5, max: weeks - 0.5, ticks: { display: false }, grid: { display: false } },
+      x: { type: "linear", min: -0.5, max: weeks - 0.5, offset: false, ticks: { display: false }, grid: { display: false } },
       y: {
         type: "linear",
         reverse: true,
         min: -0.5,
         max: 6.5,
         offset: false,
-        ticks: { stepSize: 1, callback: (value) => weekdays[value] ?? "" },
+        // Ticks would start at min, -0.5, between the rows, so put one on each row
+        afterBuildTicks: (scale) => { scale.ticks = weekdays.map((_, value) => ({ value })); },
+        ticks: { callback: (value) => weekdays[value] },
         grid: { display: false },
       },
     },
@@ -331,6 +333,7 @@ window.chartwork.render(dv.container, {
           title: (items) => items[0].raw.d,
           label: (item) => `${item.raw.v} notes`,
         },
+        displayColors: false,
       },
     },
   },
