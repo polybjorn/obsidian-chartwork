@@ -236,6 +236,23 @@ const CARTESIAN = new Set(["bar", "line", "scatter", "bubble"]);
 // One colour per data point rather than per dataset
 const PER_POINT = new Set(["pie", "doughnut", "polarArea"]);
 
+// The plugin's own colours are fixed blues and blacks that clash with a theme.
+// Annotations come as a keyed object or a list; each keeps any colour it sets.
+function annotationDefaults(options: Obj, theme: Theme): Obj {
+  const plugins = options.plugins;
+  const block = isPlain(plugins) ? plugins.annotation : undefined;
+  if (!isPlain(plugins) || !isPlain(block) || block.annotations === undefined) return options;
+  const paint = (a: unknown): unknown => {
+    if (!isPlain(a)) return a;
+    return a.type === "label" ? fillDefaults(a, { color: theme.text }) : fillDefaults(a, { borderColor: theme.text });
+  };
+  const list = block.annotations;
+  const annotations = Array.isArray(list)
+    ? list.map(paint)
+    : isPlain(list) ? Object.fromEntries(Object.entries(list).map(([k, a]) => [k, paint(a)])) : list;
+  return { ...options, plugins: { ...plugins, annotation: { ...block, annotations } } };
+}
+
 /** Theme colours for a raw Chart.js config, without touching anything it already sets. */
 export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): ChartConfiguration {
   const type = String(config.type);
@@ -289,6 +306,6 @@ export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): Cha
   return {
     ...config,
     data: { ...config.data, datasets },
-    options: fillDefaults(options, defaults),
+    options: annotationDefaults(fillDefaults(options, defaults), theme),
   } as unknown as ChartConfiguration;
 }

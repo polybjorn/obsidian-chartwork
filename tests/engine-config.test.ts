@@ -206,3 +206,29 @@ void test("withAlpha turns hex and rgb into rgba and leaves other forms alone", 
   assert.equal(withAlpha("rgba(1, 2, 3, 0.9)", 0.25), "rgba(1, 2, 3, 0.25)");
   assert.equal(withAlpha("red", 0.25), "red");
 });
+
+void test("theme fill colours annotations the config left unpainted", () => {
+  const config = {
+    type: "line",
+    data: { labels: ["a"], datasets: [{ data: [1] }] },
+    options: {
+      plugins: {
+        annotation: {
+          annotations: {
+            goal: { type: "line", yMin: 5, yMax: 5 },
+            kept: { type: "line", yMin: 6, yMax: 6, borderColor: "red" },
+            note: { type: "label", content: "x" },
+          },
+        },
+      },
+    },
+  } as unknown as ChartConfiguration;
+  const o = fillThemeDefaults(config, theme).options;
+  assert.equal(at(o, "plugins.annotation.annotations.goal.borderColor"), "#111");
+  assert.equal(at(o, "plugins.annotation.annotations.goal.yMin"), 5);
+  assert.equal(at(o, "plugins.annotation.annotations.kept.borderColor"), "red");
+  assert.equal(at(o, "plugins.annotation.annotations.note.color"), "#111");
+
+  const listed = fillThemeDefaults({ ...config, options: { plugins: { annotation: { annotations: [{ type: "box" }] } } } } as unknown as ChartConfiguration, theme).options;
+  assert.equal(at(listed, "plugins.annotation.annotations.0.borderColor"), "#111");
+});
