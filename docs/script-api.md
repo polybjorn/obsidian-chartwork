@@ -45,7 +45,7 @@ A bad or unknown field throws an error naming it, such as `chartwork: series[0].
 | `title` | string | Shown above the chart |
 | `horizontal` | boolean | Bars run sideways |
 | `stacked` | boolean | Stack the series |
-| `valueLabels` | boolean | Print each value on its bar, slice or line point. Default on for single-series bars |
+| `valueLabels` | boolean | Print each value on its bar, slice or line point. Default on for single-series bars. Formatted like the axis ticks; a zero bar, a point outside the axis range and a too-short stacked segment get none |
 | `sort` | `"none"`, `"value"`, `"label"` | Category order. Default `"none"`, as given |
 | `order` | string[] | Labels to place first; the rest follow by `sort` |
 | `topN` | number | Keep the N largest categories by the first series |

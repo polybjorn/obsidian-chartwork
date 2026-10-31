@@ -2,6 +2,7 @@ import type { ArcElement, BarElement, ChartConfiguration, ChartDataset, Plugin }
 import { allIntegers, prepareData } from "./data.ts";
 import type { PreparedData, PreparedSeries } from "./data.ts";
 import { isPlain } from "./guards.ts";
+import { barHoldsLabel, formatLabel, insidePlot } from "./labels.ts";
 import type { Obj } from "./guards.ts";
 import type { AxisSpec, ChartSpec, Stepped } from "./spec.ts";
 import type { Theme } from "./theme.ts";
@@ -127,7 +128,7 @@ function valueLabelsPlugin(style: LabelStyle): Plugin {
         chart.getDatasetMeta(i).data.forEach((el, j) => {
           const v = ds.data[j];
           if (typeof v !== "number") return;
-          const text = String(v);
+          const text = formatLabel(v, chart.options.locale);
           if (style.shape === "arc") {
             if (!chart.getDataVisibility(j)) return;
             ctx.textAlign = "center";
@@ -136,6 +137,7 @@ function valueLabelsPlugin(style: LabelStyle): Plugin {
             return;
           }
           if (style.shape === "line") {
+            if (!insidePlot(el.x, el.y, chart.chartArea)) return;
             ctx.textAlign = "center";
             ctx.textBaseline = style.reversed ? "top" : "bottom";
             const y = el.y + (style.reversed ? 8 : -8);
@@ -144,7 +146,11 @@ function valueLabelsPlugin(style: LabelStyle): Plugin {
             return;
           }
           const bar = el as BarElement & { base: number };
+          if (!insidePlot(bar.x, bar.y, chart.chartArea)) return;
           const neg = (v < 0) !== style.reversed;
+          const segment = style.horizontal ? bar.x - bar.base : bar.y - bar.base;
+          const needed = style.horizontal ? ctx.measureText(text).width + 4 : style.size + 2;
+          if (!barHoldsLabel(v, style.stacked, segment, needed)) return;
           if (style.stacked) {
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
