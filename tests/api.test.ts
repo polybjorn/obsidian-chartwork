@@ -7,7 +7,7 @@ import { unwrapRaw } from "../src/api/raw.ts";
 const good = () => ({
   kind: "bar",
   labels: ["a", "b"],
-  series: [{ name: "n", values: [1, 2], color: ["#fff", "red"] }],
+  series: [{ name: "n", values: [1, 2], color: ["#fff", "red"], stepped: "middle", hidden: false, pointRadius: 0 }],
 });
 
 void test("accepts a minimal and a full spec", () => {
@@ -16,7 +16,7 @@ void test("accepts a minimal and a full spec", () => {
     validateSpec({
       ...good(), title: "t", horizontal: true, stacked: false, valueLabels: true, sort: "value",
       order: ["b"], topN: 3, other: "Other", categoryColors: { a: "red" }, valueTitle: "v", barThickness: 20,
-      beginAtZero: false, tension: 0.4, legend: "bottom", labelColors: true,
+      beginAtZero: false, tension: 0.4, legend: "bottom", labelColors: true, spanGaps: true,
       axes: { x: { min: "a", max: 1, reverse: true, display: true, ticks: false, tickPadding: 4 }, y: {}, r: { max: 5 } },
     }),
   );
@@ -36,6 +36,10 @@ const bad: [string, (s: Record<string, unknown>) => void, RegExp][] = [
   ["value length", (s) => { s.series = [{ name: "n", values: [1] }]; }, /1 entries but labels has 2/],
   ["color", (s) => { s.series = [{ name: "n", values: [1, 2], color: 5 }]; }, /color/],
   ["fill", (s) => { s.series = [{ name: "n", values: [1, 2], fill: "yes" }]; }, /fill/],
+  ["stepped", (s) => { s.series = [{ name: "n", values: [1, 2], stepped: "up" }]; }, /stepped must be a boolean, "before"/],
+  ["hidden", (s) => { s.series = [{ name: "n", values: [1, 2], hidden: 1 }]; }, /hidden must be a boolean/],
+  ["pointRadius", (s) => { s.series = [{ name: "n", values: [1, 2], pointRadius: -1 }]; }, /pointRadius must be a number of 0 or more/],
+  ["spanGaps", (s) => { s.spanGaps = "yes"; }, /spanGaps must be a boolean/],
   ["title", (s) => { s.title = 3; }, /title must be a string/],
   ["horizontal", (s) => { s.horizontal = "true"; }, /horizontal must be a boolean/],
   ["sort", (s) => { s.sort = "random"; }, /sort must be one of/],

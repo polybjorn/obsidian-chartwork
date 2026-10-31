@@ -226,6 +226,18 @@ void test("legend, tension and beginAtZero override the defaults", () => {
   assert.equal(at(line, "data.datasets.0.tension"), 0);
 });
 
+void test("series steps, dots and hidden state reach the datasets", () => {
+  const line = buildConfig({ ...spec, kind: "line", spanGaps: true, series: [{ name: "n", values: [2, null], stepped: "after", pointRadius: 0, hidden: true }] }, theme);
+  assert.equal(at(line, "data.datasets.0.stepped"), "after");
+  assert.equal(at(line, "data.datasets.0.pointRadius"), 0);
+  assert.equal(at(line, "data.datasets.0.hidden"), true);
+  assert.equal(at(line, "data.datasets.0.spanGaps"), true);
+  const plain = buildConfig({ ...spec, kind: "line" }, theme);
+  for (const key of ["stepped", "pointRadius", "hidden"]) assert.equal(at(plain, `data.datasets.0.${key}`), undefined);
+  assert.equal(at(plain, "data.datasets.0.spanGaps"), false);
+  assert.equal(at(buildConfig({ ...spec, series: [{ name: "n", values: [2, 4], hidden: true }] }, theme), "data.datasets.0.hidden"), true);
+});
+
 void test("a gap stays a gap and does not break integer detection", () => {
   const c = buildConfig({ ...spec, kind: "line", series: [{ name: "n", values: [2, null] }] }, theme);
   assert.deepEqual(at(c, "data.datasets.0.data"), [2, null]);

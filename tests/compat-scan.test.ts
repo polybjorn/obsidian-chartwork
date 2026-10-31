@@ -20,9 +20,9 @@ void test("an unsupported type is reported at its opening fence", () => {
 });
 
 void test("keys the parser does not read are listed", () => {
-  const block = '{"type": "bar", "labels": ["a"], "series": [{"title": "S", "data": [1]}], "spanGaps": true}';
+  const block = '{"type": "bar", "labels": ["a"], "series": [{"title": "S", "data": [1]}], "madeUpKey": true}';
   const findings = check(`\`\`\`chart\n${block}\n\`\`\``);
-  assert.deepEqual(findings.map((f) => [f.kind, f.message]), [["ignored", "Drawn, but without spanGaps."]]);
+  assert.deepEqual(findings.map((f) => [f.kind, f.message]), [["ignored", "Drawn, but without madeUpKey."]]);
 });
 
 void test("a block that is not valid YAML is an error", () => {

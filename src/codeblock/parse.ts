@@ -1,5 +1,5 @@
 import type { ChartConfiguration } from "chart.js";
-import { CHART_KINDS, LEGEND_SIDES } from "../engine/spec.ts";
+import { CHART_KINDS, LEGEND_SIDES, STEPS } from "../engine/spec.ts";
 import type { AxisId, AxisSpec, ChartKind, ChartSpec, Series } from "../engine/spec.ts";
 import { isObj, isOneOf } from "../engine/guards.ts";
 import { LAYOUTS } from "./table.ts";
@@ -40,7 +40,7 @@ export const BLOCK_KEYS: readonly string[] = [
   "id", "file", "layout", "select", "labelColors",
   "xMin", "xMax", "xReverse", "xDisplay", "xTickDisplay", "xTickPadding",
   "yMin", "yMax", "yReverse", "yDisplay", "yTickDisplay", "yTickPadding",
-  "rMin", "rMax",
+  "rMin", "rMax", "spanGaps",
 ];
 
 function fail(error: string): ParseResult {
@@ -106,6 +106,17 @@ function parseSeries(raw: unknown, index: number, kind: ChartKind, fill: boolean
   const series: Series = { name: title ?? `Series ${index + 1}`, values };
   const f = seriesFill(kind, fill);
   if (f !== undefined) series.fill = f;
+  // Charts hands a series' other keys to Chart.js, so these keep its spelling
+  const stepped = raw["stepped"];
+  if (kind === "line" && stepped !== undefined) {
+    if (typeof stepped !== "boolean" && !isOneOf(STEPS, stepped)) {
+      return `Series ${index + 1}: stepped must be true, false, before, after or middle, not ${JSON.stringify(stepped)}.`;
+    }
+    if (stepped !== false) series.stepped = stepped;
+  }
+  if ((kind === "bar" || kind === "line" || kind === "radar") && bool(raw["hidden"]) === true) series.hidden = true;
+  const radius = num(raw["pointRadius"]);
+  if ((kind === "line" || kind === "radar") && radius !== undefined && radius >= 0) series.pointRadius = radius;
   return series;
 }
 
@@ -223,6 +234,7 @@ export function parseChartBlock(input: unknown): ParseResult {
   }
 
   if (kind === "line" && typeof input["tension"] === "number") spec.tension = input["tension"];
+  if ((kind === "line" || kind === "radar") && bool(input["spanGaps"]) === true) spec.spanGaps = true;
   const zero = bool(input["beginAtZero"]);
   if (zero !== undefined) spec.beginAtZero = zero;
   const legend = bool(input["legend"]);

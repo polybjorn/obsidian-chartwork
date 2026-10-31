@@ -41,7 +41,7 @@ A bad or unknown field throws an error naming it, such as `chartwork: series[0].
 |---|---|---|
 | `kind` | `"bar"`, `"line"`, `"pie"`, `"doughnut"`, `"radar"`, `"polarArea"` | Required. A radar takes its spokes from `labels` and draws one shape per series. A polar area draws one segment per label, sized by the first series |
 | `labels` | string[] | Required. One per category |
-| `series` | `{name, values, color?, fill?}[]` | Required. `values` has one number or `null` per label. `color` is one color or one per label. `fill` fills the area under a line; a radar is filled unless `fill` is `false` |
+| `series` | `{name, values, color?, fill?, stepped?, hidden?, pointRadius?}[]` | Required. `values` has one number or `null` per label. `color` is one color or one per label. `fill` fills the area under a line; a radar is filled unless `fill` is `false`. `stepped` (`true`, `"after"`, `"middle"`) draws a line as steps, `hidden` starts a series switched off in the legend, and `pointRadius` sets the dot size, `0` for none |
 | `title` | string | Shown above the chart |
 | `horizontal` | boolean | Bars run sideways |
 | `stacked` | boolean | Stack the series |
@@ -55,6 +55,7 @@ A bad or unknown field throws an error naming it, such as `chartwork: series[0].
 | `valueTitle` | string | Title for the value axis |
 | `beginAtZero` | boolean | Value axis or radar scale starts at zero. Default `true` |
 | `tension` | number | Line curve from 0 to 1. Default 0.2 |
+| `spanGaps` | boolean | A line or radar joins across a `null` value instead of leaving a gap |
 | `legend` | boolean, `"top"`, `"bottom"`, `"left"`, `"right"` | Default shown for pie, doughnut, polar area and multi-series charts |
 | `barThickness` | number | Pixels per bar on a horizontal chart. Default 28 |
 | `axes` | `{x?, y?, r?}` | Per axis: `min`, `max`, `reverse`, `display`, `ticks` (`false` hides the tick labels) and `tickPadding`. `x` runs across and `y` up; `r` is the radar and polar area scale |

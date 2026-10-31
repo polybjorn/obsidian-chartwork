@@ -113,6 +113,19 @@ void test("unsupported types are rejected with the choices", () => {
   }
 });
 
+void test("series keep Charts' stepped, hidden and pointRadius, and the block its spanGaps", () => {
+  const line = { type: "line", labels: ["a", "b"], spanGaps: true, series: [{ title: "S", data: [1, null], stepped: true, hidden: true, pointRadius: 0 }, { title: "T", data: [2, 3], stepped: "middle" }] };
+  const { spec } = ok(line);
+  assert.equal(spec.spanGaps, true);
+  assert.deepEqual(spec.series.map((s) => [s.stepped, s.hidden, s.pointRadius]), [[true, true, 0], ["middle", undefined, undefined]]);
+  assert.match(err({ ...line, series: [{ title: "S", data: [1, 2], stepped: "up" }] }), /Series 1: stepped must be true, false, before, after or middle/);
+  // Keys that mean nothing for the chart type are left out
+  const bar = ok({ ...base, spanGaps: true, series: [{ title: "S", data: [1, 2], stepped: true, pointRadius: 0, hidden: true }] }).spec;
+  assert.equal(bar.spanGaps, undefined);
+  assert.deepEqual([bar.series[0]?.stepped, bar.series[0]?.pointRadius, bar.series[0]?.hidden], [undefined, undefined, true]);
+  assert.equal(ok({ ...base, type: "pie", series: [{ title: "S", data: [1, 2], hidden: true }] }).spec.series[0]?.hidden, undefined);
+});
+
 void test("invalid input gives readable errors", () => {
   assert.match(err(null), /empty/);
   assert.match(err("text"), /empty/);

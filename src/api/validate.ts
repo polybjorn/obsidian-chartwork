@@ -1,14 +1,14 @@
 import { isObj, isOneOf } from "../engine/guards.ts";
 import type { Obj } from "../engine/guards.ts";
-import { AXIS_IDS, CHART_KINDS, LEGEND_SIDES, SORTS } from "../engine/spec.ts";
+import { AXIS_IDS, CHART_KINDS, LEGEND_SIDES, SORTS, STEPS } from "../engine/spec.ts";
 import type { AxisSpec, ChartSpec, Series } from "../engine/spec.ts";
 
 const SPEC_KEYS = [
   "kind", "labels", "series", "title", "horizontal", "stacked", "valueLabels", "sort", "order",
   "topN", "other", "categoryColors", "labelColors", "valueTitle", "beginAtZero", "tension", "legend",
-  "barThickness", "axes",
+  "barThickness", "axes", "spanGaps",
 ] as const;
-const SERIES_KEYS = ["name", "values", "color", "fill"] as const;
+const SERIES_KEYS = ["name", "values", "color", "fill", "stepped", "hidden", "pointRadius"] as const;
 const AXIS_KEYS = ["min", "max", "reverse", "display", "ticks", "tickPadding"] as const;
 
 // A field added to ChartSpec or Series but not to the lists above would be
@@ -76,6 +76,18 @@ function series(v: unknown, path: string, labelCount: number): Series {
     if (typeof v.fill !== "boolean") fail(`${path}.fill`, "a boolean", v.fill);
     out.fill = v.fill;
   }
+  if (v.stepped !== undefined) {
+    if (typeof v.stepped !== "boolean" && !isOneOf(STEPS, v.stepped)) fail(`${path}.stepped`, 'a boolean, "before", "after" or "middle"', v.stepped);
+    out.stepped = v.stepped;
+  }
+  if (v.hidden !== undefined) {
+    if (typeof v.hidden !== "boolean") fail(`${path}.hidden`, "a boolean", v.hidden);
+    out.hidden = v.hidden;
+  }
+  if (v.pointRadius !== undefined) {
+    if (typeof v.pointRadius !== "number" || !Number.isFinite(v.pointRadius) || v.pointRadius < 0) fail(`${path}.pointRadius`, "a number of 0 or more", v.pointRadius);
+    out.pointRadius = v.pointRadius;
+  }
   return out;
 }
 
@@ -127,6 +139,7 @@ export function validateSpec(input: unknown): ChartSpec {
   optBool(input, "stacked");
   optBool(input, "valueLabels");
   optBool(input, "beginAtZero");
+  optBool(input, "spanGaps");
   optBool(input, "labelColors");
   if (input.tension !== undefined && (typeof input.tension !== "number" || input.tension < 0 || input.tension > 1)) {
     fail("tension", "a number from 0 to 1", input.tension);

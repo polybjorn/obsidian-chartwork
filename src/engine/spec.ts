@@ -31,6 +31,9 @@ export interface AxisSpec {
   tickPadding?: number;
 }
 
+export const STEPS = ["before", "after", "middle"] as const;
+export type Stepped = boolean | (typeof STEPS)[number];
+
 export interface Series {
   name: string;
   /** null leaves a gap, as in a line with a missing reading. */
@@ -39,6 +42,12 @@ export interface Series {
   color?: string | string[];
   /** Line: fill under the line. Radar: fill the shape, which is the default. */
   fill?: boolean;
+  /** Line: draw steps, rising at the point (true or "before"), after it, or midway. */
+  stepped?: Stepped;
+  /** Bar, line, radar: start switched off; the legend turns it on. */
+  hidden?: boolean;
+  /** Line, radar: dot size in pixels, 0 for none. */
+  pointRadius?: number;
 }
 
 export interface ChartSpec {
@@ -68,6 +77,8 @@ export interface ChartSpec {
   beginAtZero?: boolean;
   /** Line curve, 0 for straight segments. Defaults to 0.2. */
   tension?: number;
+  /** Line, radar: join the line across a missing value instead of leaving a gap. */
+  spanGaps?: boolean;
   /** Show the legend, or show it on one side. Defaults to shown when there is more than one series, and for pie, doughnut and polar area. */
   legend?: boolean | LegendSide;
   /** Range, direction and visibility per axis. */

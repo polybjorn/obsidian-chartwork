@@ -14,7 +14,7 @@ series:
 
 <img src="images/code-block.png" width="560" alt="A line chart of pages read per month, drawn from a chart code block">
 
-`type`, `labels` and `series` are required. Each series has a `title` and a `data` list with one value per label; `null` leaves a gap.
+`type`, `labels` and `series` are required. Each series has a `title` and a `data` list with one value per label; `null` leaves a gap. A series also takes `hidden: true` to start switched off in the legend (bar, line, radar), `pointRadius: 0` to hide its dots (line, radar), and `stepped` to draw steps on a line (`true`, `after` or `middle`).
 
 | Key | Applies to | What it does |
 |---|---|---|
@@ -23,6 +23,7 @@ series:
 | `stacked: true` | bar, line | Stack the series |
 | `fill` | line, radar | `true` fills the area under each line. Radar shapes are filled unless `fill: false` |
 | `tension` | line | Curve, 0 for straight segments. Default 0.2 |
+| `spanGaps: true` | line, radar | Join the line across a missing value, or a blank table cell |
 | `beginAtZero` | bar, line, radar | Start the value axis at zero. Default `true` |
 | `xTitle` / `yTitle` | bar, line | Title for the value axis (`xTitle` when the bars are horizontal) |
 | `xMin`, `xMax`, `yMin`, `yMax` | bar, line | Axis range. `x` runs across and `y` up, as drawn; the label axis takes a label |

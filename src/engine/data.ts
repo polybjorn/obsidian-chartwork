@@ -1,4 +1,4 @@
-import type { ChartSpec } from "./spec.ts";
+import type { ChartSpec, Stepped } from "./spec.ts";
 
 export interface PreparedSeries {
   name: string;
@@ -6,6 +6,9 @@ export interface PreparedSeries {
   /** Same length as labels when the spec gave one colour per label. */
   color?: string | string[];
   fill?: boolean;
+  stepped?: Stepped;
+  hidden?: boolean;
+  pointRadius?: number;
 }
 
 export interface PreparedData {
@@ -56,6 +59,9 @@ export function prepareData(spec: ChartSpec): PreparedData {
     if (hasOther) values.push(dropped.reduce((sum, i) => sum + (value(si, i) ?? 0), 0));
     const out: PreparedSeries = { name: s.name, values };
     if (s.fill !== undefined) out.fill = s.fill;
+    if (s.stepped !== undefined) out.stepped = s.stepped;
+    if (s.hidden !== undefined) out.hidden = s.hidden;
+    if (s.pointRadius !== undefined) out.pointRadius = s.pointRadius;
     if (Array.isArray(s.color)) {
       const colors = indices.map((i) => s.color?.[i] ?? "");
       // An empty entry means "use the palette"; the bucket has no colour of its own.

@@ -1,9 +1,9 @@
 import type { BarElement, ChartConfiguration, Plugin } from "chart.js";
 import { allIntegers, prepareData } from "./data.ts";
-import type { PreparedData } from "./data.ts";
+import type { PreparedData, PreparedSeries } from "./data.ts";
 import { isPlain } from "./guards.ts";
 import type { Obj } from "./guards.ts";
-import type { AxisSpec, ChartSpec } from "./spec.ts";
+import type { AxisSpec, ChartSpec, Stepped } from "./spec.ts";
 import type { Theme } from "./theme.ts";
 
 export const DEFAULT_BAR_THICKNESS = 28;
@@ -130,6 +130,14 @@ function applyAxis(scale: Obj, axis: AxisSpec | undefined): Obj {
   return out;
 }
 
+function lineExtras(s: PreparedSeries): { stepped?: Stepped; hidden?: boolean; pointRadius?: number } {
+  const out: { stepped?: Stepped; hidden?: boolean; pointRadius?: number } = {};
+  if (s.stepped !== undefined && s.stepped !== false) out.stepped = s.stepped;
+  if (s.hidden) out.hidden = true;
+  if (s.pointRadius !== undefined) out.pointRadius = s.pointRadius;
+  return out;
+}
+
 export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
   const data = prepareData(spec);
   const cartesian = spec.kind === "bar" || spec.kind === "line";
@@ -148,7 +156,8 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
         backgroundColor: s.fill ? withAlpha(c ?? FALLBACK_COLOR, 0.25) : c,
         fill: s.fill === true,
         tension: spec.tension ?? 0.2,
-        spanGaps: false,
+        spanGaps: spec.spanGaps === true,
+        ...lineExtras(s),
       };
     }
     if (spec.kind === "radar") {
@@ -160,11 +169,12 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
         backgroundColor: s.fill === false ? c : withAlpha(c ?? FALLBACK_COLOR, 0.25),
         pointBackgroundColor: c,
         fill: s.fill !== false,
-        spanGaps: false,
+        spanGaps: spec.spanGaps === true,
+        ...lineExtras(s),
       };
     }
     if (spec.kind === "bar") {
-      return { label: s.name, data: s.values, backgroundColor: color, borderWidth: 0 };
+      return { label: s.name, data: s.values, backgroundColor: color, borderWidth: 0, ...(s.hidden ? { hidden: true } : {}) };
     }
     return { label: s.name, data: s.values, backgroundColor: color, borderColor: theme.background, borderWidth: 2 };
   });
