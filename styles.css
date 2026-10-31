@@ -27,3 +27,7 @@
   font-size: var(--font-ui-small);
   white-space: pre-wrap;
 }
+
+.chartwork-notice-actions {
+  margin-top: var(--size-4-2);
+}

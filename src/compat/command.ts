@@ -66,13 +66,14 @@ class FindingsModal extends Modal {
 
 export function registerCompat(plugin: Plugin): void {
   const { app } = plugin;
+  const check = async (): Promise<void> => {
+    const results = await scanVault(app);
+    new FindingsModal(app, results, chartsEnabled(plugin)).open();
+  };
   plugin.addCommand({
     id: "check-chart-blocks",
     name: "Check chart blocks and scripts",
-    callback: async () => {
-      const results = await scanVault(app);
-      new FindingsModal(app, results, chartsEnabled(plugin)).open();
-    },
+    callback: check,
   });
 
   // Chartwork stays silent while Charts draws the blocks, so without this a
@@ -84,7 +85,12 @@ export function registerCompat(plugin: Plugin): void {
   }
   if (app.loadLocalStorage(NOTICE_SHOWN)) return;
   app.workspace.onLayoutReady(() => {
-    new Notice("Charts is enabled, so it keeps drawing chart blocks. To switch to Chartwork, disable Charts and reload Obsidian.", 0);
+    // A click anywhere on a notice closes it, the button included
+    const message = document.createDocumentFragment();
+    message.appendText("Charts is enabled, so it keeps drawing chart blocks. To switch to Chartwork, disable Charts and reload Obsidian.");
+    const button = message.createDiv({ cls: "chartwork-notice-actions" }).createEl("button", { text: "Check notes first" });
+    button.addEventListener("click", () => void check());
+    new Notice(message, 0);
     app.saveLocalStorage(NOTICE_SHOWN, true);
   });
 }
