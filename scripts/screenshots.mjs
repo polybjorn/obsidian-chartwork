@@ -39,6 +39,7 @@ const SHOTS = [
   { file: "Pages read.md", name: "code-block", theme: "light", charts: 1 },
   { file: "Script.md", name: "script", theme: "light", script: true, charts: 1 },
   { file: "Raw config.md", name: "render-chart", theme: "light", script: true, charts: 4 },
+  { file: "Time series.md", name: "time-series", theme: "light", script: true, charts: 1 },
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -263,7 +264,8 @@ async function shoot(cdp, shot) {
     await leaf.openFile(app.vault.getFileByPath(${JSON.stringify(shot.file)}), { state: { mode: "preview" } });
   })()`);
   if (shot.script) {
-    await waitFor(() => cdp.evaluate(`!!${visible(".workspace-leaf.mod-active .markdown-preview-sizer")}`), shot.file);
+    await waitFor(() => cdp.evaluate(`!!${visible(".workspace-leaf.mod-active .markdown-preview-sizer")}
+      ?.querySelector("code.language-dataviewjs")`), `the script in ${shot.file}`);
     // The preview renders in passes and drops what it did not render itself,
     // so the chart goes in once it has settled
     await sleep(1500);

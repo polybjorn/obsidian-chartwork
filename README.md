@@ -114,6 +114,14 @@ window.renderChart({
 
 </details>
 
+## Beyond the basics
+
+A script can also pass a full Chart.js config, with time axes, sankey diagrams and annotations built in. This one draws half a year of pages read per day, a 7-day average over it, a shaded holiday and a target line ([its script](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/demo-vault/Time%20series.md)):
+
+<img src="docs/images/time-series.png" width="720" alt="A line chart of pages read per day from April to September, with a thicker 7-day average line, July shaded as a holiday where the average rises above a dashed target line at 40">
+
+More in [Beyond the basics](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/advanced.md).
+
 ## Switching from another chart plugin
 
 Notes written for [Charts](https://github.com/phibr0/obsidian-charts) work without changes, so you no longer need Charts. The Bases view counts notes and adds up values by category or by day, week, month or year. That does the job of [Bases Charts](https://github.com/mProjectsCode/obsidian-bases-charts-plugin) and most of what people use [Tracker](https://github.com/pyrochlore/obsidian-tracker) for. Tracker's month calendar and streak summaries, and Charts' chart builder and image export, are not in Chartwork.
