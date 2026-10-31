@@ -1,4 +1,30 @@
 import type { ChartConfiguration } from "chart.js";
+import type { ChartSpec } from "../engine/spec.ts";
+
+/** The wrapper form of unwrapRaw's input. */
+export interface RawWrapper {
+  chartOptions: ChartConfiguration;
+  width?: string | number;
+}
+
+export type ChartInput = ChartSpec | ChartConfiguration | RawWrapper;
+
+/**
+ * Tells Chartwork's spec from a Chart.js config without guessing: a spec has
+ * `kind`, a config has `type` and `data`, and the wrapper has `chartOptions`.
+ * Anything with none of them goes down the spec path, whose validation says
+ * what is missing.
+ */
+export function shapeOf(data: unknown): "spec" | "config" {
+  if (typeof data !== "object" || data === null) return "spec";
+  const o = data as Record<string, unknown>;
+  const raw = o.chartOptions !== undefined || o.type !== undefined || o.data !== undefined;
+  if (o.kind !== undefined && raw) {
+    const other = o.chartOptions !== undefined ? "chartOptions" : o.type !== undefined ? "type" : "data";
+    throw new Error(`chartwork: got both "kind" and "${other}"; "kind" starts a Chartwork spec and "type" with "data" a Chart.js config, so pass one`);
+  }
+  return raw ? "config" : "spec";
+}
 
 export interface RawChart {
   config: ChartConfiguration;

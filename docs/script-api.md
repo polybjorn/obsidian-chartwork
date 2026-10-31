@@ -33,7 +33,27 @@ window.chartwork.render(dv.container, {
 
 A bad or unknown field throws an error naming it, such as `chartwork: series[0].values has 3 entries but labels has 4`; `update` checks the same way. The spec is copied, so changing it afterwards does nothing.
 
-`window.chartwork.version` tells a script which fields it can use.
+`window.chartwork.version` tells a script which fields it can use. From `0.1.0`, `render` also takes a Chart.js config.
+
+## A Chart.js config
+
+For a second axis, a time scale, a bubble chart, floating bars or custom tooltips, pass a raw Chart.js config instead of a spec. Same function, same `owner`:
+
+```js
+window.chartwork.render(dv.container, {
+  type: "line",
+  data: {
+    datasets: [{ label: "Pages", data: [{ x: "2026-01-01", y: 30 }, { x: "2026-02-01", y: 45 }] }],
+  },
+  options: { scales: { x: { type: "time" } } },
+}, dv.component);
+```
+
+A config has `type` and `data`, and a spec has `kind`. An object with both `kind` and `type` throws an error naming the two, since Chartwork will not guess which you meant. The wrapper `{chartOptions: config, width: "60%"}` works too.
+
+A config gets the same treatment as in `renderChart` below: theme colors and square legend keys wherever it sets none, `var(--color-red)` as a color, and time axes. If Chart.js rejects the config, `render` shows the error in the note instead of throwing. A config in the wrong shape, such as both `kind` and `type`, still throws.
+
+The handle's `update` takes the shape the chart was made with: a spec for a spec, a config for a config. The other shape throws `chartwork: update needs the same shape the chart was made with`. A `width` in an updated wrapper is ignored.
 
 ## Spec
 
@@ -81,6 +101,6 @@ new Function("module", "exports", "require", src)(module, module.exports, window
 
 ## Charts' `renderChart`
 
-Scripts for the Charts plugin call `window.renderChart(config, element)` with a raw Chart.js config, or `{chartOptions: config, width: "60%"}`. Without Charts installed, Chartwork provides it: any Chart.js chart type, sankey and time axes included, with theme colors and square legend keys wherever the config sets none. A color the config does set can be `var(--color-red)` as well. A failing config shows its error and returns `null`. Annotations draw, in the text color unless they set their own. New scripts should use `render`, which knows when a note closes.
+Scripts for the Charts plugin call `window.renderChart(config, element)` with a raw Chart.js config, or `{chartOptions: config, width: "60%"}`. Without Charts installed, Chartwork provides it: any Chart.js chart type, sankey and time axes included, with theme colors and square legend keys wherever the config sets none. A color the config does set can be `var(--color-red)` as well. A failing config shows its error and returns `null`. Annotations draw, in the text color unless they set their own. New scripts should use `render` for both a config and a spec, since it knows when a note closes.
 
 <img src="images/render-chart.png" width="560" alt="Four charts from renderChart: a radar of genres by year, a polar area of reading hours by time of day, a line of pages read on a time axis and a scatter of pages by year published">

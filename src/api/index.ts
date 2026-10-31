@@ -1,9 +1,11 @@
 import type { Component, Plugin } from "obsidian";
-import { registerItems, renderConfig, requireModule, renderSpec, showError, errorText } from "../engine/index.ts";
-import type { ChartHandle, ChartSpec } from "../engine/index.ts";
+import { drawConfig, registerItems, renderConfig, requireModule, renderSpec, showError, errorText } from "../engine/index.ts";
+import type { ChartHandle } from "../engine/index.ts";
 import { shouldInstallRenderChart, shouldRemoveRenderChart } from "./coexist.ts";
 import { unwrapRaw } from "./raw.ts";
-import { validateSpec } from "./validate.ts";
+import { makeRender } from "./render.ts";
+import type { RenderHandle } from "./render.ts";
+import type { ChartInput } from "./raw.ts";
 
 export interface ChartworkApi {
   version: string;
@@ -11,7 +13,8 @@ export interface ChartworkApi {
   require(name: string): unknown;
   /** Passes controllers, elements, scales and plugins through to Chart.register. */
   register(...items: Parameters<typeof registerItems>): void;
-  render(el: HTMLElement, spec: ChartSpec, owner?: Component): ChartHandle;
+  /** Takes a Chartwork spec or a Chart.js config; a script can test `version` for the config form. */
+  render(el: HTMLElement, input: ChartInput, owner?: Component): RenderHandle;
 }
 
 declare global {
@@ -29,10 +32,10 @@ export function installApi(plugin: Plugin, seriesColors: () => string[]): void {
     version: plugin.manifest.version,
     require: requireModule,
     register: (...items) => registerItems(...items),
-    render: (el, spec, owner = plugin) => {
-      const handle = renderSpec(el, validateSpec(spec), ctx(owner));
-      return { update: (next) => handle.update(validateSpec(next)), destroy: () => handle.destroy() };
-    },
+    render: makeRender({
+      spec: (el, spec, owner) => renderSpec(el, spec, ctx(owner)),
+      config: (el, config, owner, width) => drawConfig(el, config, ctx(owner), width),
+    }, plugin),
   };
   window.chartwork = api;
   plugin.register(() => {

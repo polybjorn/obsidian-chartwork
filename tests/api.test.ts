@@ -3,6 +3,80 @@ import assert from "node:assert/strict";
 import { validateSpec } from "../src/api/validate.ts";
 import { shouldInstallRenderChart, shouldRemoveRenderChart } from "../src/api/coexist.ts";
 import { unwrapRaw } from "../src/api/raw.ts";
+import { makeRender } from "../src/api/render.ts";
+import type { Drawers } from "../src/api/render.ts";
+
+function fakeRender() {
+  const calls: unknown[][] = [];
+  const log = (name: string) => (...args: unknown[]) => { calls.push([name, ...args]); };
+  const drawers: Drawers = {
+    spec: (_el, spec, owner) => { calls.push(["spec", spec, owner]); return { update: log("spec.update"), destroy: log("spec.destroy") }; },
+    config: (_el, config, owner, width) => { calls.push(["config", config, owner, width]); return { update: log("config.update"), destroy: log("config.destroy") }; },
+  };
+  const render = makeRender(drawers, "plugin" as never);
+  return { render: (input: unknown, owner?: unknown) => render({} as never, input as never, owner as never), calls };
+}
+
+const config = () => ({ type: "bar", data: { labels: ["a"], datasets: [{ data: [1] }] } });
+
+void test("render draws a spec and checks it", () => {
+  const { render, calls } = fakeRender();
+  render(good(), "note");
+  assert.equal(calls[0]?.[0], "spec");
+  assert.equal(calls[0]?.[2], "note");
+  assert.throws(() => render({ kind: "bar" }), /labels must be an array/);
+});
+
+void test("render owns a chart by the plugin unless told otherwise", () => {
+  const { render, calls } = fakeRender();
+  render(config());
+  assert.equal(calls[0]?.[2], "plugin");
+});
+
+void test("render draws a raw config, bare or wrapped with a width", () => {
+  const { render, calls } = fakeRender();
+  render(config(), "note");
+  assert.deepEqual(calls[0], ["config", config(), "note", undefined]);
+  render({ chartOptions: config(), width: "60%" });
+  assert.deepEqual(calls[1], ["config", config(), "plugin", "60%"]);
+  assert.throws(() => render({ chartOptions: 5 }), /chartOptions must be/);
+});
+
+void test("render rejects an object with both kind and type", () => {
+  const { render, calls } = fakeRender();
+  assert.throws(() => render({ ...good(), type: "bar" }), /both "kind" and "type"/);
+  assert.throws(() => render({ ...good(), data: {} }), /both "kind" and "data"/);
+  assert.throws(() => render({ ...good(), chartOptions: config() }), /both "kind" and "chartOptions"/);
+  assert.equal(calls.length, 0);
+});
+
+void test("update takes the shape the chart was made with", () => {
+  const { render, calls } = fakeRender();
+  const spec = render(good());
+  const next = { ...good(), title: "t" };
+  spec.update(next as never);
+  assert.deepEqual(calls.at(-1), ["spec.update", validateSpec(next)]);
+
+  const raw = render(config());
+  const nextConfig = { type: "line", data: { datasets: [] } };
+  raw.update(nextConfig as never);
+  assert.deepEqual(calls.at(-1), ["config.update", nextConfig]);
+  raw.update({ chartOptions: nextConfig } as never);
+  assert.deepEqual(calls.at(-1), ["config.update", nextConfig]);
+  raw.destroy();
+  assert.equal(calls.at(-1)?.[0], "config.destroy");
+});
+
+void test("update with the other shape throws", () => {
+  const { render, calls } = fakeRender();
+  const spec = render(good());
+  const raw = render(config());
+  const before = calls.length;
+  assert.throws(() => spec.update(config() as never), /same shape.*a spec, but got a Chart\.js config/);
+  assert.throws(() => raw.update(good() as never), /same shape.*a Chart\.js config, but got a spec/);
+  assert.throws(() => spec.update({ ...good(), type: "bar" } as never), /both "kind" and "type"/);
+  assert.equal(calls.length, before);
+});
 
 const good = () => ({
   kind: "bar",

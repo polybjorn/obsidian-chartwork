@@ -183,16 +183,40 @@ export function renderSpec(el: HTMLElement, spec: ChartSpec, ctx: RenderContext)
   };
 }
 
+export interface ConfigHandle {
+  /** Redraws with a new config; the width given at the start stays. */
+  update(config: ChartConfiguration): void;
+  destroy(): void;
+  /** Whether the last draw failed and shows an error instead. */
+  failed(): boolean;
+}
+
 /**
  * Draws a raw Chart.js config with theme colours filled in wherever it left
- * them unset. `update` ignores its spec: a raw config has no spec to apply, so
- * it only redraws the same config in the current theme. Returns null when the
- * config fails to draw, with the error shown in its place.
+ * them unset. A config that fails to draw still gives a handle, with the error
+ * shown in its place, so an update can try again.
+ */
+export function drawConfig(el: HTMLElement, config: ChartConfiguration, ctx: RenderContext, width?: string): ConfigHandle {
+  let current = config;
+  const view = mount(el, ctx, (theme, wrapper) => ({
+    config: fillThemeDefaults(resolveConfigColors(current, (c) => resolveColor(c, wrapper)), theme),
+  }), width);
+  return {
+    update: (next) => {
+      current = next;
+      view.redraw();
+    },
+    destroy: () => view.destroy(),
+    failed: () => view.failed(),
+  };
+}
+
+/**
+ * Like drawConfig for Charts' renderChart: `update` ignores its spec, since a
+ * raw config has none to apply, and a config that fails to draw gives null.
  */
 export function renderConfig(el: HTMLElement, config: ChartConfiguration, ctx: RenderContext, width?: string): ChartHandle | null {
-  const view = mount(el, ctx, (theme, wrapper) => ({
-    config: fillThemeDefaults(resolveConfigColors(config, (c) => resolveColor(c, wrapper)), theme),
-  }), width);
-  if (view.failed()) return null;
-  return { update: () => view.redraw(), destroy: () => view.destroy() };
+  const drawn = drawConfig(el, config, ctx, width);
+  if (drawn.failed()) return null;
+  return { update: () => drawn.update(config), destroy: () => drawn.destroy() };
 }
