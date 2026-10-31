@@ -31,8 +31,10 @@ const RADIAL = new Set(["radar", "polarArea"]);
 
 function radialScale(theme: Theme): { ticks: Obj; grid: Obj; angleLines: Obj; pointLabels: Obj } {
   return {
-    // Chart.js backs radial tick labels with white, which shows on a dark theme
-    ticks: { color: theme.text, backdropColor: "transparent" },
+    // Above the data and on the page colour, so a number stays readable where
+    // a shape or segment covers it; Chart.js's own white backdrop shows on a
+    // dark theme
+    ticks: { color: theme.text, backdropColor: theme.background, z: 1 },
     grid: { color: theme.grid },
     angleLines: { color: theme.grid },
     pointLabels: { color: theme.text },

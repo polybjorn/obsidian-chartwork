@@ -60,7 +60,7 @@ void test("a radar draws one translucent shape per series on a themed radial sca
   assert.equal(at(o, "scales.r.grid.color"), "#ddd");
   assert.equal(at(o, "scales.r.angleLines.color"), "#ddd");
   assert.equal(at(o, "scales.r.pointLabels.color"), "#111");
-  assert.equal(at(o, "scales.r.ticks.backdropColor"), "transparent");
+  assert.equal(at(o, "scales.r.ticks.backdropColor"), "#fff");
   assert.equal(at(o, "scales.r.ticks.precision"), 0);
   assert.equal(at(o, "scales.r.beginAtZero"), true);
   assert.equal(at(o, "scales.x"), undefined);
@@ -77,7 +77,7 @@ void test("a polar area colours each segment by category on a themed radial scal
   const o = config.options;
   assert.equal(at(o, "scales.r.grid.color"), "#ddd");
   assert.equal(at(o, "scales.r.pointLabels.color"), "#111");
-  assert.equal(at(o, "scales.r.ticks.backdropColor"), "transparent");
+  assert.equal(at(o, "scales.r.ticks.backdropColor"), "#fff");
   assert.equal(at(o, "plugins.legend.display"), true);
 });
 
@@ -152,7 +152,7 @@ void test("theme fill reaches radial scales and colours each chart type", () => 
     fillThemeDefaults({ type, data: { labels: ["a", "b"], datasets: [{ data: [1, 2] }] } } as unknown as ChartConfiguration, theme);
   const radar = raw("radar");
   assert.equal(at(radar.options, "scales.r.ticks.color"), "#111");
-  assert.equal(at(radar.options, "scales.r.ticks.backdropColor"), "transparent");
+  assert.equal(at(radar.options, "scales.r.ticks.backdropColor"), "#fff");
   assert.equal(at(radar.options, "scales.r.angleLines.color"), "#ddd");
   assert.equal(at(radar.options, "scales.r.pointLabels.color"), "#111");
   assert.equal(at(radar.options, "scales.x"), undefined);
