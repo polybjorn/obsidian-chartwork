@@ -1,16 +1,6 @@
-# Testing and releasing
+# Releasing
 
-## Running a build in Obsidian
-
-The vault's `.obsidian/plugins/chartwork` folder is a symlink to this
-checkout, so `npm run build` here is what Obsidian loads. Hot Reload
-(pjeby/hot-reload) reloads the plugin when `main.js` changes, because the
-folder holds a `.git`. Without it, toggle the plugin off and on.
-
-A build made in a git worktree is invisible until copied into the main
-checkout: `npm run preview` builds and copies `main.js`, plus `styles.css`
-when the branch changed it (undo that with `git restore styles.css` in the
-main checkout).
+Running a build in Obsidian is in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Test plan before a tag
 
