@@ -309,9 +309,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
 
   const plugins: Obj = {
     legend: {
-      display: spec.legend === undefined
-        ? spec.kind === "pie" || spec.kind === "doughnut" || spec.kind === "polarArea" || datasets.length > 1
-        : spec.legend !== false,
+      display: legendShown(spec, datasets.length),
       ...(typeof spec.legend === "string" ? { position: spec.legend } : {}),
       labels: legendLabels(theme),
     },
@@ -376,11 +374,21 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
 }
 
 /** Wrapper height in pixels. Horizontal bars get one fixed slot per bar. */
+function legendShown(spec: ChartSpec, datasetCount: number): boolean {
+  if (spec.legend !== undefined) return spec.legend !== false;
+  return spec.kind === "pie" || spec.kind === "doughnut" || spec.kind === "polarArea" || datasetCount > 1;
+}
+
+// Unstacked series sit side by side within a label, so each takes a bar's
+// room. A legend above or below the plot takes height from it.
 export function chartHeight(spec: ChartSpec): number {
   if (!(spec.kind === "bar" && spec.horizontal === true)) return DEFAULT_HEIGHT;
-  const count = prepareData(spec).labels.length;
-  const room = 56 + (spec.title ? 32 : 0) + (spec.valueTitle ? 24 : 0);
-  return count * (spec.barThickness ?? DEFAULT_BAR_THICKNESS) + room;
+  const data = prepareData(spec);
+  const bars = data.labels.length * (spec.stacked === true ? 1 : Math.max(1, data.series.length));
+  const sideLegend = spec.legend === "left" || spec.legend === "right";
+  const legend = legendShown(spec, data.series.length) && !sideLegend ? 32 : 0;
+  const room = 56 + (spec.title ? 32 : 0) + (spec.valueTitle ? 24 : 0) + legend;
+  return bars * (spec.barThickness ?? DEFAULT_BAR_THICKNESS) + room;
 }
 
 // Returns a new object tree where defaults fill only what the caller left
