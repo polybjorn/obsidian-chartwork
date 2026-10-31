@@ -2,7 +2,7 @@
 
 One plugin for every chart in your vault. Make one from a [Bases](https://help.obsidian.md/bases) view, a code block or a script. They match your theme, light or dark, with nothing to set up, and notes written for the [Charts](https://github.com/phibr0/obsidian-charts) plugin draw as they are.
 
-<img src="docs/images/readme.png" width="560" alt="Four charts in Obsidian's dark theme: a doughnut and a bar chart from Bases, a radar chart and a line chart from code blocks">
+<img src="docs/images/hero.png" width="720" alt="A base of books drawn as a horizontal bar chart of pages by genre, next to its view options: genre as the category, summed by pages">
 
 ## Three ways to make a chart
 
@@ -26,6 +26,8 @@ series:
 ```
 ````
 
+<img src="docs/images/code-block.png" width="400" alt="The line chart this block draws">
+
 Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 is bundled, so Bases views and code blocks need nothing else installed. The plugin is about 290 KB, almost all of it Chart.js and its sankey and annotation plugins.
 
 ## What Chartwork takes care of
@@ -35,6 +37,8 @@ Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 
 - **Even horizontal bars.** The chart grows taller with each category, so bars keep one thickness.
 - **Dates on a time axis.** A Bases view groups dates by day, week, month or year, with a gap where nothing happened.
 - **Order and trimming.** In a Bases view or a script: sort by value or label, put chosen categories first, keep the largest few and add the rest up under one label.
+
+<img src="docs/images/themes.png" width="720" alt="The same bar chart of books by status in the light and the dark theme, its text, grid lines and category colors changed to match">
 
 ## Instead of other chart plugins
 

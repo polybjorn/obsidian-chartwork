@@ -4,7 +4,7 @@
 // and single-instance lock. An image is the note's charts alone, two to a row,
 // or with `crop`, that part of the page as drawn. Window chrome would double
 // each image's height in the docs. Run with `npm run screenshots`, or name
-// shots to render only those: `npm run screenshots -- readme render-chart`.
+// shots to render only those: `npm run screenshots -- hero themes`.
 import { spawn } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -28,7 +28,12 @@ const GAP = 32;
 const CROP_PAD = 12;
 
 const SHOTS = [
-  { file: "Library.md", name: "readme", theme: "dark", charts: 4 },
+  // A .base file with its view options open, the chart moved out from under
+  // them. A smaller window keeps the text readable at the README's width
+  { file: "Books.base", name: "hero", theme: "light", charts: 1, options: true, window: { width: 960, height: 540 },
+    crop: [".bases-toolbar", ".menu.bases-toolbar-views-menu", ".chartwork-bases"] },
+  // The note's first chart, drawn in each theme
+  { file: "Reading.md", name: "themes", theme: "light", charts: 1, pair: true },
   // The toolbar shows the chart is a Bases view
   { file: "Genres.md", name: "bases-view", theme: "light", charts: 1, crop: [".bases-toolbar", ".chartwork-bases"] },
   { file: "Pages read.md", name: "code-block", theme: "light", charts: 1 },
@@ -104,6 +109,9 @@ function prepare() {
     recursive: true,
     filter: (src) => !src.endsWith("community-plugins.json"),
   });
+  // A vault with no theme of its own follows the system's at startup, which
+  // can land after the first shot has set its theme
+  writeFileSync(join(vault, ".obsidian/appearance.json"), JSON.stringify({ theme: THEMES.light }));
   mkdirSync(profile);
   writeFileSync(join(profile, "obsidian.json"),
     JSON.stringify({ vaults: { chartworkdemo0001: { path: vault, ts: Date.now(), open: true } } }));
@@ -178,10 +186,78 @@ async function crop(cdp, shot) {
   write(shot, data);
 }
 
+// Opens the view's options the way a click on the toolbar does, then moves
+// the chart to their right so both show
+async function openOptions(cdp) {
+  await cdp.evaluate(`(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    document.querySelector(".workspace-leaf.mod-active .bases-toolbar-views-menu .text-icon-button").click();
+    await wait(500);
+    document.querySelector(".menu.bases-toolbar-views-menu .bases-toolbar-menu-item-icon").click();
+    await wait(500);
+    // The view name field opens focused, with its text selected
+    document.activeElement?.blur();
+    // It sits over the window's bottom corner, inside the crop
+    document.querySelector(".status-bar").style.display = "none";
+    const menu = document.querySelector(".menu.bases-toolbar-views-menu").getBoundingClientRect();
+    const chart = ${visible(".workspace-leaf.mod-active .chartwork-bases")};
+    chart.style.marginLeft = (menu.right - chart.getBoundingClientRect().left + ${GAP}) + "px";
+  })()`);
+}
+
+async function setTheme(cdp, theme) {
+  await cdp.evaluate(`app.changeTheme(${JSON.stringify(THEMES[theme])})`);
+  await waitFor(() => cdp.evaluate(`document.body.classList.contains("theme-${theme}")`), `the ${theme} theme`);
+}
+
+// The first chart in light and then dark, side by side, each on its theme's
+// background
+async function pair(cdp, shot, sel) {
+  const cells = [];
+  for (const theme of ["light", "dark"]) {
+    await setTheme(cdp, theme);
+    await sleep(1500);
+    cells.push(await cdp.evaluate(`(() => {
+      const c = [...document.querySelectorAll(${JSON.stringify(sel)})].find((e) => e.getBoundingClientRect().height > 0);
+      const bg = getComputedStyle(document.body).getPropertyValue("--background-primary");
+      return { url: c.toDataURL("image/png"), width: c.width, height: c.height, bg };
+    })()`));
+  }
+  const png = await cdp.evaluate(`(async (cells) => {
+    const gap = ${GAP} * window.devicePixelRatio;
+    const cellW = Math.max(...cells.map((c) => c.width)) + 2 * gap;
+    const cellH = Math.max(...cells.map((c) => c.height)) + 2 * gap;
+    const out = document.createElement("canvas");
+    out.width = cells.length * cellW;
+    out.height = cellH;
+    const ctx = out.getContext("2d");
+    for (const [i, c] of cells.entries()) {
+      const img = new Image();
+      img.src = c.url;
+      await img.decode();
+      ctx.fillStyle = c.bg;
+      ctx.fillRect(i * cellW, 0, cellW, cellH);
+      ctx.drawImage(img, i * cellW + (cellW - c.width) / 2, (cellH - c.height) / 2);
+    }
+    return out.toDataURL("image/png").split(",")[1];
+  })(${JSON.stringify(cells)})`);
+  write(shot, png);
+}
+
+async function resize(cdp, shot) {
+  const size = shot.window ?? WINDOW;
+  await cdp.evaluate(`(() => {
+    require("@electron/remote").getCurrentWindow().setContentSize(${size.width}, ${size.height});
+    app.workspace.leftSplit[${JSON.stringify(shot.options ? "collapse" : "expand")}]();
+  })()`);
+  await sleep(500);
+}
+
 async function shoot(cdp, shot) {
-  await cdp.evaluate(`app.changeTheme(${JSON.stringify(THEMES[shot.theme])})`);
+  await resize(cdp, shot);
+  await setTheme(cdp, shot.theme);
   // Obsidian's readable line length, so charts in a grid lay out at grid size
-  await cdp.evaluate(`document.body.style.setProperty("--file-line-width", ${JSON.stringify(shot.charts > 1 ? `${GRID_LINE_WIDTH}px` : "")})`);
+  await cdp.evaluate(`document.body.style.setProperty("--file-line-width", ${JSON.stringify(shot.charts > 1 || shot.pair ? `${GRID_LINE_WIDTH}px` : "")})`);
   await cdp.evaluate(`(async () => {
     const leaf = app.workspace.getLeaf(false);
     await leaf.openFile(app.vault.getFileByPath(${JSON.stringify(shot.file)}), { state: { mode: "preview" } });
@@ -193,12 +269,16 @@ async function shoot(cdp, shot) {
     await sleep(1500);
     await runScript(cdp, shot.file);
   }
-  const sel = ".workspace-leaf.mod-active .markdown-reading-view canvas";
+  const sel = shot.file.endsWith(".base")
+    ? ".workspace-leaf.mod-active .chartwork-bases canvas"
+    : ".workspace-leaf.mod-active .markdown-reading-view canvas";
   await waitFor(() => cdp.evaluate(`[...document.querySelectorAll(${JSON.stringify(sel)})]
     .filter((c) => c.getBoundingClientRect().height > 0).length >= ${shot.charts}`), `${shot.charts} charts in ${shot.file}`);
-  // Chart.js animates in, and a theme change redraws after css-change
+  if (shot.options) await openOptions(cdp);
+  // Chart.js animates in, and a theme change or a resize redraws it
   await sleep(1500);
-  await (shot.crop ? crop(cdp, shot) : grid(cdp, shot, sel));
+  if (shot.pair) await pair(cdp, shot, sel);
+  else await (shot.crop ? crop(cdp, shot) : grid(cdp, shot, sel));
 }
 
 const { work, vault, profile } = prepare();

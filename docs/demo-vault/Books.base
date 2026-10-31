@@ -1,0 +1,12 @@
+filters:
+  and:
+    - file.inFolder("Books")
+views:
+  - type: chartwork-chart
+    name: Pages by genre
+    x: note.genre
+    aggregation: sum
+    y: note.pages
+    horizontal: true
+    categorySort: value
+    title: Pages by genre
