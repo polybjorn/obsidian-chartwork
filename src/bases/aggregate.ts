@@ -161,7 +161,13 @@ function allDates(rows: Row[]): boolean {
 // Past this many buckets an empty one is left out rather than drawn as zero
 const MAX_FILLED = 5000;
 
-interface Bucket { sum: number; count: number; min: number; max: number }
+interface Bucket { sum: number; count: number; min: number; max: number; places: number }
+
+/** Decimal places a value is written with: 2 for 1.25, 0 for 412. */
+function decimalPlaces(n: number): number {
+  const [mantissa = "", exponent = "0"] = String(n).toLowerCase().split("e");
+  return Math.max(0, (mantissa.split(".")[1]?.length ?? 0) - Number(exponent));
+}
 
 // Pie and doughnut have no value axis, a line alone has tension
 function applyValueScale(spec: ChartSpec, opts: AggregateOptions): void {
@@ -220,11 +226,12 @@ export function aggregateRows(rows: Row[], opts: AggregateOptions): ChartSpec {
         seen.add(label);
         labelOrder.push(label);
       }
-      const bucket = perGroup.get(label) ?? { sum: 0, count: 0, min: Infinity, max: -Infinity };
+      const bucket = perGroup.get(label) ?? { sum: 0, count: 0, min: Infinity, max: -Infinity, places: 0 };
       bucket.sum += amount;
       bucket.count += 1;
       bucket.min = Math.min(bucket.min, amount);
       bucket.max = Math.max(bucket.max, amount);
+      bucket.places = Math.max(bucket.places, decimalPlaces(amount));
       perGroup.set(label, bucket);
     }
   }
@@ -285,10 +292,12 @@ export function aggregateRows(rows: Row[], opts: AggregateOptions): ChartSpec {
   return spec;
 }
 
-// An empty bucket holds no notes: a count or sum of zero, but no average or extreme
+// An empty bucket holds no notes: a count or sum of zero, but no average or extreme.
+// An average keeps one decimal more than its most precise input, so whole page
+// counts average to 476.6 rather than 476.625
 function value(bucket: Bucket | undefined, aggregation: Aggregation): number | null {
   if (!bucket) return aggregation === "count" || aggregation === "sum" ? 0 : null;
-  if (aggregation === "average") return bucket.sum / bucket.count;
+  if (aggregation === "average") return Number((bucket.sum / bucket.count).toFixed(Math.min(bucket.places + 1, 100)));
   if (aggregation === "min") return bucket.min;
   if (aggregation === "max") return bucket.max;
   return bucket.sum;

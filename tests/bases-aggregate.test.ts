@@ -201,3 +201,12 @@ void test("scatter ignores the size of a note it skips, and splits groups into s
   assert.equal(spec.xTitle, "Hours");
   assert.equal(spec.valueTitle, "Score");
 });
+
+void test("an average keeps one decimal more than its most precise input", () => {
+  const pages = [{ x: "a", y: 412 }, { x: "a", y: 500 }, { x: "a", y: 443 }, { x: "b", y: 0.1 }, { x: "b", y: 0.2 }];
+  assert.deepEqual(aggregateRows(pages, { ...base, aggregation: "average" }).series[0]?.values, [451.7, 0.15]);
+  const hours = [{ x: "a", y: 1.25 }, { x: "a", y: "2" }, { x: "a", y: 1 }];
+  assert.deepEqual(aggregateRows(hours, { ...base, aggregation: "average" }).series[0]?.values, [1.417]);
+  const sum = aggregateRows(pages, { ...base, aggregation: "sum" });
+  assert.deepEqual(sum.series[0]?.values, [1355, 0.1 + 0.2]);
+});

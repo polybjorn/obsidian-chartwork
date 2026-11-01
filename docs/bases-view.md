@@ -9,7 +9,7 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 | Option | Key in the `.base` file | What it does |
 |---|---|---|
 | Category property | `x` | The property that names each bar or slice. A list property puts a note in every category it lists. Links show as the note name, tags without the `#`. A date property groups by date, see [Dates](#dates). |
-| Aggregation | `aggregation` | `count` (the default) counts notes, `sum` adds up the value property, `average` averages it, `min` and `max` keep the smallest or largest. |
+| Aggregation | `aggregation` | `count` (the default) counts notes, `sum` adds up the value property, `average` averages it to one decimal more than its most precise value, `min` and `max` keep the smallest or largest. |
 | Value property | `y` | The number to sum, average, or take the smallest or largest of. Hidden while counting. Text that reads as a number, like `"412"` or `3,5`, counts as one; anything else is skipped. |
 | One series per property | `propertySeries` | Chart every property shown in the base's **Properties** menu, other than the category and the file name, as its own series, with the aggregation above. Count counts the notes that fill each one in. The value property is then hidden. |
 | Chart type | `kind` | `bar`, `line`, `pie`, `doughnut` or `scatter`, see [Scatter](#scatter). |
