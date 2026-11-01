@@ -29,7 +29,7 @@ CI never runs Obsidian, so run these against the build about to be tagged:
 
 ## Release
 
-The forge's `github-sync` job copies `main` and each tag to GitHub. A tag landing there starts `.github/workflows/release.yml`, which builds, attests the build and uploads `main.js`, `manifest.json` and `styles.css` to a GitHub release. The tag's section in `CHANGELOG.md` becomes the release notes. Tags carry no `v`, since Obsidian needs the tag to equal the manifest version.
+The forge's `github-sync` job copies `main` and each tag to GitHub. A tag landing there starts `.github/workflows/release.yml`, which runs lint and tests, builds, attests the build and uploads `main.js`, `manifest.json` and `styles.css` to a GitHub release. The tag's section in `CHANGELOG.md` becomes the release notes. A stable tag has to be on `main` and equal the `manifest.json` version, with no `v`, or the workflow stops before building.
 
 1. Run the test plan above.
 2. Rename `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`.
@@ -48,6 +48,6 @@ The forge's `github-sync` job copies `main` and each tag to GitHub. A tag landin
 A tag like `0.2.0-beta.1` publishes a GitHub pre-release that only [BRAT](https://github.com/TfTHacker/obsidian42-brat) users get. Obsidian's updater reads `manifest.json` on `main` and fetches the release it names, so a beta reaches nobody else while `main` stays at the last stable version.
 
 1. Add a `## [0.2.0-beta.1]` section to `CHANGELOG.md` above the last release. It becomes the release notes; without one, GitHub writes them from the commits.
-2. Tag the commit on `main` without bumping the version: `git tag -a 0.2.0-beta.1 -m 0.2.0-beta.1 && git push origin 0.2.0-beta.1`. Don't run `npm version`, which writes `manifest.json` and `versions.json`. The release workflow sets the version in the uploaded `manifest.json`.
+2. Tag the commit to test, on `main` or on a branch not merged yet, without bumping the version: `git tag -a 0.2.0-beta.1 -m 0.2.0-beta.1 && git push origin 0.2.0-beta.1`. Don't run `npm version`, which writes `manifest.json` and `versions.json`. The release workflow sets the version in the uploaded `manifest.json`.
 3. Testers run "BRAT: Add a beta plugin for testing" with `polybjorn/obsidian-chartwork` and pick the beta. BRAT then follows each new one.
 4. For the stable release, fold the beta sections into one `## [0.2.0]` section and release as above.
