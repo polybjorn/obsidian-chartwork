@@ -88,7 +88,7 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
   registerOnce();
   sweepLoose();
   const wrapper = el.createDiv({ cls: "chartwork-chart" });
-  if (width) wrapper.setCssProps({ width, "margin-inline": "auto" });
+  if (width) wrapper.setCssProps({ width });
   const canvas = wrapper.createEl("canvas");
   let chart: Chart | null = null;
   let error: HTMLElement | null = null;
@@ -117,7 +117,7 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
       error = null;
       canvas.show();
       if (height !== undefined) wrapper.setCssProps({ height: `${height}px` });
-      if (builtWidth !== undefined) wrapper.setCssProps({ width: builtWidth, "margin-inline": builtWidth ? "auto" : "" });
+      if (builtWidth !== undefined) wrapper.setCssProps({ width: builtWidth });
       // Export to PDF draws the note into a print container and prints it
       // moments later, which would catch each chart part way through its
       // opening animation
