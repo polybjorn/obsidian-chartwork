@@ -41,7 +41,7 @@ Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 
 
 ## A script, before and after
 
-Notes created this month counted by tag, as horizontal bars with the count on each bar. Both versions start from `counts`, an object of tag and count. With Chartwork:
+Notes created this month counted by tag, the top 10 as horizontal bars with the count on each, from `counts`, an object of tag and count. Charts' `renderChart` leaves the sorting, theme colors, counts on the bars and bar thickness to you. With Chartwork it is one call:
 
 ```js
 window.chartwork.render(dv.container, {
