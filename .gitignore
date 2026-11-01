@@ -3,4 +3,6 @@ node_modules
 main.js
 *.map
 data.json
+# OBSIDIAN_PLUGIN_DIR, a path on your machine
+.env
 .DS_Store

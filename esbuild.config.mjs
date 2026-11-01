@@ -1,8 +1,24 @@
 import esbuild from "esbuild";
 import process from "node:process";
 import { builtinModules } from "node:module";
+import { copyFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { pluginDir } from "./scripts/plugin-dir.mjs";
 
 const prod = process.argv[2] === "production";
+const target = pluginDir();
+
+const install = {
+  name: "install",
+  setup(build) {
+    build.onEnd((result) => {
+      if (!target || result.errors.length) return;
+      mkdirSync(target, { recursive: true });
+      for (const file of ["main.js", "manifest.json", "styles.css"]) copyFileSync(file, join(target, file));
+      console.log(`Copied the build to ${target}`);
+    });
+  },
+};
 
 const context = await esbuild.context({
   banner: {
@@ -33,6 +49,7 @@ const context = await esbuild.context({
   treeShaking: true,
   outfile: "main.js",
   minify: prod,
+  plugins: [install],
 });
 
 if (prod) {
