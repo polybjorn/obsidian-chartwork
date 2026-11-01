@@ -1,8 +1,13 @@
 # Chartwork
 
-One plugin for every chart in your vault. Make one from a [Bases](https://help.obsidian.md/bases) view, a code block or a script. They match your theme, light or dark, with nothing to set up, and notes written for the [Charts](https://github.com/phibr0/obsidian-charts) plugin draw as they are.
+One plugin for every chart in your vault. Make one from a [Bases](https://help.obsidian.md/bases) view, a code block or a script, and notes written for the [Charts](https://github.com/phibr0/obsidian-charts) plugin draw as they are.
 
-<img src="docs/images/hero.gif" width="720" alt="A base of books drawn as a horizontal bar chart of pages by genre, next to its view options. Turning off horizontal bars and then picking Doughnut as the chart type redraws the chart each time, and switching to the dark theme recolors it">
+<img src="docs/images/overview.png" width="720" alt="Four charts of the demo books, split diagonally between the light theme above and the dark theme below: a bar chart by status with a color per status and its value on each bar, pages by author as a doughnut, top five and the rest added up as Others, pages finished per month with gaps for months without a finished book, and books by genre as horizontal bars">
+
+- **Native in any theme.** Text, grid lines and colors come from your theme, light or dark, with nothing to set up. Pick a color per category, like `var(--color-green)`.
+- **Bars you can read.** Values sit on the bars, and horizontal bars keep one thickness however many there are.
+- **Dates on a real time axis.** A Bases view groups dates by day, week, month or year and leaves a gap where nothing happened.
+- **The big picture.** Sort by value, keep the top few and add up the rest as "Others".
 
 ## Three ways to make a chart
 
@@ -29,15 +34,6 @@ series:
 <img src="docs/images/code-block.png" width="400" alt="The line chart this block draws">
 
 Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 is bundled, so Bases views and code blocks need nothing else installed. The plugin is about 290 KB, almost all of it Chart.js and its sankey and annotation plugins.
-
-## What Chartwork takes care of
-
-- **Looks native in any theme.** Text, grid lines and colors come from your theme and redraw when you switch, light or dark. Pick a color per category, like `var(--color-green)`.
-- **Bars you can read.** Values sit on the bars, and horizontal bars keep one thickness however many there are.
-- **Dates on a real time axis.** A Bases view groups dates by day, week, month or year and leaves a gap where nothing happened.
-- **The big picture.** Sort by value, keep the top few and add up the rest as "Others".
-
-<img src="docs/images/themes.png" width="720" alt="Four charts of the demo books, split diagonally between the light theme above and the dark theme below: a bar chart by status with a color per status and its value on each bar, pages by author as a doughnut, top five and the rest added up as Others, pages finished per month with gaps for months without a finished book, and books by genre as horizontal bars">
 
 ## A script, before and after
 

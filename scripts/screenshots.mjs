@@ -5,7 +5,7 @@
 // or with `crop`, that part of the page as drawn. Window chrome would double
 // each image's height in the docs. A shot with `record` is a GIF of its steps
 // instead, encoded with ffmpeg, which has to be on the PATH. Run with `npm run screenshots`, or name
-// shots to render only those: `npm run screenshots -- hero themes`.
+// shots to render only those: `npm run screenshots -- bases-view overview`.
 import { execFileSync, spawn } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -36,20 +36,17 @@ const GIF_WIDTH = 1440;
 const SHOTS = [
   // A .base file with its view options open, the chart moved out from under
   // them, redrawing as the options change. A smaller window keeps the text
-  // readable at the README's width
-  { file: "Books.base", name: "hero", theme: "light", charts: 1, options: true, window: { width: 960, height: 540 },
+  // readable at the docs' width
+  { file: "Books.base", name: "bases-view", theme: "light", charts: 1, options: true, window: { width: 960, height: 540 },
     crop: [".bases-toolbar", ".menu.bases-toolbar-views-menu", ".chartwork-bases"],
     record: [
       { hold: 1500 },
       { scroll: "Horizontal bars", hold: 1000 },
       { toggle: "Horizontal bars", hold: 1800 },
-      { select: "Chart type", value: "doughnut", hold: 1800 },
-      { theme: "dark", hold: 2500 },
+      { select: "Chart type", value: "doughnut", hold: 2500 },
     ] },
-  // Four of the things Chartwork takes care of, split between the themes
-  { file: "Overview.md", name: "themes", theme: "light", charts: 4, split: true },
-  // The toolbar shows the chart is a Bases view
-  { file: "Genres.md", name: "bases-view", theme: "light", charts: 1, crop: [".bases-toolbar", ".chartwork-bases"] },
+  // The README's top image: four features, split between the themes
+  { file: "Overview.md", name: "overview", theme: "light", charts: 4, split: true },
   { file: "Pages read.md", name: "code-block", theme: "light", charts: 1 },
   { file: "Script.md", name: "script", theme: "light", script: true, charts: 1 },
   { file: "Raw config.md", name: "render-chart", theme: "light", script: true, charts: 4 },
