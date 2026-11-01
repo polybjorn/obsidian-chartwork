@@ -2,7 +2,7 @@
   "name": "obsidian-chartwork",
   "version": "0.0.0",
   "private": true,
-  "description": "Draw charts from Bases views, code blocks and scripts in your theme's colors. Notes written for the Charts plugin draw as they are.",
+  "description": "Draw charts from Bases views, code blocks and scripts in your theme's colors.",
   "main": "main.js",
   "type": "module",
   "scripts": {

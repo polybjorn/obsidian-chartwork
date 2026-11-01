@@ -1,6 +1,6 @@
 # Chartwork
 
-One plugin for every chart in your vault. Make one from a [Bases](https://help.obsidian.md/bases) view, a code block or a script, and notes written for the [Charts](https://github.com/phibr0/obsidian-charts) plugin draw as they are.
+One plugin for every chart in your vault. Make one from a [Bases](https://help.obsidian.md/bases) view, a code block or a script, with less code than other chart plugins need and no second one beside it.
 
 <img src="docs/images/overview.png" width="720" alt="Four charts of the demo books, split diagonally between the light theme above and the dark theme below: a bar chart by status with a color per status and its value on each bar, pages by author as a doughnut, top five and the rest added up as Others, pages finished per month with gaps for months without a finished book, and books by genre as horizontal bars">
 
