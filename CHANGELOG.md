@@ -15,4 +15,4 @@ The first release.
 - **Script function** `window.chartwork.render`, plus `window.renderChart` for scripts written for Charts, in theme colors and with a width and height in the spec. Works with any plugin that runs JavaScript in notes, such as Dataview.
 - Theme colors and text size in every chart, redrawn when the theme switches between light and dark.
 - The command **Check chart blocks and scripts** lists notes with charts Chartwork can't draw as written.
-- Chart.js 4 with its sankey and annotation plugins bundled; nothing is fetched from the network.
+- Chart.js 4.6.1 with its sankey and annotation plugins bundled; nothing is fetched from the network.
