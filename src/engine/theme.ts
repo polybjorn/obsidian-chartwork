@@ -39,7 +39,7 @@ let probe: CanvasRenderingContext2D | null | undefined;
 // A canvas reports any colour it accepts back as hex or rgba(), the two forms
 // withAlpha can read.
 export function normalizeColor(value: string, el: HTMLElement): string {
-  probe ??= el.ownerDocument.createElement("canvas").getContext("2d");
+  probe ??= createEl("canvas").getContext("2d");
   if (!probe || !value) return value;
   probe.fillStyle = "#000000";
   probe.fillStyle = value;

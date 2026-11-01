@@ -134,7 +134,7 @@ export function registerCompat(plugin: Plugin): () => Promise<void> {
   if (app.loadLocalStorage(NOTICE_SHOWN)) return check;
   app.workspace.onLayoutReady(() => {
     // A click anywhere on a notice closes it, the button included
-    const message = document.createDocumentFragment();
+    const message = createFragment();
     message.appendText("The Charts plugin is enabled, so it keeps drawing chart blocks. To switch to Chartwork, disable Charts and reload Obsidian.");
     const button = message.createDiv({ cls: "chartwork-notice-actions" }).createEl("button", { text: "Check notes first" });
     button.addEventListener("click", () => void check());
