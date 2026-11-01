@@ -32,13 +32,12 @@ Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 
 
 ## What Chartwork takes care of
 
-- **Theme colors and text size.** Text, grid lines and series follow your theme, light or dark, and redraw when you switch. Chart text follows the note's text size. In a Bases view or a script, any CSS color sets a category apart, such as `var(--color-green)`.
-- **Values on the bars** of a bar chart with one series.
-- **Even horizontal bars.** The chart grows taller with each category, so bars keep one thickness.
-- **Dates on a time axis.** A Bases view groups dates by day, week, month or year, with a gap where nothing happened.
-- **Order and trimming.** In a Bases view or a script: sort by value or label, put chosen categories first, keep the largest few and add the rest up under one label.
+- **Looks native in any theme.** Text, grid lines and colors come from your theme and redraw when you switch, light or dark. Pick a color per category, like `var(--color-green)`.
+- **Bars you can read.** Values sit on the bars, and horizontal bars keep one thickness however many there are.
+- **Dates on a real time axis.** A Bases view groups dates by day, week, month or year and leaves a gap where nothing happened.
+- **The big picture.** Sort by value, keep the top few and add up the rest as "Others".
 
-<img src="docs/images/themes.png" width="720" alt="The same bar chart of books by status in the light and the dark theme, its text, grid lines and category colors changed to match">
+<img src="docs/images/themes.png" width="720" alt="Four charts of the demo books, split diagonally between the light theme above and the dark theme below: a bar chart by status with a color per status and its value on each bar, pages by author as a doughnut, top five and the rest added up as Others, pages finished per month with gaps for months without a finished book, and books by genre as horizontal bars">
 
 ## A script, before and after
 

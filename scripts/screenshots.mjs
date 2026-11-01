@@ -46,8 +46,8 @@ const SHOTS = [
       { select: "Chart type", value: "doughnut", hold: 1800 },
       { theme: "dark", hold: 2500 },
     ] },
-  // The note's first chart, drawn in each theme
-  { file: "Reading.md", name: "themes", theme: "light", charts: 1, pair: true },
+  // Four of the things Chartwork takes care of, split between the themes
+  { file: "Overview.md", name: "themes", theme: "light", charts: 4, split: true },
   // The toolbar shows the chart is a Bases view
   { file: "Genres.md", name: "bases-view", theme: "light", charts: 1, crop: [".bases-toolbar", ".chartwork-bases"] },
   { file: "Pages read.md", name: "code-block", theme: "light", charts: 1 },
@@ -159,8 +159,7 @@ function write(shot, base64) {
 
 // The charts' own canvases, two to a row on the theme's background. Each
 // canvas is already at the screen's pixel density, so the image is too
-async function grid(cdp, shot, sel) {
-  const png = await cdp.evaluate(`(() => {
+const gridImage = (cdp, sel) => cdp.evaluate(`(() => {
     const charts = [...document.querySelectorAll(${JSON.stringify(sel)})]
       .filter((c) => c.getBoundingClientRect().height > 0);
     const gap = ${GAP} * window.devicePixelRatio;
@@ -181,6 +180,44 @@ async function grid(cdp, shot, sel) {
     });
     return out.toDataURL("image/png").split(",")[1];
   })()`);
+
+async function grid(cdp, shot, sel) {
+  write(shot, await gridImage(cdp, sel));
+}
+
+// The grid in the light theme above a 45 degree line and the dark one below
+// it, so one image shows both themes on four different charts. Only colors
+// change with the theme, so the two grids line up pixel for pixel
+async function split(cdp, shot, sel) {
+  const halves = [];
+  for (const theme of ["light", "dark"]) {
+    await setTheme(cdp, theme);
+    await sleep(1500);
+    halves.push(await gridImage(cdp, sel));
+  }
+  const png = await cdp.evaluate(`(async ([light, dark]) => {
+    const load = async (b64) => {
+      const img = new Image();
+      img.src = "data:image/png;base64," + b64;
+      await img.decode();
+      return img;
+    };
+    const [a, b] = [await load(light), await load(dark)];
+    const out = document.createElement("canvas");
+    out.width = a.width;
+    out.height = a.height;
+    const ctx = out.getContext("2d");
+    ctx.drawImage(a, 0, 0);
+    const reach = a.width + a.height;
+    ctx.translate(a.width / 2, a.height / 2);
+    ctx.rotate(-Math.PI / 4);
+    ctx.beginPath();
+    ctx.rect(-reach, 0, 2 * reach, reach);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clip();
+    ctx.drawImage(b, 0, 0);
+    return out.toDataURL("image/png").split(",")[1];
+  })(${JSON.stringify(halves)})`);
   write(shot, png);
 }
 
@@ -227,40 +264,6 @@ async function openOptions(cdp) {
 async function setTheme(cdp, theme) {
   await cdp.evaluate(`app.changeTheme(${JSON.stringify(THEMES[theme])})`);
   await waitFor(() => cdp.evaluate(`document.body.classList.contains("theme-${theme}")`), `the ${theme} theme`);
-}
-
-// The first chart in light and then dark, side by side, each on its theme's
-// background
-async function pair(cdp, shot, sel) {
-  const cells = [];
-  for (const theme of ["light", "dark"]) {
-    await setTheme(cdp, theme);
-    await sleep(1500);
-    cells.push(await cdp.evaluate(`(() => {
-      const c = [...document.querySelectorAll(${JSON.stringify(sel)})].find((e) => e.getBoundingClientRect().height > 0);
-      const bg = getComputedStyle(document.body).getPropertyValue("--background-primary");
-      return { url: c.toDataURL("image/png"), width: c.width, height: c.height, bg };
-    })()`));
-  }
-  const png = await cdp.evaluate(`(async (cells) => {
-    const gap = ${GAP} * window.devicePixelRatio;
-    const cellW = Math.max(...cells.map((c) => c.width)) + 2 * gap;
-    const cellH = Math.max(...cells.map((c) => c.height)) + 2 * gap;
-    const out = document.createElement("canvas");
-    out.width = cells.length * cellW;
-    out.height = cellH;
-    const ctx = out.getContext("2d");
-    for (const [i, c] of cells.entries()) {
-      const img = new Image();
-      img.src = c.url;
-      await img.decode();
-      ctx.fillStyle = c.bg;
-      ctx.fillRect(i * cellW, 0, cellW, cellH);
-      ctx.drawImage(img, i * cellW + (cellW - c.width) / 2, (cellH - c.height) / 2);
-    }
-    return out.toDataURL("image/png").split(",")[1];
-  })(${JSON.stringify(cells)})`);
-  write(shot, png);
 }
 
 // A row of the open view options, by its label
@@ -365,7 +368,7 @@ async function shoot(cdp, shot, work) {
   await resize(cdp, shot);
   await setTheme(cdp, shot.theme);
   // Obsidian's readable line length, so charts in a grid lay out at grid size
-  await cdp.evaluate(`document.body.style.setProperty("--file-line-width", ${JSON.stringify(shot.charts > 1 || shot.pair ? `${GRID_LINE_WIDTH}px` : "")})`);
+  await cdp.evaluate(`document.body.style.setProperty("--file-line-width", ${JSON.stringify(shot.charts > 1 ? `${GRID_LINE_WIDTH}px` : "")})`);
   await cdp.evaluate(`(async () => {
     const leaf = app.workspace.getLeaf(false);
     await leaf.openFile(app.vault.getFileByPath(${JSON.stringify(shot.file)}), { state: { mode: "preview" } });
@@ -387,7 +390,7 @@ async function shoot(cdp, shot, work) {
   // Chart.js animates in, and a theme change or a resize redraws it
   await sleep(1500);
   if (shot.record) await record(cdp, shot, work);
-  else if (shot.pair) await pair(cdp, shot, sel);
+  else if (shot.split) await split(cdp, shot, sel);
   else await (shot.crop ? crop(cdp, shot) : grid(cdp, shot, sel));
 }
 
