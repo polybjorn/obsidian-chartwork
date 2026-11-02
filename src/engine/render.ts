@@ -105,7 +105,7 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
     error = showError(wrapper, errorText(e));
   };
 
-  const redraw = (): void => {
+  const redraw = (animate = true): void => {
     if (destroyed) return;
     try {
       // Built before the old chart goes, so a spec that fails to build
@@ -120,8 +120,10 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
       if (builtWidth !== undefined) wrapper.setCssProps({ width: builtWidth });
       // Export to PDF draws the note into a print container and prints it
       // moments later, which would catch each chart part way through its
-      // opening animation
-      if (wrapper.closest(".print")) config.options = { ...config.options, animation: false };
+      // opening animation. A restyle skips it too: a theme switch can fire
+      // css-change twice (Style Settings re-fires it), and each replay of the
+      // animation reads as the chart loading again
+      if (!animate || wrapper.closest(".print")) config.options = { ...config.options, animation: false };
       const made = new GuardedChart(canvas, config);
       made.onUpdateError = fail;
       chart = made;
@@ -156,7 +158,7 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
     if (ctx.loose) check();
     // A note's chart redraws even while out of view, so it is right when it
     // comes back; the theme is then read from the document
-    redraw();
+    redraw(false);
   };
   life.registerEvent(ctx.app.workspace.on("css-change", onStyle));
   life.registerEvent(chartworkEvents.on(SERIES_COLORS_CHANGED, onStyle));
@@ -168,7 +170,7 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
   }
 
   redraw();
-  return { redraw, destroy, failed: () => error !== null };
+  return { redraw: () => redraw(), destroy, failed: () => error !== null };
 }
 
 export function renderSpec(el: HTMLElement, spec: ChartSpec, ctx: RenderContext): ChartHandle {
