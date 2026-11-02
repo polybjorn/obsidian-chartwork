@@ -3,7 +3,7 @@
   "name": "Chartwork",
   "version": "1.0.1",
   "minAppVersion": "1.10.2",
-  "description": "Draw charts from Bases views, code blocks and scripts in your theme's colors.",
+  "description": "Draw charts from Bases views, code blocks and scripts.",
   "author": "polybjorn",
   "authorUrl": "https://github.com/polybjorn",
   "isDesktopOnly": false
