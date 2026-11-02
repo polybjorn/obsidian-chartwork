@@ -1,5 +1,7 @@
 # Chartwork
 
+[![Obsidian plugin downloads](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/obsidianmd/obsidian-releases/HEAD/community-plugin-stats.json&query=$['chartwork'].downloads&label=Obsidian%20plugin&color=7c3aed&logo=obsidian&logoColor=white&suffix=%20downloads)](https://community.obsidian.md/plugins/chartwork)
+
 One plugin for every chart in your vault. Make one from a [Bases](https://help.obsidian.md/bases) view, a code block or a script, with less code than other chart plugins need and no second one beside it.
 
 <img src="docs/images/overview.png" width="720" alt="Four charts of the demo books, split diagonally between the light theme above and the dark theme below: a bar chart by status with a color per status and its value on each bar, pages by author as a doughnut, top five and the rest added up as Others, pages finished per month with gaps for months without a finished book, and books by genre as horizontal bars">
@@ -33,7 +35,7 @@ series:
 
 <img src="docs/images/code-block.png" width="400" alt="The line chart this block draws">
 
-Chartwork needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 is bundled, so Bases views and code blocks need nothing else installed. The plugin is about 290 KB, almost all of it Chart.js and its sankey and annotation plugins.
+Install Chartwork from Obsidian's community plugins; manual and beta installs are in [Installation](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/install.md). It needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 is bundled, so Bases views and code blocks need nothing else installed. The plugin is about 290 KB, almost all of it Chart.js and its sankey and annotation plugins.
 
 ## A script, before and after
 
