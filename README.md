@@ -126,4 +126,5 @@ Notes written for [Charts](https://github.com/phibr0/obsidian-charts) work witho
 ## What the plugin accesses
 
 - **Vault, read-only.** Chartwork reads what a Bases view or script hands it, the note or CSV file a `chart` block names, and, for the check command, your notes. It writes nothing. A Bases view's options are saved into its `.base` file by Bases itself.
+- **Clipboard, write-only.** **Copy as Markdown** in the check command's report puts the list on the clipboard. Nothing reads it.
 - **No network.** The plugin makes no outbound requests.
