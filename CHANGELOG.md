@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-02
+
+### Fixed
+
+- The release files carry a build attestation that verifies against the public Sigstore log, and the source builds without a git checkout.
+
 ## [1.0.0] - 2026-11-02
 
 The first release.
