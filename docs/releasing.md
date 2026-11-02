@@ -50,9 +50,9 @@ The forge's `github-sync` job copies `main` and each tag to GitHub. A tag landin
 
 ## Beta releases
 
-A tag like `0.2.0-beta.1` publishes a GitHub pre-release that only [BRAT](https://github.com/TfTHacker/obsidian42-brat) users get. Obsidian's updater reads `manifest.json` on `main` and fetches the release it names, so a beta reaches nobody else while `main` stays at the last stable version.
+A tag like `1.1.0-beta.1` publishes a GitHub pre-release that only [BRAT](https://github.com/TfTHacker/obsidian42-brat) users get. Obsidian's updater reads `manifest.json` on `main` and fetches the release it names, so a beta reaches nobody else while `main` stays at the last stable version.
 
-1. Add a `## [0.2.0-beta.1]` section to `CHANGELOG.md` above the last release. It becomes the release notes; without one, GitHub writes them from the commits.
-2. Tag the commit to test, on `main` or on a branch not merged yet, without bumping the version: `git tag -a 0.2.0-beta.1 -m 0.2.0-beta.1 && git push origin 0.2.0-beta.1`. Don't run `npm version`, which writes `manifest.json` and `versions.json`. The release workflow sets the version in the uploaded `manifest.json`.
+1. Add a `## [1.1.0-beta.1]` section to `CHANGELOG.md` above the last release. It becomes the release notes; without one, GitHub writes them from the commits.
+2. Tag the commit to test, on `main` or on a branch not merged yet, without bumping the version: `git tag -a 1.1.0-beta.1 -m 1.1.0-beta.1 && git push origin <branch> 1.1.0-beta.1`. The branch goes in the same push, because the forge's GitHub sync finds the tagged commit only on a branch it holds; a tag pushed alone fails that job, and a rerun after pushing the branch syncs it. Don't run `npm version`, which writes `manifest.json` and `versions.json`. The release workflow sets the version in the uploaded `manifest.json`.
 3. Testers run "BRAT: Add a beta plugin for testing" with `polybjorn/obsidian-chartwork` and pick the beta. BRAT then follows each new one.
-4. For the stable release, fold the beta sections into one `## [0.2.0]` section and release as above.
+4. For the stable release, fold the beta sections into one `## [1.1.0]` section and release as above.
