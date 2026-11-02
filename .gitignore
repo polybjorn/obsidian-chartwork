@@ -5,4 +5,8 @@ main.js
 data.json
 # OBSIDIAN_PLUGIN_DIR, a path on your machine
 .env
+# What Obsidian writes into the demo vault when it is opened, and the build
+# copied into its plugins folder to try it there
+docs/demo-vault/.obsidian/*
+!docs/demo-vault/.obsidian/community-plugins.json
 .DS_Store

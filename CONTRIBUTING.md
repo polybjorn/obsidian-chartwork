@@ -32,7 +32,7 @@ Enable the plugin in Settings -> Community plugins. To load a rebuild, toggle it
 
 With the symlink, `npm run preview` in a git worktree builds and copies `main.js` into the main checkout, the folder Obsidian loads, plus `styles.css` when the branch changed it (undo that with `git restore styles.css` in the main checkout). `npm run build` in the main checkout switches back.
 
-`docs/demo-vault` is a small vault of made-up notes with charts, including edge cases and the errors common mistakes give. Open it as a vault to try a change.
+`docs/demo-vault` is a small vault of made-up notes with charts, including edge cases and the errors common mistakes give. Open it as a vault to try a change, with `main.js`, `manifest.json` and `styles.css` copied into its `.obsidian/plugins/chartwork`; git ignores that folder and the settings Obsidian writes there. Its script charts need Dataview installed in it too.
 
 ## Scripts
 

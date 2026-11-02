@@ -33,7 +33,7 @@ window.chartwork.render(dv.container, {
 
 A bad or unknown field throws an error naming it, such as `chartwork: series[0].values has 3 entries but labels has 4`; `update` checks the same way. The spec is copied, so changing it afterwards does nothing.
 
-`window.chartwork.version` tells a script which fields it can use. From `0.1.0`, `render` also takes a Chart.js config.
+`window.chartwork.version` tells a script which fields it can use.
 
 ## A Chart.js config
 

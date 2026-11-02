@@ -42,5 +42,7 @@ export default defineConfig(
     "version-bump.mjs",
     "versions.json",
     "main.js",
+    // The demo vault's config folder, where a build is copied to try it
+    "docs/demo-vault/.*",
   ]),
 );

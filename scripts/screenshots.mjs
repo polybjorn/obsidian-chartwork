@@ -9,7 +9,7 @@
 import { execFileSync, spawn } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const OUT = join(ROOT, "docs/images");
@@ -115,11 +115,14 @@ function prepare() {
   const work = mkdtempSync(join(tmpdir(), "chartwork-shots-"));
   const vault = join(work, "vault");
   const profile = join(work, "profile");
-  // A vault that lists plugins when it first opens gets a trust prompt over
-  // every page, so the plugin goes in once the vault has loaded
-  cpSync(join(ROOT, "docs/demo-vault"), vault, {
+  // Only the notes are copied. A vault that lists plugins when it first opens
+  // gets a trust prompt over every page, so the plugin goes in once the vault
+  // has loaded, and the settings and open tabs Obsidian writes into a demo
+  // vault someone opened would change the shots
+  const demo = join(ROOT, "docs/demo-vault");
+  cpSync(demo, vault, {
     recursive: true,
-    filter: (src) => !src.endsWith("community-plugins.json"),
+    filter: (src) => !relative(demo, src).startsWith(`.obsidian${sep}`),
   });
   // A vault with no theme of its own follows the system's at startup, which
   // can land after the first shot has set its theme
