@@ -2,15 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { errorText } from "../src/engine/error.ts";
 
-void test("an unregistered chart type points at loading its add-on", () => {
-  const text = errorText(new Error('"candlestick" is not a registered controller.'));
-  assert.match(text, /"candlestick" is not registered/);
-  assert.match(text, /Load its add-on, or call chartwork\.register, before this chart draws/);
+void test("an unregistered chart type reads as an unknown type, with spelling and add-ons as the causes", () => {
+  assert.equal(
+    errorText(new Error('"candlestick" is not a registered controller.')),
+    'Unknown chart type "candlestick". Check the spelling. If it comes from an add-on, load the add-on or call chartwork.register before this chart draws.',
+  );
 });
 
-void test("scales, elements and plugins get the same hint", () => {
-  for (const kind of ["scale", "element", "plugin"]) {
-    assert.match(errorText(new Error(`"x" is not a registered ${kind}.`)), new RegExp(`The ${kind} "x"`));
+void test("scales are named axis types; elements and plugins keep their names", () => {
+  assert.match(errorText(new Error('"x" is not a registered scale.')), /^Unknown axis type "x"\./);
+  for (const kind of ["element", "plugin"]) {
+    assert.match(errorText(new Error(`"x" is not a registered ${kind}.`)), new RegExp(`^Unknown ${kind} "x"\\.`));
   }
 });
 

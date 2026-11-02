@@ -3,7 +3,7 @@ import type { MarkdownPostProcessorContext, Plugin } from "obsidian";
 import { chartsEnabled } from "../compat/charts.ts";
 import { renderConfig, renderSpec, showError } from "../engine/index.ts";
 import type { ChartHandle, ChartSpec } from "../engine/index.ts";
-import { parseChartBlock, seriesFill } from "./parse.ts";
+import { parseChartBlock, seriesFill, yamlError } from "./parse.ts";
 import type { ParsedBlock, TableRef } from "./parse.ts";
 import { findCsv, findTable } from "./table-source.ts";
 import { tableToSeries } from "./table.ts";
@@ -100,7 +100,7 @@ export function registerChartBlock(plugin: Plugin, seriesColors: () => string[])
     try {
       data = parseYaml(source);
     } catch (e) {
-      showError(el, `The block is not valid YAML. ${e instanceof Error ? e.message : ""}`.trim());
+      showError(el, yamlError(e));
       return;
     }
     const result = parseChartBlock(data);

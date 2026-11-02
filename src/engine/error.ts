@@ -6,13 +6,16 @@ export function showError(el: HTMLElement, message: string): HTMLElement {
   return box;
 }
 
-// Chart.js words this for its own registry, which gives a note whose chart
-// drew before a script's register call no hint that order is the cause
+// Chart.js words this for its own registry: "controller" and "scale" are its
+// names for a chart type and an axis type, and nothing in it says that a typo
+// is the likely cause, or that an add-on registered after the chart drew is
 const UNREGISTERED = /^"([^"]+)" is not a registered (controller|scale|element|plugin)\.?$/;
+const REGISTRY_NAMES: Record<string, string> = { controller: "chart type", scale: "axis type" };
 
 export function errorText(e: unknown): string {
   const message = e instanceof Error ? e.message : String(e);
   const m = UNREGISTERED.exec(message);
   if (!m) return message;
-  return `The ${m[2]} "${m[1]}" is not registered. Load its add-on, or call chartwork.register, before this chart draws.`;
+  const kind = m[2] ?? "";
+  return `Unknown ${REGISTRY_NAMES[kind] ?? kind} "${m[1]}". Check the spelling. If it comes from an add-on, load the add-on or call chartwork.register before this chart draws.`;
 }

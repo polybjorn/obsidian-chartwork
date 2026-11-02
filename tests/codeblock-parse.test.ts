@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { parseChartBlock } from "../src/codeblock/parse.ts";
+import { parseChartBlock, yamlError } from "../src/codeblock/parse.ts";
 import type { ParsedBlock } from "../src/codeblock/parse.ts";
 
 function ok(input: unknown): ParsedBlock {
@@ -153,7 +153,9 @@ void test("invalid input gives readable errors", () => {
   assert.match(err({ ...base, series: [] }), /needs series/);
   assert.match(err({ ...base, series: ["x"] }), /Series 1/);
   assert.match(err({ ...base, series: [{ title: "S" }] }), /data list/);
-  assert.match(err({ ...base, series: [{ data: [1, "x"] }] }), /not a number/);
+  assert.match(err({ ...base, series: [{ data: [1, "x"] }] }), /^Series 1 has a value that is not a number: "x"\.$/);
+  assert.match(err({ ...base, series: [{ title: "Books", data: [1, "x"] }] }), /^Series "Books" has a value/);
+  assert.match(err({ ...base, series: [{ title: "S" }] }), /^Series "S" needs a data list/);
   assert.match(err({ ...base, indexAxis: "z" }), /indexAxis/);
   assert.match(err({ type: "bar", id: "" }), /block id/);
   assert.match(err({ type: "bar", id: "t", layout: "diagonal" }), /layout/);
@@ -234,7 +236,8 @@ void test("a scatter block shows a legend for more than one series unless told",
 
 void test("a scatter block with bad points says what is wrong", () => {
   assert.match(err({ type: "scatter" }), /data of points/);
-  assert.match(err({ type: "scatter", series: [{ title: "A" }] }), /Series 1 needs a data list of points/);
+  assert.match(err({ type: "scatter", series: [{ title: "A" }] }), /Series "A" needs a data list of points/);
+  assert.match(err({ type: "scatter", series: [{}] }), /Series 1 needs a data list of points/);
   assert.match(err({ type: "scatter", series: [{ data: [{ x: 1 }] }] }), /Series 1 has a point without a number for x and y/);
   assert.match(err({ type: "scatter", series: [{ data: [3] }] }), /without a number/);
 });
@@ -273,8 +276,32 @@ void test("bestFit keys apply to line charts, bestFitNumber counting from 0", ()
 void test("a block with csv: names a CSV file, apart from id and file", () => {
   assert.deepEqual(ok({ type: "line", csv: "data/reading.csv", layout: "rows" }).table, { csv: "data/reading.csv", layout: "rows" });
   assert.deepEqual(ok({ type: "bar", csv: "[[reading.csv]]" }).table, { csv: "reading.csv", layout: "columns" });
-  assert.match(err({ type: "bar", csv: "a.csv", id: "t" }), /Use csv on its own/);
-  assert.match(err({ type: "bar", csv: "a.csv", file: "Notes.md" }), /Use csv on its own/);
+  assert.match(err({ type: "bar", csv: "a.csv", id: "t" }), /^Use either csv or id, not both\./);
+  assert.match(err({ type: "bar", csv: "a.csv", file: "Notes.md" }), /^Use either csv or id, not both\./);
   assert.match(err({ type: "bar", csv: "" }), /csv must name a CSV file/);
   assert.equal(ok({ ...base, csv: "a.csv" }).table, undefined);
+});
+
+// Shaped like the YAMLParseError Obsidian's parseYaml throws (the yaml
+// package): a code, the line it stopped at, and a message ending in an excerpt
+function parseError(code: string, line: number): Error {
+  return Object.assign(new Error(`Parser wording at line ${line}, column 1:\n\nexcerpt\n^\n`), { code, linePos: [{ line, col: 1 }] });
+}
+
+void test("a YAML error names the line and the likely fix, not the parser's wording", () => {
+  assert.equal(
+    yamlError(parseError("BAD_INDENT", 3)),
+    "The block's formatting is broken near line 3. Look for an unclosed bracket, a missing space after a colon, or uneven indentation.",
+  );
+  assert.equal(yamlError(parseError("TAB_AS_INDENT", 2)), "The block's formatting is broken near line 2. Indent with spaces, not tabs.");
+  assert.match(yamlError(parseError("MULTILINE_IMPLICIT_KEY", 1)), /missing space after a colon, as in type: bar\.$/);
+  assert.match(yamlError(parseError("DUPLICATE_KEY", 4)), /A key appears twice\.$/);
+});
+
+void test("a YAML error without a line or code still gives the general hint", () => {
+  assert.equal(
+    yamlError(new SyntaxError("Unexpected token")),
+    "The block's formatting is broken. Look for an unclosed bracket, a missing space after a colon, or uneven indentation.",
+  );
+  assert.match(yamlError("thrown string"), /^The block's formatting is broken\. /);
 });

@@ -64,6 +64,34 @@ function label(v: unknown): string | undefined {
   return undefined;
 }
 
+// A series is named the way the note names it, so a block with several finds
+// the one meant without counting
+function seriesName(raw: unknown, index: number): string {
+  const title = isObj(raw) ? label(raw["title"]) : undefined;
+  return title ? `Series "${title}"` : `Series ${index + 1}`;
+}
+
+const YAML_HINTS: Record<string, string> = {
+  TAB_AS_INDENT: "Indent with spaces, not tabs.",
+  DUPLICATE_KEY: "A key appears twice.",
+  // What the parser reports for type:bar, a colon with no space after it
+  MULTILINE_IMPLICIT_KEY: "Check for a missing space after a colon, as in type: bar.",
+};
+
+/**
+ * A block Obsidian's YAML parser rejects, in words a note writer can act on.
+ * The parser's own message names YAML internals and ends in a code excerpt an
+ * error box would run together, so only its line and error code are used.
+ */
+export function yamlError(e: unknown): string {
+  const err = isObj(e) ? e : {};
+  const at = Array.isArray(err["linePos"]) ? (err["linePos"] as unknown[])[0] : undefined;
+  const line = isObj(at) && typeof at["line"] === "number" ? at["line"] : undefined;
+  const code = typeof err["code"] === "string" ? err["code"] : "";
+  const hint = YAML_HINTS[code] ?? "Look for an unclosed bracket, a missing space after a colon, or uneven indentation.";
+  return `The block's formatting is broken${line === undefined ? "" : ` near line ${line}`}. ${hint}`;
+}
+
 function bool(v: unknown): boolean | undefined {
   return typeof v === "boolean" ? v : undefined;
 }
@@ -104,12 +132,12 @@ export function seriesFill(kind: ChartKind, fill: boolean | undefined): boolean 
 function parseSeries(raw: unknown, index: number, kind: ChartKind, fill: boolean | undefined): Series | string {
   if (!isObj(raw)) return `Series ${index + 1} must have a title and data.`;
   const data = raw["data"];
-  if (!Array.isArray(data)) return `Series ${index + 1} needs a data list, like data: [1, 2, 3].`;
+  if (!Array.isArray(data)) return `${seriesName(raw, index)} needs a data list, like data: [1, 2, 3].`;
   const values: (number | null)[] = [];
   for (const v of data) {
     if (typeof v === "number") values.push(v);
     else if (v === null || v === undefined) values.push(null);
-    else return `Series ${index + 1} has a value that is not a number: ${JSON.stringify(v)}.`;
+    else return `${seriesName(raw, index)} has a value that is not a number: ${JSON.stringify(v)}.`;
   }
   const title = label(raw["title"]);
   const series: Series = { name: title ?? `Series ${index + 1}`, values };
@@ -131,7 +159,7 @@ function parseSeries(raw: unknown, index: number, kind: ChartKind, fill: boolean
 
 function tableSource(input: Record<string, unknown>): { id: string; file?: string } | { csv: string } | string {
   if (input["csv"] !== undefined) {
-    if (input["id"] !== undefined || input["file"] !== undefined) return "Use csv on its own: id and file name a table in a note.";
+    if (input["id"] !== undefined || input["file"] !== undefined) return "Use either csv or id, not both. csv reads a CSV file; id reads a table in a note, with file naming the note when it is another one.";
     const csv = typeof input["csv"] === "string" ? input["csv"].trim().replace(/^\[\[(.*)\]\]$/, "$1").trim() : "";
     return csv ? { csv } : "csv must name a CSV file in the vault, like csv: data/reading.csv.";
   }
@@ -204,7 +232,7 @@ function parseScatter(input: Record<string, unknown>): ParseResult {
   const datasets: Record<string, unknown>[] = [];
   for (const [i, raw] of (rawSeries as unknown[]).entries()) {
     if (!isObj(raw) || !Array.isArray(raw["data"])) {
-      return fail(`Series ${i + 1} needs a data list of points, like data: [{x: 1, y: 2}, {x: 3, y: 5}].`);
+      return fail(`${seriesName(raw, i)} needs a data list of points, like data: [{x: 1, y: 2}, {x: 3, y: 5}].`);
     }
     const data: { x: number; y: number }[] = [];
     for (const point of raw["data"] as unknown[]) {
@@ -212,7 +240,7 @@ function parseScatter(input: Record<string, unknown>): ParseResult {
       const px = num(x);
       const py = num(y);
       if (px === undefined || py === undefined) {
-        return fail(`Series ${i + 1} has a point without a number for x and y: ${JSON.stringify(point)}.`);
+        return fail(`${seriesName(raw, i)} has a point without a number for x and y: ${JSON.stringify(point)}.`);
       }
       data.push({ x: px, y: py });
     }

@@ -26,7 +26,9 @@ void test("keys the parser does not read are listed", () => {
 });
 
 void test("a block that is not valid YAML is an error", () => {
-  assert.equal(check("```chart\n{type: \n```")[0]?.kind, "error");
+  const finding = check("```chart\n{type: \n```")[0];
+  assert.equal(finding?.kind, "error");
+  assert.match(finding?.message ?? "", /^Not drawn\. The block's formatting is broken\./);
 });
 
 void test("a chart fence shown inside a longer fence is an example, not a chart", () => {

@@ -10,13 +10,13 @@ series:
     data: [1]
 ```
 
-A value that is not a number. Expect an error box reading: Chartwork can't draw this chart: Series 1 has a value that is not a number: "lots".
+A value that is not a number. Expect an error box reading: Chartwork can't draw this chart: Series "Books" has a value that is not a number: "lots".
 
 ```chart
 type: bar
 labels: [a, b]
 series:
-  - title: x
+  - title: Books
     data: [1, lots]
 ```
 
@@ -27,7 +27,7 @@ type: bar
 csv: no-such-file.csv
 ```
 
-A csv key together with id. Expect an error box reading: Chartwork can't draw this chart: Use csv on its own: id and file name a table in a note.
+A csv key together with id. Expect an error box reading: Chartwork can't draw this chart: Use either csv or id, not both. csv reads a CSV file; id reads a table in a note, with file naming the note when it is another one.
 
 ```chart
 type: bar
@@ -35,7 +35,7 @@ id: messy
 csv: Edge cases.csv
 ```
 
-Broken YAML. Expect an error box reading: Chartwork can't draw this chart: The block is not valid YAML, followed by the parser's message.
+Broken YAML. Expect an error box reading: Chartwork can't draw this chart: The block's formatting is broken near line 3. Look for an unclosed bracket, a missing space after a colon, or uneven indentation.
 
 ```chart
 type: bar
@@ -43,7 +43,7 @@ labels: [a, b
 series: oops
 ```
 
-A script asking for a chart type that doesn't exist. Expect an error box reading: Chartwork can't draw this chart: The controller "banana" is not registered. Load its add-on, or call chartwork.register, before this chart draws.
+A script asking for a chart type that doesn't exist. Expect an error box reading: Chartwork can't draw this chart: Unknown chart type "banana". Check the spelling. If it comes from an add-on, load the add-on or call chartwork.register before this chart draws.
 
 ```dataviewjs
 window.chartwork.render(dv.container, {type: "banana", data: {labels: ["a"], datasets: [{data: [1]}]}}, dv.component);

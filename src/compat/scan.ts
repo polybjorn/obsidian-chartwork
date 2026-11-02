@@ -1,4 +1,4 @@
-import { BLOCK_KEYS, parseChartBlock } from "../codeblock/parse.ts";
+import { BLOCK_KEYS, parseChartBlock, yamlError } from "../codeblock/parse.ts";
 
 export type FindingKind = "error" | "ignored" | "renderChart";
 
@@ -46,8 +46,8 @@ function checkBlock(fence: Fence, parseYaml: (source: string) => unknown): Findi
   let data: unknown;
   try {
     data = parseYaml(fence.body.join("\n"));
-  } catch {
-    return { ...at, kind: "error", message: "Not drawn. The block is not valid YAML." };
+  } catch (e) {
+    return { ...at, kind: "error", message: `Not drawn. ${yamlError(e)}` };
   }
   const result = parseChartBlock(data);
   if (!result.ok) return { ...at, kind: "error", message: `Not drawn. ${result.error}` };
@@ -74,7 +74,7 @@ export function checkNote(text: string, parseYaml: (source: string) => unknown):
         findings.push({
           line: fence.line + 1 + n,
           kind: "renderChart",
-          message: "Calls renderChart, which draws but can't tell when the note closes. window.chartwork.render can.",
+          message: "Uses renderChart from Charts. It still draws, but window.chartwork.render also cleans up when the note closes.",
         });
       }
     });
