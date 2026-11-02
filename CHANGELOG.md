@@ -14,5 +14,6 @@ The first release.
 - **`chart` code block** in Charts' format, so a Charts note draws as it is, on Chart.js 4. Data can come from the block, a table in the note or a CSV file, with chosen rows or columns. New keys add values on bars and slices, reference lines, an average line, a running total, and a height and width.
 - **Script function** `window.chartwork.render`, plus `window.renderChart` for scripts written for Charts, in theme colors and with a width and height in the spec. Works with any plugin that runs JavaScript in notes, such as Dataview.
 - Theme colors and text size in every chart, redrawn when the theme switches between light and dark.
+- The setting **Series colors** puts your own colors before the theme's. Both settings show in Obsidian's settings search from 1.13.
 - The command **Check chart blocks and scripts** lists notes with charts Chartwork can't draw as written.
 - Chart.js 4.6.1 with its sankey and annotation plugins bundled; nothing is fetched from the network.

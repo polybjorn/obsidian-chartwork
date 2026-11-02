@@ -11,7 +11,8 @@ CI never runs Obsidian, so run these against the build about to be tagged:
    Mistakes chart shows the error its note names. Then check that a Bases
    chart view, a `chart` block drawn from a table, one from a CSV file and one
    with inline data, and a script chart through both `chartwork.render` and
-   `window.renderChart` all draw.
+   `window.renderChart` all draw. The script charts need Dataview, in the demo
+   vault or in another vault holding the same charts.
 3. Switching between light and dark recolors every chart without a reload,
    and changing the text size resizes chart text.
 4. Editing the table or CSV file a chart reads redraws it.
@@ -24,8 +25,12 @@ CI never runs Obsidian, so run these against the build about to be tagged:
 9. A base embedded in a canvas draws at a steady size, with no scrollbars
    and no y axis that keeps growing.
 10. When the change touches an Obsidian API, repeat 1 and 2 on the stable
-    release in a separate profile (`--user-data-dir`) with `docs/demo-vault`,
-    since `minAppVersion` stays at stable.
+    release and on the oldest release at or above `minAppVersion`, each in a
+    separate profile (`--user-data-dir`) with `docs/demo-vault`. Before 1.13
+    the settings tab draws from `display()`, not from its setting definitions.
+    Older installers are on the `obsidianmd/obsidian-releases` GitHub
+    releases; a fresh profile runs the version the installer shipped, not a
+    downloaded update.
 
 ## Release
 
