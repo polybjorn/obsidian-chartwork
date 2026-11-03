@@ -4,10 +4,10 @@
 // and single-instance lock. An image is the note's charts alone, two to a row,
 // or with `crop`, that part of the page as drawn. Window chrome would double
 // each image's height in the docs. A shot with `record` is a GIF of its steps
-// instead, encoded with ffmpeg, which has to be on the PATH. Run with `npm run screenshots`, or name
+// instead, recorded as the window paints and encoded with ffmpeg, which has to be on the PATH. Run with `npm run screenshots`, or name
 // shots to render only those: `npm run screenshots -- bases-view overview`.
 import { execFileSync, spawn } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, linkSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 
@@ -27,11 +27,14 @@ const GRID_LINE_WIDTH = 400;
 const GAP = 32;
 // Less around a crop, which would otherwise take in the text above it
 const CROP_PAD = 12;
-// How long a step's own motion lasts (a toggle sliding, the options
-// scrolling), captured frame by frame before the settled frame is held
-const MOTION_MS = 600;
+// How long a step's own motion lasts (the options scrolling, the chart
+// growing back in after a redraw) before its settled frame is held
+const MOTION_MS = 1100;
 // Wide enough to stay sharp at the README's 720 on a high-density screen
 const GIF_WIDTH = 1440;
+// A GIF stores each frame's length in hundredths of a second: at 50 a second
+// every frame lasts 2, the shortest that browsers play at full speed
+const GIF_FPS = 50;
 
 const SHOTS = [
   // A .base file with its view options open, the chart moved out from under
@@ -83,8 +86,10 @@ async function connect() {
   });
   let seq = 0;
   const pending = new Map();
+  const listeners = new Map();
   ws.addEventListener("message", (e) => {
     const m = JSON.parse(e.data);
+    if (m.method) listeners.get(m.method)?.(m.params);
     if (!pending.has(m.id)) return;
     const { res, rej } = pending.get(m.id);
     pending.delete(m.id);
@@ -102,7 +107,8 @@ async function connect() {
     if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description ?? r.exceptionDetails.text);
     return r.result.value;
   };
-  return { send, evaluate, close: () => ws.close() };
+  const on = (method, fn) => listeners.set(method, fn);
+  return { send, evaluate, on, close: () => ws.close() };
 }
 
 function installPlugin(vault) {
@@ -300,57 +306,50 @@ async function step(cdp, s) {
   })()`);
 }
 
-// Each step's motion frame by frame, then its settled frame held. The chart
-// itself redraws in one frame
+// Recorded as the window paints rather than by screenshots in turn, which
+// come back too slowly to follow the chart growing in after each redraw
 async function record(cdp, shot, work) {
   const box = await cropBox(cdp, shot);
+  const viewWidth = await cdp.evaluate("window.innerWidth");
   const dir = join(work, "frames");
   mkdirSync(dir);
-  // Two captures of an unchanged window still differ by a faint shade along
-  // the options' edges, and a GIF stores each such frame in full, so a frame
-  // counts as new only when enough pixels change by more than that
-  await cdp.evaluate(`window.chartworkChanged = async (png) => {
-    const img = new Image();
-    img.src = "data:image/png;base64," + png;
-    await img.decode();
-    const ctx = new OffscreenCanvas(img.width, img.height).getContext("2d");
-    ctx.drawImage(img, 0, 0);
-    const now = ctx.getImageData(0, 0, img.width, img.height).data;
-    const prev = window.chartworkFrame;
-    window.chartworkFrame = now;
-    if (!prev) return true;
-    let changed = 0;
-    for (let i = 0; i < now.length; i += 4) {
-      if (Math.abs(now[i] - prev[i]) + Math.abs(now[i + 1] - prev[i + 1]) + Math.abs(now[i + 2] - prev[i + 2]) > 24) changed++;
-    }
-    return changed > 50;
-  }`);
   const frames = [];
-  const capture = async () => {
-    const { data } = await cdp.send("Page.captureScreenshot", { format: "png", clip: box });
-    if (!(await cdp.evaluate(`chartworkChanged(${JSON.stringify(data)})`))) return;
+  cdp.on("Page.screencastFrame", ({ data, metadata, sessionId }) => {
     const file = join(dir, `${String(frames.length).padStart(4, "0")}.png`);
     writeFileSync(file, Buffer.from(data, "base64"));
-    frames.push({ file, t: Date.now() });
-  };
+    frames.push({ file, t: metadata.timestamp });
+    void cdp.send("Page.screencastFrameAck", { sessionId });
+  });
+  await cdp.send("Page.startScreencast", { format: "png", everyNthFrame: 1 });
+  await sleep(300);
   for (const s of shot.record) {
     await step(cdp, s);
-    const start = Date.now();
-    if (Object.keys(s).length > 1) while (Date.now() - start < MOTION_MS) await capture();
-    await sleep(200);
-    await capture();
-    for (const [i, f] of frames.entries()) f.duration ??= frames[i + 1] && frames[i + 1].t - f.t;
-    frames.at(-1).duration = s.hold;
+    await sleep((Object.keys(s).length > 1 ? MOTION_MS : 0) + s.hold);
   }
-  const list = frames.map((f) => `file '${f.file}'\nduration ${f.duration / 1000}\n`).join("");
-  writeFileSync(join(dir, "list.txt"), list);
+  await cdp.send("Page.stopScreencast");
+  const end = Date.now() / 1000;
+  if (frames.length === 0) throw new Error(`No frames recorded for ${shot.name}`);
+  // Laid out on the GIF's own frame rate, each tick showing the last frame
+  // painted by then. A list of frames with their durations would go through
+  // ffmpeg's image input, which rounds every timestamp to 1/25 of a second
+  const seq = join(dir, "seq");
+  mkdirSync(seq);
+  const t0 = frames[0].t;
+  const ticks = Math.round((end - t0) * GIF_FPS);
+  for (let k = 0, j = 0; k < ticks; k++) {
+    while (frames[j + 1] && frames[j + 1].t <= t0 + k / GIF_FPS) j++;
+    linkSync(frames[j].file, join(seq, `${String(k).padStart(5, "0")}.png`));
+  }
+  const frameWidth = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "stream=width", "-of", "csv=p=0", frames[0].file],
+    { encoding: "utf8" }));
+  const scale = frameWidth / viewWidth;
+  const [x, y, w, h] = [box.x, box.y, box.width, box.height].map((v) => Math.round(v * scale));
   const file = join(OUT, `${shot.name}.gif`);
   // A flat interface needs no dithering, which would only add noise between frames
-  execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", join(dir, "list.txt"),
-    "-vf", `scale=${GIF_WIDTH}:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff:max_colors=128[p];` +
-      "[b][p]paletteuse=dither=none:diff_mode=rectangle",
-    // The concat format drops the last frame's duration, so the GIF sets it
-    "-fps_mode", "vfr", "-loop", "0", "-final_delay", String(Math.round(frames.at(-1).duration / 10)), file]);
+  execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-framerate", String(GIF_FPS), "-i", join(seq, "%05d.png"),
+    "-vf", `crop=${w}:${h}:${x}:${y},scale=${GIF_WIDTH}:-1:flags=lanczos,` +
+      "split[a][b];[a]palettegen=stats_mode=diff:max_colors=128[p];[b][p]paletteuse=dither=none:diff_mode=rectangle",
+    "-loop", "0", file]);
   rmSync(dir, { recursive: true });
   console.log(`Wrote ${file.slice(ROOT.length + 1)}`);
 }
