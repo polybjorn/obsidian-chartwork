@@ -6,10 +6,11 @@ One plugin for every chart in your vault. Make one from a [Bases](https://help.o
 
 <img src="docs/images/overview.png" width="720" alt="Four charts of the demo books, split diagonally between the light theme above and the dark theme below: a bar chart by status with a color per status and its value on each bar, pages by author as a doughnut, top five and the rest added up as Others, pages finished per month with gaps for months without a finished book, and books by genre as horizontal bars">
 
-- Matches your theme, light or dark. Color a category with `var(--color-green)`.
-- Puts the value on each bar and keeps horizontal bars one thickness, however many there are.
-- Plots dates from a Bases view by day, week, month or year, leaving a gap where nothing happened.
 - Sorts by value, keeps the top few and adds up the rest as "Others".
+- Plots dates from a Bases view by day, week, month or year, leaving a gap where nothing happened.
+- Puts the value on each bar.
+- Grows a horizontal bar chart with each bar, so a long list is never squeezed.
+- Uses your theme's colors, in light and dark.
 
 ## Three ways to make a chart
 
