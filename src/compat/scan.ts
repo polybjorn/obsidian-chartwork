@@ -81,10 +81,3 @@ export function checkNote(text: string, parseYaml: (source: string) => unknown):
   }
   return findings;
 }
-
-/** The findings as a Markdown checklist under a link to each note. */
-export function findingsMarkdown(notes: { link: string; findings: Finding[] }[]): string {
-  return notes
-    .map(({ link, findings }) => [`- ${link}`, ...findings.map((f) => `  - [ ] Line ${f.line + 1}: ${f.message}`)].join("\n"))
-    .join("\n");
-}

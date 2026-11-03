@@ -35,18 +35,21 @@
 }
 
 /* Export to PDF lays the note out at the page's width without redrawing the
-   charts, so a canvas keeps the width it was drawn at; shrinking it keeps the
-   whole chart on the page. The box keeps its height: an auto height feeds
-   each Chart.js resize back into the next, so charts print at random sizes */
+   charts, so a canvas keeps the width it was drawn at. Capping the width and
+   fitting the drawing inside keeps the whole chart on the page; the height
+   Chart.js writes on the canvas would beat a CSS height. The box keeps its
+   height: an auto height feeds each Chart.js resize back into the next, so
+   charts print at random sizes */
 @media print {
   .chartwork-chart canvas {
-    max-width: 100% !important;
-    height: auto !important;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: left top;
   }
 }
 
 /* Obsidian turns off text selection across its interface; the findings are
-   worth copying a line at a time too */
+   worth copying into a note */
 .chartwork-findings .modal-content {
   -webkit-user-select: text;
   user-select: text;

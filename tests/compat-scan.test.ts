@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checkNote, findingsMarkdown } from "../src/compat/scan.ts";
+import { checkNote } from "../src/compat/scan.ts";
 
 // YAML is a superset of JSON, so JSON blocks stand in for Obsidian's parseYaml
 const check = (text: string) => checkNote(text, JSON.parse);
@@ -49,12 +49,4 @@ void test("renderChart is reported inside a script block, not in prose", () => {
   const text = "Mentions renderChart(config) in prose.\n\n```dataviewjs\nconst c = {};\nwindow.renderChart(c, this.container);\n```\n";
   const findings = check(text);
   assert.deepEqual(findings.map((f) => [f.kind, f.line]), [["renderChart", 4]]);
-});
-
-void test("findings copy as a checklist under each note's link, with one-based lines", () => {
-  const md = findingsMarkdown([
-    { link: "[[A]]", findings: [{ line: 2, kind: "error", message: "Not drawn." }, { line: 9, kind: "renderChart", message: "Calls renderChart." }] },
-    { link: "[[B]]", findings: [{ line: 0, kind: "ignored", message: "Drawn, but without x." }] },
-  ]);
-  assert.equal(md, "- [[A]]\n  - [ ] Line 3: Not drawn.\n  - [ ] Line 10: Calls renderChart.\n- [[B]]\n  - [ ] Line 1: Drawn, but without x.");
 });

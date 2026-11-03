@@ -1,8 +1,8 @@
-import { Modal, Notice, Setting, parseYaml } from "obsidian";
+import { Modal, Notice, parseYaml } from "obsidian";
 import type { App, Plugin, TFile } from "obsidian";
 import { errorText } from "../engine/index.ts";
 import { chartsEnabled } from "./charts.ts";
-import { checkNote, findingsMarkdown } from "./scan.ts";
+import { checkNote } from "./scan.ts";
 import type { Finding } from "./scan.ts";
 
 interface NoteFindings {
@@ -84,22 +84,6 @@ class FindingsModal extends Modal {
         });
         item.appendText(`: ${finding.message}`);
       }
-    }
-    new Setting(contentEl).addButton((button) => button
-      .setButtonText("Copy as Markdown")
-      .onClick(() => void this.copy()));
-  }
-
-  private async copy(): Promise<void> {
-    const markdown = findingsMarkdown(this.scan.notes.map(({ file, findings }) => ({
-      link: this.app.fileManager.generateMarkdownLink(file, ""),
-      findings,
-    })));
-    try {
-      await navigator.clipboard.writeText(markdown);
-      new Notice("Copied the list as Markdown.");
-    } catch (e) {
-      new Notice(`Chartwork could not copy the list. ${errorText(e)}`);
     }
   }
 
