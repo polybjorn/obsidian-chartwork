@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-11-03
+
 ### Removed
 
 - **Copy as Markdown** in the check command's report. The report's text can still be selected and copied.
