@@ -4,10 +4,6 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ## [Unreleased]
 
-### Changed
-
-- A horizontal bar chart with several series side by side is shorter: each series past the first adds 12 pixels per label instead of a full bar's 28, so the gaps between labels no longer grow with the series count.
-
 ## [1.0.3] - 2026-11-03
 
 ### Fixed
