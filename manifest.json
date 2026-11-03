@@ -1,7 +1,7 @@
 {
   "id": "chartwork",
   "name": "Chartwork",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "minAppVersion": "1.10.2",
   "description": "Draw charts from Bases views, code blocks and scripts.",
   "author": "polybjorn",

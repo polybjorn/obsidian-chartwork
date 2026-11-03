@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-11-03
+
 ### Fixed
 
 - A Bases chart played its opening animation twice after each change to the view's options.
