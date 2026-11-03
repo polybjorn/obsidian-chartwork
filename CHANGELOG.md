@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ## [Unreleased]
 
+### Fixed
+
+- A Bases chart played its opening animation twice after each change to the view's options.
+
 ## [1.0.2] - 2026-11-03
 
 ### Removed

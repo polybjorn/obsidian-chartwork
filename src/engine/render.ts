@@ -182,6 +182,9 @@ export function renderSpec(el: HTMLElement, spec: ChartSpec, ctx: RenderContext)
   });
   return {
     update: (next) => {
+      // Bases updates a view twice for one change to its options, about a
+      // second apart, and every redraw replays the chart's opening animation
+      if (!view.failed() && JSON.stringify(next) === JSON.stringify(current)) return;
       current = next;
       view.redraw();
     },
