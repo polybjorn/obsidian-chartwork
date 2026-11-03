@@ -15,8 +15,11 @@ const ROOT = resolve(import.meta.dirname, "..");
 const OUT = join(ROOT, "docs/images");
 const OBSIDIAN = process.env.OBSIDIAN_BIN ?? "/Applications/Obsidian.app/Contents/MacOS/Obsidian";
 const PORT = 9333;
-// The window's content size in points; a Retina screen captures it at 2x
+// The window's content size in points, captured at SCALE pixels per point
 const WINDOW = { width: 1100, height: 780 };
+// Forced rather than taken from the screen, so a non-Retina monitor renders
+// images as sharp as a Retina one
+const SCALE = 2;
 // The demo vault's note names are short, so the file list needs little room
 const SIDEBAR = 180;
 const THEMES = { light: "moonstone", dark: "obsidian" };
@@ -27,6 +30,9 @@ const GRID_LINE_WIDTH = 400;
 const GAP = 32;
 // Less around a crop, which would otherwise take in the text above it
 const CROP_PAD = 12;
+// Corner radius in points. GitHub strips CSS from a README, so the corners
+// are cut into the image as transparent pixels
+const RADIUS = 8;
 // How long a step's own motion lasts (the options scrolling, the chart
 // growing back in after a redraw) before its settled frame is held
 const MOTION_MS = 1100;
@@ -157,9 +163,23 @@ async function runScript(cdp, file) {
   })()`);
 }
 
-function write(shot, base64) {
+async function write(cdp, shot, base64) {
+  const rounded = await cdp.evaluate(`(async (b64) => {
+    const img = new Image();
+    img.src = "data:image/png;base64," + b64;
+    await img.decode();
+    const out = document.createElement("canvas");
+    out.width = img.width;
+    out.height = img.height;
+    const ctx = out.getContext("2d");
+    ctx.beginPath();
+    ctx.roundRect(0, 0, out.width, out.height, ${RADIUS} * window.devicePixelRatio);
+    ctx.clip();
+    ctx.drawImage(img, 0, 0);
+    return out.toDataURL("image/png").split(",")[1];
+  })(${JSON.stringify(base64)})`);
   const file = join(OUT, `${shot.name}.png`);
-  writeFileSync(file, Buffer.from(base64, "base64"));
+  writeFileSync(file, Buffer.from(rounded, "base64"));
   console.log(`Wrote ${file.slice(ROOT.length + 1)}`);
 }
 
@@ -188,7 +208,7 @@ const gridImage = (cdp, sel) => cdp.evaluate(`(() => {
   })()`);
 
 async function grid(cdp, shot, sel) {
-  write(shot, await gridImage(cdp, sel));
+  await write(cdp, shot, await gridImage(cdp, sel));
 }
 
 // The grid in the light theme above a 45 degree line and the dark one below
@@ -224,7 +244,7 @@ async function split(cdp, shot, sel) {
     ctx.drawImage(b, 0, 0);
     return out.toDataURL("image/png").split(",")[1];
   })(${JSON.stringify(halves)})`);
-  write(shot, png);
+  await write(cdp, shot, png);
 }
 
 // The smallest box around the crop's elements, as the page draws it
@@ -245,7 +265,7 @@ async function cropBox(cdp, shot) {
 async function crop(cdp, shot) {
   const box = await cropBox(cdp, shot);
   const { data } = await cdp.send("Page.captureScreenshot", { format: "png", clip: box, captureBeyondViewport: false });
-  write(shot, data);
+  await write(cdp, shot, data);
 }
 
 // Opens the view's options the way a click on the toolbar does, then moves
@@ -394,7 +414,7 @@ async function shoot(cdp, shot, work) {
 }
 
 const { work, vault, profile } = prepare();
-const app = spawn(OBSIDIAN, [`--user-data-dir=${profile}`, `--remote-debugging-port=${PORT}`], { stdio: "ignore" });
+const app = spawn(OBSIDIAN, [`--user-data-dir=${profile}`, `--remote-debugging-port=${PORT}`, `--force-device-scale-factor=${SCALE}`], { stdio: "ignore" });
 let cdp;
 try {
   cdp = await connect();
