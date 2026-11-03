@@ -107,7 +107,7 @@ export interface ChartSpec {
   height?: number;
   /** Chart width, as CSS (`"60%"`) or a number of pixels. Default is the full width. */
   width?: string | number;
-  /** Horizontal bars: pixels per bar, so height follows the bar count. */
+  /** Horizontal bars: pixels per label, plus 3/7 of it for each further series side by side, so height follows the bar count. */
   barThickness?: number;
   /** Bar, line: dashed lines across the chart where an axis reads these values, or these labels on the label axis. */
   referenceLines?: Partial<Record<"x" | "y", (number | string)[]>>;

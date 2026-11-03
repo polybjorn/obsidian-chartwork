@@ -133,16 +133,16 @@ void test("horizontal height scales with bar count", () => {
   assert.equal(chartHeight(spec), 300);
 });
 
-void test("horizontal height gives each unstacked series a bar and the legend its row", () => {
+void test("horizontal height gives each further unstacked series 12 pixels and the legend its row", () => {
   const three: ChartSpec = {
     ...spec,
     horizontal: true,
     series: [{ name: "a", values: [1, 2] }, { name: "b", values: [3, 4] }, { name: "c", values: [5, 6] }],
   };
-  assert.equal(chartHeight(three), 2 * 3 * 28 + 56 + 32);
+  assert.equal(chartHeight(three), 2 * (28 + 2 * 12) + 56 + 32);
   assert.equal(chartHeight({ ...three, stacked: true }), 2 * 28 + 56 + 32);
-  assert.equal(chartHeight({ ...three, legend: false }), 2 * 3 * 28 + 56);
-  assert.equal(chartHeight({ ...three, legend: "right" }), 2 * 3 * 28 + 56);
+  assert.equal(chartHeight({ ...three, legend: false }), 2 * (28 + 2 * 12) + 56);
+  assert.equal(chartHeight({ ...three, legend: "right" }), 2 * (28 + 2 * 12) + 56);
   assert.equal(chartHeight({ ...spec, horizontal: true, legend: "bottom" }), 2 * 28 + 56 + 32);
 });
 

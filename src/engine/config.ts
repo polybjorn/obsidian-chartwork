@@ -19,6 +19,7 @@ function timeAxis(unit: DateUnit): Obj {
 }
 
 export const DEFAULT_BAR_THICKNESS = 28;
+const EXTRA_SERIES_SHARE = 3 / 7;
 const DEFAULT_HEIGHT = 300;
 export const DEFAULT_TENSION = 0.2;
 export const DEFAULT_POINT_RADIUS = 4;
@@ -537,13 +538,16 @@ export function chartHeight(spec: ChartSpec): number {
   if (spec.height !== undefined) return spec.height;
   if (!(spec.kind === "bar" && spec.horizontal === true)) return DEFAULT_HEIGHT;
   const data = prepareData(spec);
-  // Unstacked series sit side by side within a label, so each takes a bar's
-  // room. A legend above or below the plot takes height from it.
-  const bars = data.labels.length * (spec.stacked === true ? 1 : Math.max(1, data.series.length));
+  // Unstacked series sit side by side within a label and read as one row, so
+  // each series past the first adds less than a lone bar's room. A legend
+  // above or below the plot takes height from it.
+  const extra = spec.stacked === true ? 0 : Math.max(0, data.series.length - 1);
+  const thickness = spec.barThickness ?? DEFAULT_BAR_THICKNESS;
+  const perLabel = thickness + Math.round(extra * thickness * EXTRA_SERIES_SHARE);
   const sideLegend = spec.legend === "left" || spec.legend === "right";
   const legend = legendShown(spec, data.series.length) && !sideLegend ? 32 : 0;
   const room = 56 + (spec.title ? 32 : 0) + (spec.valueTitle ? 24 : 0) + legend;
-  return bars * (spec.barThickness ?? DEFAULT_BAR_THICKNESS) + room;
+  return data.labels.length * perLabel + room;
 }
 
 // Returns a new object tree where defaults fill only what the caller left

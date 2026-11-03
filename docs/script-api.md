@@ -78,7 +78,7 @@ The handle's `update` takes the shape the chart was made with: a spec for a spec
 | `tension` | number | Line curve from 0 to 1. Left out, the line takes a gentle curve that never overshoots the values it joins |
 | `spanGaps` | boolean | A line or radar joins across a `null` value instead of leaving a gap |
 | `legend` | boolean, `"top"`, `"bottom"`, `"left"`, `"right"` | Default shown for pie, doughnut, polar area and multi-series charts |
-| `barThickness` | number | Pixels per bar on a horizontal chart. Default 28 |
+| `barThickness` | number | Pixels per label on a horizontal chart, plus 3/7 of it for each further series beside the first. Default 28 |
 | `height` | number | Chart height in pixels, default 300. The chart keeps it while the width follows the pane. Wins over the height a horizontal bar chart grows to from `barThickness` |
 | `width` | string or number | Chart width, as CSS (`"60%"`) or pixels (`400`). Default is the full width. An update can change it |
 | `referenceLines` | `{x?, y?}` | Bar and line charts: dashed lines across the chart at these values, or at labels on the label axis |
