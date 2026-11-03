@@ -12,6 +12,8 @@ One plugin for every chart in your vault. Make one from a [Bases](https://help.o
 - Grows a horizontal bar chart with each bar, so a long list is never squeezed.
 - Uses your theme's colors, in light and dark.
 
+Install it from Obsidian's community plugins, or see [Installation](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/install.md) for manual and beta installs.
+
 ## Three ways to make a chart
 
 | Way | Use it when | Needs |
@@ -19,8 +21,6 @@ One plugin for every chart in your vault. Make one from a [Bases](https://help.o
 | [Bases view](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/bases-view.md) | the numbers are note properties, like books counted by status or hours summed by project | Bases, built into [Obsidian](https://obsidian.md) |
 | [`chart` code block](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/code-block.md) | the numbers are in no note, so you type them in | nothing else |
 | [Script function](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/script-api.md) | the numbers have to be worked out first, like notes created this month counted by tag | a plugin that runs JavaScript in notes, such as [Dataview](https://github.com/blacksmithgu/obsidian-dataview) |
-
-Any Chart.js config: [Beyond the basics](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/advanced.md).
 
 The smallest chart is a code block:
 
@@ -35,8 +35,6 @@ series:
 ````
 
 <img src="docs/images/code-block.png" width="400" alt="The line chart this block draws">
-
-Install Chartwork from Obsidian's community plugins; manual and beta installs are in [Installation](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/install.md). It needs Obsidian 1.10.2 or later. [Chart.js](https://www.chartjs.org) 4 is bundled, so Bases views and code blocks need nothing else installed. The plugin is about 290 KB, almost all of it Chart.js and its sankey and annotation plugins.
 
 ## A script, before and after
 
@@ -114,7 +112,7 @@ window.renderChart({
 
 ## Beyond the basics
 
-A script can also pass a full Chart.js config, with time axes, sankey diagrams and annotations built in. This one draws half a year of pages read per day, a 7-day average over it, a shaded holiday and a target line ([its script](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/demo-vault/Time%20series.md)):
+Chartwork runs on [Chart.js](https://www.chartjs.org) 4 and bundles time axes, sankey diagrams and annotations for it. A script can pass it a full Chart.js config. This one draws half a year of pages read per day, a 7-day average over it, a shaded holiday and a target line ([its script](https://github.com/polybjorn/obsidian-chartwork/blob/main/docs/demo-vault/Time%20series.md)):
 
 <img src="docs/images/time-series.png" width="720" alt="A line chart of pages read per day from April to September, with a thicker 7-day average line, July shaded as a holiday where the average rises above a dashed target line at 40">
 
@@ -122,7 +120,7 @@ More in [Beyond the basics](https://github.com/polybjorn/obsidian-chartwork/blob
 
 ## Switching from another chart plugin
 
-Notes written for [Charts](https://github.com/phibr0/obsidian-charts) work without changes, so you no longer need Charts. The Bases view counts notes and adds up values by category or by day, week, month or year. That does the job of [Bases Charts](https://github.com/mProjectsCode/obsidian-bases-charts-plugin) and most of what people use [Tracker](https://github.com/pyrochlore/obsidian-tracker) for. Tracker's month calendar and streak summaries, and Charts' chart builder and image export, are not in Chartwork.
+Notes written for [Charts](https://github.com/phibr0/obsidian-charts) work without changes and draw on Chart.js 4, so you no longer need Charts. The Bases view counts notes and adds up values by category or by day, week, month or year. That does the job of [Bases Charts](https://github.com/mProjectsCode/obsidian-bases-charts-plugin) and most of what people use [Tracker](https://github.com/pyrochlore/obsidian-tracker) for. Tracker's month calendar and streak summaries, and Charts' chart builder and image export, are not in Chartwork.
 
 ## What the plugin accesses
 
