@@ -12,6 +12,7 @@ All notable changes to this project are documented here. Format based on [Keep a
 - Hovering a stacked bar or line chart shows the total of its series.
 - A chart block with a key neither Chartwork nor Charts knows, or a Chartwork key its chart type does not use, shows a line under the chart naming it, with a guess for a misspelt key. A script spec field the chart's kind does not use, such as `horizontal` on a pie, shows the same line.
 - Right-clicking a chart offers **Copy chart as image**, a PNG on the theme's background.
+- A click on a bar, slice or point in a Bases chart opens the notes behind it.
 
 ### Changed
 

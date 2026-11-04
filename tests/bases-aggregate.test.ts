@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { aggregateRows, valueLabelsOption, bucketLabel, dateOf, parseCategoryColors, propertyRows, scatterSpec, xLabels, type AggregateOptions } from "../src/bases/aggregate.ts";
+import { aggregateRows, valueLabelsOption, bucketLabel, dateOf, noteEntries, parseCategoryColors, propertyRows, scatterSpec, xLabels, type AggregateOptions } from "../src/bases/aggregate.ts";
 
 const base: AggregateOptions = { aggregation: "count", kind: "bar" };
 
@@ -246,4 +246,52 @@ void test("the Value labels option reads the dropdown and a chart block's boolea
   assert.equal(valueLabelsOption(false), false);
   assert.equal(valueLabelsOption("auto"), undefined);
   assert.equal(valueLabelsOption(undefined), undefined);
+});
+
+void test("each value keeps the paths of the notes behind it", () => {
+  const rows = [{ x: "a", note: "1.md" }, { x: "b", note: "2.md" }, { x: "a", note: "3.md" }];
+  assert.deepEqual(aggregateRows(rows, base).series[0]?.notes, [["1.md", "3.md"], ["2.md"]]);
+});
+
+void test("rows with no note add no notes to the series", () => {
+  assert.ok(!("notes" in (aggregateRows([{ x: "a" }], base).series[0] ?? {})));
+});
+
+void test("a note listing a category twice sits in it once", () => {
+  assert.deepEqual(aggregateRows([{ x: ["a", "a"], note: "1.md" }], base).series[0]?.notes, [["1.md"]]);
+});
+
+void test("a note skipped for having no number is not behind the value", () => {
+  const rows = [{ x: "a", y: 1, note: "1.md" }, { x: "a", y: "n/a", note: "2.md" }];
+  assert.deepEqual(aggregateRows(rows, { ...base, aggregation: "sum" }).series[0]?.notes, [["1.md"]]);
+});
+
+void test("an empty date bucket has no notes, and each group keeps its own", () => {
+  const rows = [
+    { x: "2026-01-05", group: "g", note: "1.md" },
+    { x: "2026-03-02", group: "g", note: "2.md" },
+    { x: "2026-03-09", group: "h", note: "3.md" },
+  ];
+  const spec = aggregateRows(rows, { ...base, dateUnit: "month" });
+  assert.deepEqual(spec.series[0]?.notes, [["1.md"], [], ["2.md"]]);
+  assert.deepEqual(spec.series[1]?.notes, [[], [], ["3.md"]]);
+});
+
+void test("property rows carry their note", () => {
+  const rows = propertyRows("a", [1], ["p"], undefined, false, "1.md");
+  assert.equal(rows[0]?.note, "1.md");
+});
+
+void test("a scatter point keeps its note", () => {
+  const spec = scatterSpec([{ name: "n", note: "dir/n.md", x: 1, y: 2 }]);
+  assert.equal(spec.series[0]?.points?.[0]?.note, "dir/n.md");
+});
+
+void test("noteEntries sorts by name and shows the folder of a shared name", () => {
+  assert.deepEqual(noteEntries(["b/Zed.md", "a/index.md", "b/index.md", "Art.pdf"]), [
+    { path: "a/index.md", title: "a/index" },
+    { path: "Art.pdf", title: "Art.pdf" },
+    { path: "b/index.md", title: "b/index" },
+    { path: "b/Zed.md", title: "Zed" },
+  ]);
 });

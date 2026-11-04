@@ -49,6 +49,8 @@ export interface ScatterPoint {
   name: string;
   radius?: number;
   size?: number;
+  /** Path of the note behind the point. */
+  note?: string;
 }
 
 export interface Series {
@@ -57,6 +59,8 @@ export interface Series {
   points?: ScatterPoint[];
   /** null leaves a gap, as in a line with a missing reading. */
   values: (number | null)[];
+  /** Paths of the notes behind each value, parallel to `values`. */
+  notes?: string[][];
   /** One colour for the series, or one per label. Any CSS colour, including var(--x). */
   color?: string | string[];
   /** Line: fill under the line. Radar: fill the shape, which is the default. */
@@ -145,6 +149,8 @@ export interface RenderContext {
    * settings shows on the next redraw. Absent means the theme alone.
    */
   seriesColors?: () => string[];
+  /** Called with the notes behind a clicked element. Absent, a click does nothing. */
+  openNotes?: (notes: string[], event: MouseEvent) => void;
 }
 
 export interface ChartHandle {

@@ -91,3 +91,17 @@ void test("cumulative is ignored for pie", () => {
   const out = prepareData({ ...base, kind: "pie", cumulative: true });
   assert.deepEqual(out.series[0]?.values, [3, 9, 1, 7, 5]);
 });
+
+void test("notes move with the labels, and other holds the notes it adds up", () => {
+  const notes = [["a.md"], ["b.md"], ["c.md"], ["d.md"], ["e.md"]];
+  const spec: ChartSpec = { ...base, series: [{ name: "n", values: [3, 9, 1, 7, 5], notes }] };
+  assert.deepEqual(prepareData({ ...spec, sort: "value" }).series[0]?.notes, [["b.md"], ["d.md"], ["e.md"], ["a.md"], ["c.md"]]);
+  assert.deepEqual(prepareData({ ...spec, topN: 2, other: "Rest" }).series[0]?.notes, [["b.md"], ["d.md"], ["e.md", "a.md", "c.md"]]);
+});
+
+void test("a running total lists only each label's own notes", () => {
+  const spec: ChartSpec = { kind: "bar", labels: ["a", "b"], cumulative: true, series: [{ name: "n", values: [1, 2], notes: [["a.md"], ["b.md"]] }] };
+  const out = prepareData(spec).series[0];
+  assert.deepEqual(out?.values, [1, 3]);
+  assert.deepEqual(out?.notes, [["a.md"], ["b.md"]]);
+});

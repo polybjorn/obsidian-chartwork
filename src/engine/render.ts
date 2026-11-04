@@ -1,4 +1,4 @@
-import { Component, Events, Menu, Notice } from "obsidian";
+import { Component, Events, Menu, Notice, Platform } from "obsidian";
 import * as ChartJs from "chart.js";
 import * as helpers from "chart.js/helpers";
 import { Chart, Tooltip, registerables } from "chart.js";
@@ -6,10 +6,12 @@ import type { ChartComponentLike, ChartConfiguration } from "chart.js";
 import { Flow, SankeyController } from "chartjs-chart-sankey";
 import annotationPlugin from "chartjs-plugin-annotation";
 import { buildConfig, chartHeight, fillThemeDefaults, barSide } from "./config.ts";
+import { prepareData } from "./data.ts";
 import { installDateAdapter } from "./date-adapter.ts";
 import { errorText, showError } from "./error.ts";
 import { chartImage } from "./image.ts";
 import { isGone } from "./lifecycle.ts";
+import { withNoteClicks } from "./notes.ts";
 import type { ChartHandle, ChartSpec, RenderContext } from "./spec.ts";
 import { readTheme, resolveColor, resolveConfigColors, resolveSpecColors } from "./theme.ts";
 import type { Theme } from "./theme.ts";
@@ -202,7 +204,12 @@ export function renderSpec(el: HTMLElement, spec: ChartSpec, ctx: RenderContext)
   const view = mount(el, ctx, (theme, wrapper) => {
     const resolved = resolveSpecColors(current, wrapper);
     const width = typeof resolved.width === "number" ? `${resolved.width}px` : resolved.width?.trim();
-    return { config: buildConfig(resolved, theme), height: chartHeight(resolved), width: width ?? "" };
+    const config = buildConfig(resolved, theme);
+    return {
+      config: ctx.openNotes ? withNoteClicks(config, prepareData(resolved), ctx.openNotes, Platform.isMobile) : config,
+      height: chartHeight(resolved),
+      width: width ?? "",
+    };
   });
   return {
     update: (next) => {

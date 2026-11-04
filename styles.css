@@ -5,6 +5,15 @@
   margin-inline: auto;
 }
 
+.chartwork-clickable {
+  cursor: pointer;
+}
+
+/* Obsidian's desktop menu clips at the window, and a group can hold hundreds of notes */
+.menu:has(.chartwork-note-item) .menu-scroll {
+  overflow-y: auto;
+}
+
 .chartwork-bases {
   height: 100%;
   padding: var(--size-4-3);

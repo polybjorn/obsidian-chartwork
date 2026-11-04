@@ -3,6 +3,7 @@ import type { ChartSpec, ScatterPoint, Stepped } from "./spec.ts";
 export interface PreparedSeries {
   name: string;
   values: (number | null)[];
+  notes?: string[][];
   points?: ScatterPoint[];
   /** Same length as labels when the spec gave one colour per label. */
   color?: string | string[];
@@ -84,6 +85,10 @@ export function prepareData(spec: ChartSpec): PreparedData {
     }
     const out: PreparedSeries = { name: s.name, values };
     if (s.points) out.points = s.points;
+    if (s.notes) {
+      out.notes = indices.map((i) => s.notes?.[i] ?? []);
+      if (hasOther) out.notes.push(dropped.flatMap((i) => s.notes?.[i] ?? []));
+    }
     if (s.fill !== undefined) out.fill = s.fill;
     if (s.stepped !== undefined) out.stepped = s.stepped;
     if (s.hidden !== undefined) out.hidden = s.hidden;

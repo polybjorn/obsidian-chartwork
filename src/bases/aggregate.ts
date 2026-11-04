@@ -8,6 +8,8 @@ export interface Row {
   y?: unknown;
   /** Series name when the Bases view is grouped. */
   group?: string;
+  /** Path of the note the row came from. */
+  note?: string;
 }
 
 export interface AggregateOptions {
@@ -135,13 +137,13 @@ export function bucketLabel(start: string, unit: DateUnit): string {
 }
 
 /** One row per property for a note, each its own series, named `group: property` when the view is grouped. */
-export function propertyRows(x: unknown, values: unknown[], names: string[], group: string | undefined, counting: boolean): Row[] {
+export function propertyRows(x: unknown, values: unknown[], names: string[], group: string | undefined, counting: boolean, note?: string): Row[] {
   const rows: Row[] = [];
   values.forEach((y, i) => {
     // Counting per property counts the notes that fill it in
     if (counting && xLabels(y).length === 0) return;
     const name = names[i] ?? "";
-    rows.push({ x, y, group: group ? `${group}: ${name}` : name });
+    rows.push({ x, y, group: group ? `${group}: ${name}` : name, note });
   });
   return rows;
 }
@@ -165,7 +167,7 @@ function allDates(rows: Row[]): boolean {
 // Past this many buckets an empty one is left out rather than drawn as zero
 const MAX_FILLED = 5000;
 
-interface Bucket { sum: number; count: number; min: number; max: number; places: number }
+interface Bucket { sum: number; count: number; min: number; max: number; places: number; notes: Set<string> }
 
 /** Decimal places a value is written with: 2 for 1.25, 0 for 412. */
 function decimalPlaces(n: number): number {
@@ -237,12 +239,13 @@ export function aggregateRows(rows: Row[], opts: AggregateOptions): ChartSpec {
         seen.add(label);
         labelOrder.push(label);
       }
-      const bucket = perGroup.get(label) ?? { sum: 0, count: 0, min: Infinity, max: -Infinity, places: 0 };
+      const bucket = perGroup.get(label) ?? { sum: 0, count: 0, min: Infinity, max: -Infinity, places: 0, notes: new Set<string>() };
       bucket.sum += amount;
       bucket.count += 1;
       bucket.min = Math.min(bucket.min, amount);
       bucket.max = Math.max(bucket.max, amount);
       bucket.places = Math.max(bucket.places, decimalPlaces(amount));
+      if (row.note !== undefined) bucket.notes.add(row.note);
       perGroup.set(label, bucket);
     }
   }
@@ -277,7 +280,8 @@ export function aggregateRows(rows: Row[], opts: AggregateOptions): ChartSpec {
   const series: Series[] = groupOrder.map((group) => {
     const perGroup = buckets.get(group);
     const values = labels.map((label) => value(perGroup?.get(label), opts.aggregation));
-    return { name: group || opts.seriesName || defaultName(opts.aggregation), values };
+    const notes = labels.map((label) => [...(perGroup?.get(label)?.notes ?? [])]);
+    return { name: group || opts.seriesName || defaultName(opts.aggregation), values, ...(notes.some((n) => n.length > 0) ? { notes } : {}) };
   });
   if (series.length === 0) series.push({ name: opts.seriesName ?? defaultName(opts.aggregation), values: [] });
 
@@ -339,8 +343,20 @@ export function parseCategoryColors(lines: unknown): Record<string, string> {
   return colors;
 }
 
+/** Menu entries for note paths, by name. A name two notes share shows its folder too. */
+export function noteEntries(paths: string[]): { path: string; title: string }[] {
+  const name = (path: string): string => (path.split("/").pop() ?? path).replace(/\.md$/, "");
+  const uses = new Map<string, number>();
+  for (const path of paths) uses.set(name(path), (uses.get(name(path)) ?? 0) + 1);
+  return paths
+    .map((path) => ({ path, title: uses.get(name(path)) === 1 ? name(path) : path.replace(/\.md$/, "") }))
+    .sort((a, b) => a.title.localeCompare(b.title));
+}
+
 export interface ScatterEntry {
   name: string;
+  /** Path of the note the entry came from. */
+  note?: string;
   x: unknown;
   y: unknown;
   size?: unknown;
@@ -370,7 +386,7 @@ export function scatterSpec(entries: ScatterEntry[], opts: ScatterOptions = {}):
   const kept = entries.flatMap((e) => {
     const x = parseNumber(e.x);
     const y = parseNumber(e.y);
-    return x === null || y === null ? [] : [{ name: e.name, x, y, size: opts.sized ? parseNumber(e.size) : null, group: e.group ?? "" }];
+    return x === null || y === null ? [] : [{ name: e.name, note: e.note, x, y, size: opts.sized ? parseNumber(e.size) : null, group: e.group ?? "" }];
   });
   const sizes = kept.flatMap((p) => (p.size === null ? [] : [p.size]));
   const lo = Math.min(...sizes);
@@ -392,7 +408,10 @@ export function scatterSpec(entries: ScatterEntry[], opts: ScatterOptions = {}):
       order.push(p.group);
     }
     const r = radius(p.size);
-    series.points?.push({ x: p.x, y: p.y, name: p.name, ...(r === undefined ? {} : { radius: r }), ...(p.size === null ? {} : { size: p.size }) });
+    series.points?.push({
+      x: p.x, y: p.y, name: p.name, ...(r === undefined ? {} : { radius: r }), ...(p.size === null ? {} : { size: p.size }),
+      ...(p.note === undefined ? {} : { note: p.note }),
+    });
   }
   const series = order.flatMap((g) => byGroup.get(g) ?? []);
   const spec: ChartSpec = { kind: "scatter", labels: [], series: series.length > 0 ? series : [{ name: "Notes", values: [], points: [] }] };

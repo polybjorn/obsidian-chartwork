@@ -53,6 +53,14 @@ views:
     size: caffeine_mg
 ```
 
+## Opening notes
+
+Click a bar, slice or point to reach the notes behind it. A scatter point, or a group of one note, opens that note. A group of several lists them in a menu. Hold Ctrl, or Cmd on macOS, to open the note in a new tab.
+
+"Others" lists the notes of every group it adds up. With a running total, a point lists only the notes of its own group, not those before it. A note left out of a sum for having no number in the Value property is left out of the list too.
+
+On a phone, the first tap shows the tooltip and a second tap on the same bar, slice or point opens its notes.
+
 ## Dates
 
 When every category value is a date, a date and time, or a note named like `2026-03-02`, the notes are grouped by day, week, month or year. Weeks start on Monday. The time and time zone of a value are left out, so a run logged at 23:40 counts on its own day. Notes with no date are left out.

@@ -1,7 +1,9 @@
 import {
   BasesView,
   FileValue,
+  Keymap,
   ListValue,
+  Menu,
   NullValue,
   NumberValue,
   type BasesAllOptions,
@@ -17,6 +19,7 @@ import {
   AGGREGATIONS,
   NONE_LABEL,
   aggregateRows,
+  noteEntries,
   parseCategoryColors,
   parseNumber,
   propertyRows,
@@ -207,7 +210,7 @@ class ChartView extends BasesView {
       seriesOrder.push(...names.map((n) => (name ? `${name}: ${n}` : n)));
       for (const entry of group.entries) {
         const values = properties.map((p) => plain(entry.getValue(p)));
-        rows.push(...propertyRows(plain(entry.getValue(x)), values, names, name, aggregation === "count"));
+        rows.push(...propertyRows(plain(entry.getValue(x)), values, names, name, aggregation === "count", entry.file.path));
       }
     }
 
@@ -258,6 +261,7 @@ class ChartView extends BasesView {
       for (const entry of group.entries) {
         entries.push({
           name: entry.file.basename,
+          note: entry.file.path,
           x: plain(entry.getValue(x)),
           y: plain(entry.getValue(y)),
           size: size ? plain(entry.getValue(size)) : undefined,
@@ -284,7 +288,29 @@ class ChartView extends BasesView {
       return;
     }
     this.host.empty();
-    this.handle = renderSpec(this.host, spec, { app: this.app, owner: this, seriesColors: this.seriesColors });
+    this.handle = renderSpec(this.host, spec, {
+      app: this.app,
+      owner: this,
+      seriesColors: this.seriesColors,
+      openNotes: (notes, event) => this.openNotes(notes, event),
+    });
+  }
+
+  private openNotes(notes: string[], event: MouseEvent): void {
+    const [first] = notes;
+    if (first !== undefined && notes.length === 1) return this.openNote(first, event);
+    const menu = new Menu();
+    for (const { path, title } of noteEntries(notes)) {
+      const label = createFragment((f) => f.createSpan({ cls: "chartwork-note-item", text: title }));
+      menu.addItem((item) => item.setTitle(label).onClick((e) => this.openNote(path, e)));
+    }
+    menu.showAtMouseEvent(event);
+  }
+
+  private openNote(path: string, event: MouseEvent | KeyboardEvent): void {
+    // By file rather than by link text, where a # in a name reads as a heading
+    const file = this.app.vault.getFileByPath(path);
+    if (file) void this.app.workspace.getLeaf(Keymap.isModEvent(event)).openFile(file);
   }
 
   // The file name is in a new view's property list by default, and is never a number
@@ -293,7 +319,7 @@ class ChartView extends BasesView {
   }
 
   private row(entry: BasesEntry, x: BasesPropertyId, y: BasesPropertyId | null, group?: string): Row {
-    return { x: plain(entry.getValue(x)), y: y ? plain(entry.getValue(y)) : undefined, group };
+    return { x: plain(entry.getValue(x)), y: y ? plain(entry.getValue(y)) : undefined, group, note: entry.file.path };
   }
 
   private clear(): void {
