@@ -31,6 +31,8 @@ export interface AggregateOptions {
   cumulative?: boolean;
   /** Left undefined, the engine decides by chart type. */
   valueLabels?: boolean;
+  /** Bar, line: stack the series. */
+  stacked?: boolean;
   /** Series in this order, the rest after them as found. */
   seriesOrder?: string[];
   /** Bounds of the value axis, which is x when horizontal. */
@@ -288,6 +290,7 @@ export function aggregateRows(rows: Row[], opts: AggregateOptions): ChartSpec {
   if (opts.horizontal) spec.horizontal = true;
   if (opts.cumulative && (opts.kind === "bar" || opts.kind === "line")) spec.cumulative = true;
   if (opts.valueLabels !== undefined) spec.valueLabels = opts.valueLabels;
+  if (opts.stacked && (opts.kind === "bar" || opts.kind === "line")) spec.stacked = true;
   applyValueScale(spec, opts);
   if (onAxis) return spec;
   if (opts.sort) spec.sort = opts.sort;

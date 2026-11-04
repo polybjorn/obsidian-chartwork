@@ -111,6 +111,14 @@ void test("cumulative is set for bar and line only", () => {
   assert.equal(aggregateRows(rows, base).cumulative, undefined);
 });
 
+void test("stacked is set for bar and line only", () => {
+  const rows = [{ x: "a" }, { x: "b" }];
+  assert.equal(aggregateRows(rows, { ...base, stacked: true }).stacked, true);
+  assert.equal(aggregateRows(rows, { ...base, kind: "line", stacked: true }).stacked, true);
+  assert.equal(aggregateRows(rows, { ...base, kind: "doughnut", stacked: true }).stacked, undefined);
+  assert.equal(aggregateRows(rows, base).stacked, undefined);
+});
+
 void test("dates only count when every category is one, and a pie gets readable labels", () => {
   const mixed = aggregateRows([{ x: "2026-01-03" }, { x: "soon" }], { ...base, dateUnit: "day" });
   assert.deepEqual(mixed.labels, ["2026-01-03", "soon"]);

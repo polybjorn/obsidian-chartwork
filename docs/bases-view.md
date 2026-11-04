@@ -16,12 +16,13 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 | Point size property | `size` | Scatter only. A number property that sets each point's radius, see [Scatter](#scatter). |
 | Group dates by | `dateUnit` | `day` (the default), `week`, `month` or `year`, when the category is a date. |
 | Running total | `cumulative` | Bar and line charts: each series becomes its running sum, in the order drawn, after Sort and Largest categories to keep. On a time axis the total runs in date order. A category with no value adds nothing and leaves a gap. Pie and doughnut charts ignore it. |
+| Stacked | `stacked` | Bar and line charts: stack the series, such as one per group or per property, so each category shows their total. With Running total each series is summed first, then stacked. Hidden for the other chart types. |
 | Horizontal bars | `horizontal` | Bars run sideways, and the chart grows taller with each category so bars keep the same thickness. |
 | Value labels | `valueLabels` | Bar, line, pie and doughnut charts: `auto` (the default) prints each value on a single-series bar chart only, `on` prints them on every chart, `off` on none. A stacked segment too short for its text stays blank. `true` and `false` work too, as in a `chart` block. |
 | Title | `title` | Shown above the chart. |
 | Minimum, Maximum | `yMin`, `yMax` | Range of the value axis, which is the horizontal one when bars run sideways. Empty fits the data. Not for pie and doughnut. |
 | Start at zero | `beginAtZero` | On by default. Turn it off so a line such as weight over time fills the chart instead of hugging a zero axis. A minimum above zero still wins. |
-| Average line | `average` | A dashed line at the mean of each series, in its color. |
+| Average line | `average` | A dashed line at the mean of each series, in its color. With Stacked the line sits at the mean of the stack up to that series, where the series is drawn. |
 | Line smoothing | `tension` | For line charts: 0 draws straight segments, higher values curve more. At the default, 0.2, the curve never dips below or rises above the values it joins; another value can overshoot a little between points. |
 | Sort | `categorySort` | `none` keeps the order categories first appear in, `value` puts the largest first, `label` sorts by name. |
 | Largest categories to keep | `topN` | Keep only this many categories, by value. 0 keeps all. |

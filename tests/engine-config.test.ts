@@ -515,3 +515,14 @@ void test("scatter carries a point's size value into the chart data", () => {
 void test("scatter has no legend with one series", () => {
   assert.equal(at(buildConfig(scatter, theme).options, "plugins.legend.display"), false);
 });
+
+void test("a stacked running total sums each series first, and the average sits on the stack", () => {
+  const run: ChartSpec = { kind: "bar", labels: ["a", "b"], stacked: true, cumulative: true, average: true, valueLabels: true,
+    series: [{ name: "n", values: [1, 2] }, { name: "m", values: [2, 2] }] };
+  const config = buildConfig(run, theme);
+  assert.deepEqual(config.data.datasets.map((d) => d.data), [[1, 3], [2, 4]]);
+  assert.equal(at(config.options, "scales.y.stacked"), true);
+  const lines = at(config.options, "plugins.annotation.annotations") as Record<string, unknown>[];
+  assert.deepEqual(lines.map((l) => l.value), [2, 5]);
+  assert.equal(config.plugins?.length, 1);
+});

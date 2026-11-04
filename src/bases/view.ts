@@ -78,6 +78,13 @@ function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
       shouldHide: scatter,
       options: { auto: "Automatic", on: "On", off: "Off" },
     },
+    {
+      type: "toggle",
+      key: "stacked",
+      displayName: "Stacked",
+      default: false,
+      shouldHide: () => !["bar", "line"].includes(text(config, "kind") || "bar"),
+    },
     { type: "text", key: "title", displayName: "Title" },
     {
       type: "group",
@@ -221,6 +228,7 @@ class ChartView extends BasesView {
       horizontal: this.config.get("horizontal") === true,
       cumulative: this.config.get("cumulative") === true,
       valueLabels: valueLabelsOption(this.config.get("valueLabels")),
+      stacked: this.config.get("stacked") === true,
       title: text(this.config, "title") || undefined,
       sort: isOneOf(SORTS, sortValue) ? sortValue : "none",
       topN: Number.isFinite(topN) ? topN : 0,
