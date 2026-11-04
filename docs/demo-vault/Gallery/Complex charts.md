@@ -27,35 +27,7 @@ window.chartwork.render(dv.container, {
 }, dv.component);
 ```
 
-Time series: 180 days of a made-up daily value on a real date axis, with a 7-day moving average over it, a shaded "holiday" range and a labelled target line:
-
-```dataviewjs
-const start = new Date(2026, 3, 1);
-const days = [], raw = [];
-let v = 50;
-for (let i = 0; i < 180; i++) {
-  const d = new Date(start); d.setDate(d.getDate() + i);
-  v += Math.sin(i * 1.7) * 6 + Math.cos(i * 0.31) * 3 + (i % 7 === 5 ? -8 : 1);
-  v = Math.max(5, Math.min(110, v));
-  days.push(d.toISOString().slice(0, 10)); raw.push(Math.round(v));
-}
-const avg = raw.map((_, i) => i < 6 ? null : Math.round(raw.slice(i - 6, i + 1).reduce((a, b) => a + b, 0) / 7));
-window.chartwork.render(dv.container, {
-  type: "line",
-  data: {labels: days, datasets: [
-    {label: "Daily", data: raw, pointRadius: 0, borderWidth: 1, borderColor: "var(--text-faint)"},
-    {label: "7-day average", data: avg, pointRadius: 0, borderWidth: 3, borderColor: "var(--color-accent)"},
-  ]},
-  options: {
-    interaction: {mode: "index", intersect: false},
-    scales: {x: {type: "time", time: {unit: "month"}}},
-    plugins: {annotation: {annotations: {
-      holiday: {type: "box", xMin: "2026-07-01", xMax: "2026-07-31", backgroundColor: "rgba(120, 120, 120, 0.15)", borderWidth: 0, label: {display: true, content: "Holiday", position: "start"}},
-      target: {type: "line", yMin: 80, yMax: 80, borderDash: [6, 4], borderColor: "var(--color-green)", label: {display: true, content: "Target 80", position: "end"}},
-    }}},
-  },
-}, dv.component);
-```
+Time series: a date axis with a 7-day average, a shaded holiday and a target line. It has its own note, [[Time series]].
 
 Bubble: three groups, x and y plus size. Bubbles near the edge stay inside the chart:
 
