@@ -11,6 +11,7 @@ All notable changes to this project are documented here. Format based on [Keep a
 - A Stacked option in the Bases view for bar and line charts, the same as `stacked: true` in a `chart` block.
 - Hovering a stacked bar or line chart shows the total of its series.
 - A chart block with a key neither Chartwork nor Charts knows, or a Chartwork key its chart type does not use, shows a line under the chart naming it, with a guess for a misspelt key. A script spec field the chart's kind does not use, such as `horizontal` on a pie, shows the same line.
+- Right-clicking a chart offers **Copy chart as image**, a PNG on the theme's background.
 
 ### Changed
 

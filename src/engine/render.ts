@@ -1,4 +1,4 @@
-import { Component, Events } from "obsidian";
+import { Component, Events, Menu, Notice } from "obsidian";
 import * as ChartJs from "chart.js";
 import * as helpers from "chart.js/helpers";
 import { Chart, Tooltip, registerables } from "chart.js";
@@ -8,6 +8,7 @@ import annotationPlugin from "chartjs-plugin-annotation";
 import { buildConfig, chartHeight, fillThemeDefaults, barSide } from "./config.ts";
 import { installDateAdapter } from "./date-adapter.ts";
 import { errorText, showError } from "./error.ts";
+import { chartImage } from "./image.ts";
 import { isGone } from "./lifecycle.ts";
 import type { ChartHandle, ChartSpec, RenderContext } from "./spec.ts";
 import { readTheme, resolveColor, resolveConfigColors, resolveSpecColors } from "./theme.ts";
@@ -83,6 +84,18 @@ export const SERIES_COLORS_CHANGED = "series-colors";
 const loose = new Set<() => void>();
 function sweepLoose(): void {
   for (const check of [...loose]) check();
+}
+
+async function copyImage(chart: Chart, background: string): Promise<void> {
+  try {
+    // The promise goes in unresolved, since Safari on iOS drops a write that
+    // waits for it first
+    const item = new ClipboardItem({ "image/png": chartImage(chart, background) });
+    await chart.canvas.win.navigator.clipboard.write([item]);
+    new Notice("Chart copied");
+  } catch (e) {
+    new Notice(`Could not copy the chart: ${errorText(e)}`);
+  }
 }
 
 function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string): View {
@@ -163,6 +176,16 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
   };
   life.registerEvent(ctx.app.workspace.on("css-change", onStyle));
   life.registerEvent(chartworkEvents.on(SERIES_COLORS_CHANGED, onStyle));
+  life.registerDomEvent(canvas, "contextmenu", (event) => {
+    event.preventDefault();
+    // The view around the chart would open a menu of its own as well
+    event.stopPropagation();
+    new Menu()
+      .addItem((item) => item.setTitle("Copy chart as image").setIcon("image").onClick(() => {
+        if (chart) void copyImage(chart, readTheme(wrapper, ctx.seriesColors?.()).background);
+      }))
+      .showAtMouseEvent(event);
+  });
   life.register(destroy);
   ctx.owner.addChild(life);
   if (ctx.loose) {
