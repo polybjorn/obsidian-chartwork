@@ -6,4 +6,5 @@ genre:
   - adventure
   - classic
 pages: 635
+rating: 1.5
 ---

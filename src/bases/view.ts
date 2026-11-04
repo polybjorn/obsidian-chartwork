@@ -251,6 +251,7 @@ class ChartView extends BasesView {
       title: text(this.config, "title") || undefined,
       xTitle: this.config.getDisplayName(x),
       yTitle: this.config.getDisplayName(y),
+      sizeTitle: size ? this.config.getDisplayName(size) : undefined,
       sized: size !== null,
     });
     if (spec.series.every((s) => (s.points?.length ?? 0) === 0)) {

@@ -361,7 +361,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
       const points = s.points ?? [];
       return {
         label: s.name,
-        data: points.map((p) => ({ x: p.x, y: p.y, name: p.name })),
+        data: points.map((p) => ({ x: p.x, y: p.y, name: p.name, ...(p.size === undefined ? {} : { size: p.size }) })),
         borderColor: c,
         backgroundColor: withAlpha(c ?? FALLBACK_COLOR, 0.6),
         pointRadius: points.map((p) => p.radius ?? DEFAULT_POINT_RADIUS),
@@ -503,8 +503,10 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
       callbacks: {
         title: (items: { raw: unknown }[]) => String((items[0]?.raw as { name?: string } | undefined)?.name ?? ""),
         label: (item: { raw: unknown }) => {
-          const p = item.raw as { x: number; y: number };
-          return `${spec.xTitle ?? "x"}: ${formatLabel(p.x, undefined)}, ${spec.valueTitle ?? "y"}: ${formatLabel(p.y, undefined)}`;
+          const p = item.raw as { x: number; y: number; size?: number };
+          const position = `${spec.xTitle ?? "x"}: ${formatLabel(p.x, undefined)}, ${spec.valueTitle ?? "y"}: ${formatLabel(p.y, undefined)}`;
+          // Its own line, since three values on one overflow a phone's width
+          return p.size === undefined ? position : [position, `${spec.sizeTitle ?? "Size"}: ${formatLabel(p.size, undefined)}`];
         },
       },
     };

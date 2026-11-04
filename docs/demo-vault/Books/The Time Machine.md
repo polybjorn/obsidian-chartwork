@@ -6,4 +6,5 @@ finished: 2026-05-03
 genre:
   - science fiction
 pages: 118
+rating: 3
 ---

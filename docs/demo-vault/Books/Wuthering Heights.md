@@ -5,4 +5,5 @@ status: dropped
 genre:
   - romance
 pages: 416
+rating: 2
 ---

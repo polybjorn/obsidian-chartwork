@@ -7,4 +7,5 @@ genre:
   - horror
   - classic
 pages: 280
+rating: 4.5
 ---

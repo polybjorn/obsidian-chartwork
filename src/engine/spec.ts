@@ -42,12 +42,13 @@ export interface AxisSpec {
 export const STEPS = ["before", "after", "middle"] as const;
 export type Stepped = boolean | (typeof STEPS)[number];
 
-/** One scatter point: where it sits, its note's name for the tooltip, and an optional radius in pixels. */
+/** One scatter point: where it sits, its note's name for the tooltip, an optional radius in pixels, and the value behind that radius. */
 export interface ScatterPoint {
   x: number;
   y: number;
   name: string;
   radius?: number;
+  size?: number;
 }
 
 export interface Series {
@@ -91,6 +92,8 @@ export interface ChartSpec {
   labelColors?: boolean;
   /** Scatter: axis title for x. */
   xTitle?: string;
+  /** Scatter: names a point's size value in the tooltip. */
+  sizeTitle?: string;
   /** Axis title for the values. */
   valueTitle?: string;
   /** Start the value axis, or radial scale, at zero. Defaults to true. */

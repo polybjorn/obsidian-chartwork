@@ -15,8 +15,8 @@ const AXIS_KEYS = ["min", "max", "reverse", "display", "ticks", "tickPadding"] a
 // A field added to ChartSpec or Series but not to the lists above would be
 // rejected as unknown, so the build fails instead
 type Complete<Keys, Listed> = [Exclude<Keys, Listed>] extends [never] ? true : never;
-// xTitle and points are scatter's, which the script API does not accept
-const specListed: Complete<Exclude<keyof ChartSpec, "xTitle">, (typeof SPEC_KEYS)[number]> = true;
+// xTitle, sizeTitle and points are scatter's, which the script API does not accept
+const specListed: Complete<Exclude<keyof ChartSpec, "xTitle" | "sizeTitle">, (typeof SPEC_KEYS)[number]> = true;
 const seriesListed: Complete<Exclude<keyof Series, "points">, (typeof SERIES_KEYS)[number]> = true;
 const axisListed: Complete<keyof AxisSpec, (typeof AXIS_KEYS)[number]> = true;
 void specListed;

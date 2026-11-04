@@ -481,6 +481,19 @@ void test("scatter tooltip shows the note name and both values", () => {
   assert.equal(callbacks.label({ raw }), "Hours: 1, Score: 2");
 });
 
+void test("scatter tooltip adds the size value on its own line, only for a point that has one", () => {
+  const sized: ChartSpec = { ...scatter, sizeTitle: "Rating" };
+  const config = buildConfig(sized, theme);
+  const callbacks = at(config.options, "plugins.tooltip.callbacks") as { label(item: unknown): string | string[] };
+  assert.deepEqual(callbacks.label({ raw: { x: 1, y: 2, name: "Alpha", size: 4.5 } }), ["Hours: 1, Score: 2", "Rating: 4.5"]);
+  assert.equal(callbacks.label({ raw: { x: 1, y: 2, name: "Beta" } }), "Hours: 1, Score: 2");
+});
+
+void test("scatter carries a point's size value into the chart data", () => {
+  const spec: ChartSpec = { kind: "scatter", labels: [], series: [{ name: "Notes", values: [], points: [{ x: 1, y: 2, name: "a", radius: 9, size: 4 }, { x: 3, y: 4, name: "b", radius: 9 }] }] };
+  assert.deepEqual(buildConfig(spec, theme).data.datasets[0]?.data, [{ x: 1, y: 2, name: "a", size: 4 }, { x: 3, y: 4, name: "b" }]);
+});
+
 void test("scatter has no legend with one series", () => {
   assert.equal(at(buildConfig(scatter, theme).options, "plugins.legend.display"), false);
 });

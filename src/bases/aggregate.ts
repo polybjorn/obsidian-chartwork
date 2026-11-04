@@ -339,6 +339,7 @@ export interface ScatterOptions {
   title?: string;
   xTitle?: string;
   yTitle?: string;
+  sizeTitle?: string;
   /** Whether a size property is chosen; without one every point has the default radius. */
   sized?: boolean;
 }
@@ -378,12 +379,13 @@ export function scatterSpec(entries: ScatterEntry[], opts: ScatterOptions = {}):
       order.push(p.group);
     }
     const r = radius(p.size);
-    series.points?.push({ x: p.x, y: p.y, name: p.name, ...(r === undefined ? {} : { radius: r }) });
+    series.points?.push({ x: p.x, y: p.y, name: p.name, ...(r === undefined ? {} : { radius: r }), ...(p.size === null ? {} : { size: p.size }) });
   }
   const series = order.flatMap((g) => byGroup.get(g) ?? []);
   const spec: ChartSpec = { kind: "scatter", labels: [], series: series.length > 0 ? series : [{ name: "Notes", values: [], points: [] }] };
   if (opts.title) spec.title = opts.title;
   if (opts.xTitle) spec.xTitle = opts.xTitle;
   if (opts.yTitle) spec.valueTitle = opts.yTitle;
+  if (opts.sizeTitle) spec.sizeTitle = opts.sizeTitle;
   return spec;
 }

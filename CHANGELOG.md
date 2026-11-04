@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ## [Unreleased]
 
+### Added
+
+- Hovering a scatter point in the Bases view shows its point size value.
+
 ## [1.0.3] - 2026-11-03
 
 ### Fixed

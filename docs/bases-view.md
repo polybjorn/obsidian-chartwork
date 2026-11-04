@@ -37,7 +37,7 @@ Bases keeps `sort` and `order` for its own settings, which is why Chartwork's ar
 
 With Chart type set to `scatter`, each note is one point. The Category property (`x`) and the Value property (`y`) are both number properties: `x` is the horizontal position and `y` the vertical. Aggregation, Group dates by, One series per property, Horizontal bars and the category options do not apply and are hidden. A note missing either number, or with text that does not read as one, is left out.
 
-Hovering a point shows the note's name and both values. A grouped base draws each group as its own series, with a legend.
+Hovering a point shows the note's name, both values and its point size value if it has one. A grouped base draws each group as its own series, with a legend.
 
 The optional Point size property (`size`) sets each point's radius, scaled linearly from 3 px for the smallest value to 15 px for the largest, over the notes in the view. When every value is the same, points get a middle radius, and so does a note with no value for it.
 

@@ -6,4 +6,5 @@ finished: 2026-06-21
 genre:
   - adventure
 pages: 292
+rating: 3.5
 ---

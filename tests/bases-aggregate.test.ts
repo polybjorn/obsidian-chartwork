@@ -190,6 +190,18 @@ void test("scatter gives a middle radius when every size is equal, and none with
   assert.equal(unsized.series[0]?.points?.[0]?.radius, undefined);
 });
 
+void test("scatter keeps each size value and its title for the tooltip", () => {
+  const spec = scatterSpec([
+    { name: "a", x: 0, y: 0, size: 10 },
+    { name: "b", x: 1, y: 1, size: "not a number" },
+    { name: "c", x: 2, y: 2 },
+  ], { sized: true, sizeTitle: "Rating" });
+  assert.deepEqual(spec.series[0]?.points?.map((p) => p.size), [10, undefined, undefined]);
+  assert.equal(spec.sizeTitle, "Rating");
+  const unsized = scatterSpec([{ name: "a", x: 0, y: 0, size: 10 }]);
+  assert.equal(unsized.series[0]?.points?.[0]?.size, undefined);
+});
+
 void test("scatter ignores the size of a note it skips, and splits groups into series", () => {
   const spec = scatterSpec([
     { name: "a", x: 0, y: 0, size: 1, group: "Gym" },

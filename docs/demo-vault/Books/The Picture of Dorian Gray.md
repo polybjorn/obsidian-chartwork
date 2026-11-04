@@ -6,4 +6,5 @@ finished: 2026-08-14
 genre:
   - classic
 pages: 254
+rating: 4
 ---

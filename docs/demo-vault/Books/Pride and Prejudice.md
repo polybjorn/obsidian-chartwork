@@ -7,4 +7,5 @@ genre:
   - romance
   - classic
 pages: 432
+rating: 5
 ---
