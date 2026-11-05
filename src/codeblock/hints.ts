@@ -43,12 +43,15 @@ function list(keys: string[]): string {
  */
 export function blockHint(input: Record<string, unknown>): string | undefined {
   const type = typeof input["type"] === "string" ? input["type"].trim().toLowerCase() : "";
-  const known = [...new Set([...BLOCK_KEYS, ...CHARTS_KEYS])];
-  const unknown = Object.keys(input).filter((k) => !known.includes(k));
-  const unused = Object.keys(input).filter((k) => ONLY_FOR[k] && !ONLY_FOR[k].includes(type));
+  const keys = Object.keys(input);
+  const unknown = keys.filter((k) => !BLOCK_KEYS.includes(k) && !CHARTS_KEYS.includes(k));
+  // A note's key can be any word, constructor included, so only ONLY_FOR's own
+  // keys count. False asks for nothing, so nothing goes unused.
+  const unused = keys.filter((k) => Object.hasOwn(ONLY_FOR, k) && input[k] !== false && !ONLY_FOR[k]?.includes(type));
   const parts: string[] = [];
   if (unknown.length > 0) {
-    parts.push(`Chartwork doesn't know ${list(unknown.map((k) => unknownKeyText(k, known)))}, so ${unknown.length > 1 ? "they do" : "it does"} nothing.`);
+    // A guess at a Charts-only key would send the writer to one that does nothing here either
+    parts.push(`Chartwork doesn't know ${list(unknown.map((k) => unknownKeyText(k, BLOCK_KEYS)))}, so ${unknown.length > 1 ? "they do" : "it does"} nothing.`);
   }
   if (unused.length > 0) {
     parts.push(`A ${KIND_NAMES[type] ?? type} chart doesn't use ${list(unused)}.`);

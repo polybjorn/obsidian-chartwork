@@ -212,6 +212,7 @@ void test("specHint names fields the chart kind does not use", () => {
   assert.equal(specHint({ ...good(), kind: "pie", horizontal: true } as never), "A pie chart doesn't use horizontal.");
   assert.equal(specHint({ ...good(), kind: "polarArea", stacked: true, tension: 0.3 } as never), "A polar area chart doesn't use stacked or tension.");
   assert.equal(specHint({ ...good(), kind: "bar", horizontal: true, stacked: true } as never), undefined);
+  assert.equal(specHint({ ...good(), kind: "pie", horizontal: false } as never), undefined);
 });
 
 void test("render shows the hint under a spec chart and removes it with the chart", () => {
@@ -227,4 +228,14 @@ void test("render shows the hint under a spec chart and removes it with the char
   calls.length = 0;
   render({} as never, { ...good(), kind: "pie", horizontal: true } as never).destroy();
   assert.deepEqual(calls, [["hint", "A pie chart doesn't use horizontal."], ["remove"], ["destroy"]]);
+  calls.length = 0;
+  const handle = render({} as never, { ...good(), kind: "bar" } as never);
+  handle.update({ ...good(), kind: "pie", stacked: true } as never);
+  handle.update({ ...good(), kind: "pie", horizontal: true } as never);
+  handle.update({ ...good(), kind: "bar", horizontal: true } as never);
+  assert.deepEqual(calls, [
+    ["hint", "A pie chart doesn't use stacked."],
+    ["remove"], ["hint", "A pie chart doesn't use horizontal."],
+    ["remove"],
+  ]);
 });

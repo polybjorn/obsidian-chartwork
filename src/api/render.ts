@@ -28,12 +28,19 @@ export function makeRender(drawers: Drawers, defaultOwner: Component) {
     if (shapeOf(input) === "spec") {
       const spec = validateSpec(input);
       const handle = drawers.spec(el, spec, owner);
-      const hint = specHint(spec);
-      const hintEl = hint ? drawers.hint?.(el, hint) : undefined;
+      let hintEl: { remove(): void } | undefined;
+      const showHint = (shown: ChartSpec): void => {
+        hintEl?.remove();
+        const hint = specHint(shown);
+        hintEl = hint ? drawers.hint?.(el, hint) : undefined;
+      };
+      showHint(spec);
       return {
         update: (next) => {
           if (shapeOf(next) !== "spec") throw wrongShape("spec", "a Chart.js config");
-          handle.update(validateSpec(next));
+          const nextSpec = validateSpec(next);
+          handle.update(nextSpec);
+          showHint(nextSpec);
         },
         destroy: () => {
           hintEl?.remove();

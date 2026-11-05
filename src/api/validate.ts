@@ -254,7 +254,8 @@ const ONLY_FOR: Partial<Record<(typeof SPEC_KEYS)[number], readonly string[]>> =
 export function specHint(spec: ChartSpec): string | undefined {
   const unused = Object.keys(ONLY_FOR).filter((key) => {
     const kinds = ONLY_FOR[key as keyof typeof ONLY_FOR];
-    return spec[key as keyof ChartSpec] !== undefined && kinds !== undefined && !kinds.includes(spec.kind);
+    const value = spec[key as keyof ChartSpec];
+    return value !== undefined && value !== false && kinds !== undefined && !kinds.includes(spec.kind);
   });
   if (unused.length === 0) return undefined;
   const fields = unused.length < 2 ? unused.join("") : `${unused.slice(0, -1).join(", ")} or ${unused[unused.length - 1]}`;

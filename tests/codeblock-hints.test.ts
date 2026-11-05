@@ -50,6 +50,18 @@ void test("a Chartwork key on a chart type that does not use it is named", () =>
   assert.equal(blockHint({ ...bar, type: "line", average: true, valueLabels: true }), undefined);
 });
 
+void test("a key named after an object method is only an unknown key", () => {
+  assert.equal(blockHint({ ...bar, constructor: 1 }), "Chartwork doesn't know constructor, so it does nothing.");
+});
+
+void test("a key set to false on a chart type that does not use it gets no hint", () => {
+  assert.equal(blockHint({ ...bar, type: "radar", valueLabels: false }), undefined);
+});
+
+void test("a guess never names a key only Charts reads", () => {
+  assert.equal(blockHint({ ...bar, textcolor: "red" }), "Chartwork doesn't know textcolor, so it does nothing.");
+});
+
 void test("both kinds of hint go in one line", () => {
   assert.equal(
     blockHint({ ...bar, type: "pie", average: true, tilte: "x" }),
