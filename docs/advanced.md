@@ -9,7 +9,7 @@ window.chartwork.render(dv.container, {
 }, dv.component);
 ```
 
-The `docs/demo-vault/Gallery` folder holds charts like these, drawn in Obsidian.
+The notes at the top of `docs/demo-vault` hold charts like these, drawn in Obsidian.
 
 ## What Chartwork adds
 

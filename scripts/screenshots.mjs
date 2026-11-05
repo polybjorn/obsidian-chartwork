@@ -46,7 +46,7 @@ const SHOTS = [
   // A .base file with its view options open, the chart moved out from under
   // them, redrawing as the options change. A smaller window keeps the text
   // readable at the docs' width
-  { file: "Books.base", name: "bases-view", theme: "light", charts: 1, options: true, window: { width: 960, height: 540 },
+  { file: "Screenshots/Books.base", name: "bases-view", theme: "light", charts: 1, options: true, window: { width: 960, height: 540 },
     crop: [".bases-toolbar", ".menu.bases-toolbar-views-menu", ".chartwork-bases"],
     record: [
       { hold: 1500 },
@@ -55,11 +55,11 @@ const SHOTS = [
       { select: "Chart type", value: "doughnut", hold: 2500 },
     ] },
   // The README's top image: four features, split between the themes
-  { file: "Overview.md", name: "overview", theme: "light", charts: 4, split: true },
-  { file: "Pages read.md", name: "code-block", theme: "light", charts: 1 },
-  { file: "Script.md", name: "script", theme: "light", script: true, charts: 1 },
-  { file: "Raw config.md", name: "render-chart", theme: "light", script: true, charts: 4 },
-  { file: "Time series.md", name: "time-series", theme: "light", script: true, charts: 1 },
+  { file: "Screenshots/Overview.md", name: "overview", theme: "light", charts: 4, split: true },
+  { file: "Screenshots/Pages read.md", name: "code-block", theme: "light", charts: 1 },
+  { file: "Screenshots/Script.md", name: "script", theme: "light", script: true, charts: 1 },
+  { file: "Screenshots/Raw config.md", name: "render-chart", theme: "light", script: true, charts: 4 },
+  { file: "Screenshots/Time series.md", name: "time-series", theme: "light", script: true, charts: 1 },
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
