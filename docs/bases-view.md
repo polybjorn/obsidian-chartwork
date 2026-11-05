@@ -16,7 +16,7 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 | Point size property | `size` | Scatter only. A number property that sets each point's radius, see [Scatter](#scatter). |
 | Group dates by | `dateUnit` | `day` (the default), `week`, `month` or `year`, when the category is a date. |
 | Running total | `cumulative` | Bar and line charts: each series becomes its running sum, in the order drawn, after Sort and Largest categories to keep. On a time axis the total runs in date order. A category with no value adds nothing and leaves a gap. Pie and doughnut charts ignore it. |
-| Stacked | `stacked` | Bar and line charts: stack the series, such as one per group or per property, so each category shows their total. With Running total each series is summed first, then stacked. Hidden for the other chart types. |
+| Stacked | `stacked` | Bar and line charts: stack the series, such as one per group or per property, so each category shows their total, which hovering prints in the tooltip. With Running total each series is summed first, then stacked. Hidden for the other chart types. |
 | Horizontal bars | `horizontal` | Bars run sideways, and the chart grows taller with each category so bars keep the same thickness. |
 | Value labels | `valueLabels` | Bar, line, pie and doughnut charts: `auto` (the default) prints each value on a single-series bar chart only, `on` prints them on every chart, `off` on none. A stacked segment too short for its text stays blank. `true` and `false` work too, as in a `chart` block. |
 | Title | `title` | Shown above the chart. |

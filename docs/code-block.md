@@ -21,7 +21,7 @@ series:
 | `type` | all | `bar`, `line`, `pie`, `doughnut`, `radar`, `polarArea`, `scatter` or `sankey` |
 | `title` | all | Shown above the chart. A title wider than the chart wraps onto more lines |
 | `indexAxis: y` | bar, line | Horizontal bars |
-| `stacked: true` | bar, line | Stack the series |
+| `stacked: true` | bar, line | Stack the series. The tooltip adds their total |
 | `fill` | line, radar | `true` fills the area under each line, and with `stacked: true` each area down to the series below it. Radar shapes are filled unless `fill: false` |
 | `tension` | line | Curve, 0 for straight segments. Left out, the line takes a gentle curve that never overshoots the values it joins |
 | `spanGaps: true` | line, radar | Join the line across a missing value, or a blank table cell |

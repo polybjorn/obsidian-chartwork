@@ -493,6 +493,8 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     };
   }
 
+  if (stacked) tooltip.callbacks = { footer: (items: HoveredPoint[]) => stackTotal(data.series, items) };
+
   if (spec.kind === "scatter") {
     const axisOf = (title: string | undefined, id: "x" | "y"): Obj => applyAxis({
       type: "linear",
@@ -531,6 +533,20 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
       })]
       : [])],
   };
+}
+
+type HoveredPoint = { chart: { isDatasetVisible(index: number): boolean }; dataIndex: number; datasetIndex: number };
+
+/** The hovered stack's total over the series showing; empty below two, where it would only repeat the value. */
+function stackTotal(series: PreparedSeries[], items: HoveredPoint[]): string {
+  const hovered = items[0];
+  // Past the series sit the best-fit lines, which belong to no stack
+  if (!hovered || hovered.datasetIndex >= series.length) return "";
+  const values = series.flatMap((s, i) => {
+    const value = s.values[hovered.dataIndex];
+    return hovered.chart.isDatasetVisible(i) && typeof value === "number" ? [value] : [];
+  });
+  return values.length > 1 ? `Total: ${formatLabel(values.reduce((a, b) => a + b, 0), undefined)}` : "";
 }
 
 function legendShown(spec: ChartSpec, datasetCount: number): boolean {

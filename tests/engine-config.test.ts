@@ -512,6 +512,27 @@ void test("scatter carries a point's size value into the chart data", () => {
   assert.deepEqual(buildConfig(spec, theme).data.datasets[0]?.data, [{ x: 1, y: 2, name: "a", size: 4 }, { x: 3, y: 4, name: "b" }]);
 });
 
+void test("stacked tooltip totals the series showing", () => {
+  const stacked: ChartSpec = { kind: "bar", stacked: true, labels: ["a", "b"], series: [{ name: "x", values: [1, 2] }, { name: "y", values: [3, null] }, { name: "z", values: [10, 20] }] };
+  const { footer } = at(buildConfig(stacked, theme).options, "plugins.tooltip.callbacks") as { footer: (items: unknown[]) => string };
+  const hover = (dataIndex: number, hidden: number[] = [], datasetIndex = 0) => [{ chart: { isDatasetVisible: (i: number) => !hidden.includes(i) }, dataIndex, datasetIndex }];
+  assert.equal(footer(hover(0)), "Total: 14");
+  assert.equal(footer(hover(1)), "Total: 22");
+  assert.equal(footer(hover(0, [2])), "Total: 4");
+  assert.equal(footer(hover(0, [1, 2])), "");
+  assert.equal(footer(hover(1, [2])), "");
+  assert.equal(footer(hover(0, [], 3)), "");
+});
+
+void test("stacked tooltip totals a running total's sums, and an unstacked chart has none", () => {
+  const series = [{ name: "x", values: [1, 2] }, { name: "y", values: [3, 4] }];
+  const cumulative: ChartSpec = { kind: "bar", stacked: true, cumulative: true, labels: ["a", "b"], series };
+  const { footer } = at(buildConfig(cumulative, theme).options, "plugins.tooltip.callbacks") as { footer: (items: unknown[]) => string };
+  assert.equal(footer([{ chart: { isDatasetVisible: () => true }, dataIndex: 1, datasetIndex: 0 }]), "Total: 10");
+  const plain = at(buildConfig({ ...cumulative, stacked: false, cumulative: false }, theme).options, "plugins.tooltip") as { callbacks?: unknown };
+  assert.equal(plain.callbacks, undefined);
+});
+
 void test("scatter has no legend with one series", () => {
   assert.equal(at(buildConfig(scatter, theme).options, "plugins.legend.display"), false);
 });

@@ -1,6 +1,6 @@
 Stacked Bases charts of the books in this vault: each genre split by status. A book with two genres counts in both. The line above each chart says what it should show. Every grouped chart has four series, dropped, read, reading and to read.
 
-Stacked bars. Each genre is one bar. classic is the tallest at 8, then adventure at 4, and the others at 3 or 2:
+Stacked bars. Each genre is one bar. classic is the tallest at 8, then adventure at 4, and the others at 3 or 2. Hovering a segment shows its own count and the total, so classic says Total: 8:
 
 ```base
 filters:
@@ -31,7 +31,7 @@ views:
       direction: ASC
 ```
 
-Stacked lines. The top line reaches 8 at classic. A line shows the stack up to that series, so it reads higher than the series' own count:
+Stacked lines. The top line reaches 8 at classic. A line shows the stack up to that series, so it reads higher than the series' own count. Hovering a point shows that count and the total:
 
 ```base
 filters:
@@ -48,7 +48,7 @@ views:
       direction: ASC
 ```
 
-Running total and an average line. Each series is summed first, then stacked, so the last bar reaches 23. The dashed lines sit at the mean of the stack up to each series: read is near 9.2, where its own mean is 6.7:
+Running total and an average line. Each series is summed first, then stacked, so the last bar reaches 23, and hovering it says Total: 23. The dashed lines sit at the mean of the stack up to each series: read is near 9.2, where its own mean is 6.7:
 
 ```base
 filters:

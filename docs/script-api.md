@@ -64,7 +64,7 @@ The handle's `update` takes the shape the chart was made with: a spec for a spec
 | `series` | `{name, values, color?, fill?, stepped?, hidden?, pointRadius?}[]` | Required. `values` has one number or `null` per label. `color` is one color or one per label. `fill` fills the area under a line (with `stacked`, down to the series below); a radar is filled unless `fill` is `false`. `stepped` (`true`, `"after"`, `"middle"`) draws a line as steps, `hidden` starts a series switched off in the legend, and `pointRadius` sets the dot size, `0` for none |
 | `title` | string | Shown above the chart |
 | `horizontal` | boolean | Bars run sideways |
-| `stacked` | boolean | Stack the series |
+| `stacked` | boolean | Stack the series. The tooltip adds their total |
 | `valueLabels` | boolean | Print each value on its bar, slice or line point. Default on for single-series bars. Formatted like the axis ticks; a zero bar, a point outside the axis range and a too-short stacked segment get none |
 | `sort` | `"none"`, `"value"`, `"label"` | Category order. Default `"none"`, as given |
 | `order` | string[] | Labels to place first; the rest follow by `sort` |
