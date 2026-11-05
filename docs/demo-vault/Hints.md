@@ -89,7 +89,6 @@ A chart drawn from a table keeps its line. Expect: Chartwork doesn't know layot 
 | Mon | 12    |
 | Tue | 30    |
 | Wed | 18    |
-
 ^hint-pages
 
 ```chart
