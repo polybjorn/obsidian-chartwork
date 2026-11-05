@@ -89,3 +89,20 @@ views:
     kind: pie
     valueLabels: on
 ```
+
+A short stacked chart with small and large segments, from a `chart` block. The segments of 20 and up have their number, and the ones of 1 to 4 show none, so no numbers overlap:
+
+```chart
+type: bar
+labels: [Mon, Tue, Wed, Thu, Fri]
+stacked: true
+valueLabels: true
+height: 180
+series:
+  - title: Alpha
+    data: [40, 2, 30, 1, 25]
+  - title: Beta
+    data: [3, 35, 2, 30, 4]
+  - title: Gamma
+    data: [20, 1, 22, 3, 28]
+```
