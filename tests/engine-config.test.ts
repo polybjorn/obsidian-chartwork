@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { prepareData } from "../src/engine/data.ts";
-import { bestFitValues, buildConfig, chartHeight, fillThemeDefaults, withAlpha, wrapTitle } from "../src/engine/config.ts";
+import { bestFitValues, buildConfig, chartHeight, fadeHiddenEntries, fillThemeDefaults, withAlpha, wrapTitle } from "../src/engine/config.ts";
 import type { Theme } from "../src/engine/theme.ts";
 import { parseVarRef, resolveConfigColors } from "../src/engine/theme.ts";
 import type { ChartSpec } from "../src/engine/spec.ts";
@@ -531,6 +531,13 @@ void test("stacked tooltip totals a running total's sums, and an unstacked chart
   assert.equal(footer([{ chart: { isDatasetVisible: () => true }, dataIndex: 1, datasetIndex: 0 }]), "Total: 10");
   const plain = at(buildConfig({ ...cumulative, stacked: false, cumulative: false }, theme).options, "plugins.tooltip") as { callbacks?: unknown };
   assert.equal(plain.callbacks, undefined);
+});
+
+void test("a hidden legend entry is grayed rather than struck through", () => {
+  const shown = { text: "a", hidden: false, fontColor: "#111", fillStyle: "#f00", strokeStyle: "#f00" };
+  const [kept, faded] = fadeHiddenEntries([shown, { ...shown, text: "b", hidden: true }], { ...theme, text: "#112233" });
+  assert.deepEqual(kept, shown);
+  assert.deepEqual(faded, { text: "b", hidden: false, fontColor: "rgba(17, 34, 51, 0.45)", fillStyle: "rgba(17, 34, 51, 0.25)", strokeStyle: "rgba(17, 34, 51, 0.25)" });
 });
 
 void test("scatter has no legend with one series", () => {

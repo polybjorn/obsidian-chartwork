@@ -1,4 +1,5 @@
-import type { ArcElement, BarElement, ChartConfiguration, ChartDataset, Plugin } from "chart.js";
+import { Chart } from "chart.js";
+import type { ArcElement, BarElement, ChartConfiguration, ChartDataset, LegendItem, Plugin } from "chart.js";
 import { allIntegers, onTimeAxis, prepareData } from "./data.ts";
 import type { PreparedData, PreparedSeries } from "./data.ts";
 import { isPlain } from "./guards.ts";
@@ -54,11 +55,30 @@ function textFont(theme: Theme): Obj {
   return { family: theme.font, size: smallSize(theme) };
 }
 
+/** Grays a hidden entry, in place of the strikethrough Chart.js gives one with `hidden` set. */
+export function fadeHiddenEntries(items: LegendItem[], theme: Theme): LegendItem[] {
+  const key = withAlpha(theme.text, 0.25);
+  return items.map((item) => item.hidden
+    ? { ...item, hidden: false, fontColor: withAlpha(theme.text, 0.45), fillStyle: key, strokeStyle: key }
+    : item);
+}
+
 // Chart.js draws legend keys 40 px wide, longer than most of the labels they
 // mark, so a key is a square a little under the text's height
 function legendLabels(theme: Theme): Obj {
   const box = Math.round(smallSize(theme) * 0.85);
-  return { color: theme.text, font: textFont(theme), boxWidth: box, boxHeight: box };
+  return {
+    color: theme.text,
+    font: textFont(theme),
+    boxWidth: box,
+    boxHeight: box,
+    generateLabels: (chart: Chart) => {
+      // Setting this option replaces the per-slice entries pie and polar charts bring
+      const own = Chart.overrides[(chart.config as ChartConfiguration).type]?.plugins?.legend?.labels;
+      const items = own?.generateLabels ? own.generateLabels(chart) : Chart.defaults.plugins.legend.labels.generateLabels(chart);
+      return fadeHiddenEntries(items, theme);
+    },
+  };
 }
 
 function titleFont(theme: Theme): Obj {

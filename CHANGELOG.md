@@ -14,6 +14,7 @@ All notable changes to this project are documented here. Format based on [Keep a
 ### Changed
 
 - Tooltips no longer show a color key, and scatter tooltips name the group in text.
+- A hidden series or slice is grayed out in the legend instead of struck through.
 
 ## [1.0.3] - 2026-11-03
 
