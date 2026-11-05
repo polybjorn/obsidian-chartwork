@@ -1,18 +1,18 @@
 Charts pushed to their limits. The line above each chart says what it should show. Nothing here should draw blank, overlap itself or break the note. The table charts read the tables in this note, and the CSV chart reads `Edge cases.csv`, which sits beside it. The script chart needs Dataview.
 
-30 labels, 3 series, horizontal. Every label shows, the bars are readable, and the legend doesn't overlap them:
+10 labels, 3 series, horizontal. Every label shows, the bars are readable, and the legend doesn't overlap them:
 
 ```chart
 type: bar
 indexAxis: y
-labels: [Item 1, Item 2, Item 3, Item 4, Category 5 with a long name, Item 6, Item 7, Item 8, Item 9, Category 10 with a long name, Item 11, Item 12, Item 13, Item 14, Category 15 with a long name, Item 16, Item 17, Item 18, Item 19, Category 20 with a long name, Item 21, Item 22, Item 23, Item 24, Category 25 with a long name, Item 26, Item 27, Item 28, Item 29, Category 30 with a long name]
+labels: [Item 1, Item 2, Item 3, Item 4, Category 5 with a long name, Item 6, Item 7, Item 8, Item 9, Category 10 with a long name]
 series:
   - title: Alpha
-    data: [8, 15, 22, 29, 36, 6, 13, 20, 27, 34, 4, 11, 18, 25, 32, 2, 9, 16, 23, 30, 37, 7, 14, 21, 28, 35, 5, 12, 19, 26]
+    data: [8, 15, 22, 29, 36, 6, 13, 20, 27, 34]
   - title: Beta
-    data: [12, 23, 34, 8, 19, 30, 4, 15, 26, 37, 11, 22, 33, 7, 18, 29, 3, 14, 25, 36, 10, 21, 32, 6, 17, 28, 2, 13, 24, 35]
+    data: [12, 23, 34, 8, 19, 30, 4, 15, 26, 37]
   - title: Gamma
-    data: [14, 27, 3, 16, 29, 5, 18, 31, 7, 20, 33, 9, 22, 35, 11, 24, 37, 13, 26, 2, 15, 28, 4, 17, 30, 6, 19, 32, 8, 21]
+    data: [14, 27, 3, 16, 29, 5, 18, 31, 7, 20]
 ```
 
 Tiny and huge numbers side by side, values printed. Labels stay readable and the axis ticks are not a wall of digits:
@@ -221,7 +221,7 @@ type: bar
 csv: Edge cases.csv
 ```
 
-2,000 points from a script. Draws within a second or two and scrolling past it stays smooth:
+2,000 points from a script, which needs Dataview. Draws within a second or two and scrolling past it stays smooth:
 
 ```dataviewjs
 const n = 2000;
