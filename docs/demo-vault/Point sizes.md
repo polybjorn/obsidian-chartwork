@@ -1,6 +1,6 @@
 Scatter charts of the books in this vault, with points sized by a property. The line above each chart says what it should show. Hover a point to read its tooltip. Nine books have a rating, and the seven unrated ones show how a note without a value draws.
 
-Sized by rating. Pride and Prejudice (5) is the largest point and Moby-Dick (1.5) the smallest. All 16 books draw, the unrated ones at a middle size. Hovering a rated book shows "rating" on a second line of the tooltip, and hovering an unrated one shows no such line:
+Sized by rating. Pride and Prejudice (5) is the largest point and Moby-Dick (1.5) the smallest. All 16 books draw, the unrated ones at a middle size. Hovering a rated book shows year, pages and rating in the tooltip, and hovering an unrated one shows only year and pages:
 
 ```base
 filters:
@@ -33,7 +33,7 @@ views:
       direction: ASC
 ```
 
-Sized by a property that holds text. Nothing reads as a number, so every point is the same middle size and no tooltip has a size line:
+Sized by a property that holds text. Nothing reads as a number, so every point is the same middle size and every tooltip shows only year and pages:
 
 ```base
 filters:
@@ -48,7 +48,7 @@ views:
     size: note.status
 ```
 
-No size property. Every point is small and the same size, and no tooltip has a size line:
+No size property. Every point is small and the same size, and every tooltip shows only year and pages:
 
 ```base
 filters:
