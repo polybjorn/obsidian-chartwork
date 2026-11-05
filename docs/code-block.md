@@ -83,6 +83,7 @@ A `scatter` block has no `labels`. Each series' `data` is a list of points, `{x:
 ## Differences from Charts
 
 - Keys not listed above are ignored. Raw Chart.js options in the block have no effect; use [the script function](script-api.md) for those.
+- A key neither Chartwork nor Charts knows, such as `valuelabels`, draws the chart with a line under it naming the key and, for a near miss, the key it may mean. So does one of Chartwork's own keys on a chart type that does not use it, such as `average` on a pie. A key Charts reads shows no such line, so a Charts note draws as it is.
 - While Charts is enabled, Chartwork leaves `chart` blocks to it, and says so once. Disable Charts and reload to switch over.
 
 Before removing Charts, run **Check chart blocks and scripts** from the command palette or Chartwork's settings, or press **Check notes first** on that notice. It lists every block Chartwork can't draw or draws without some of its keys, and every script that calls `renderChart`, with a link to each line.

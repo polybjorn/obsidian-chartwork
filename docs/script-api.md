@@ -31,7 +31,7 @@ window.chartwork.render(dv.container, {
 
 `render(element, spec, owner)` draws into `element` and returns a handle with `update(spec)` and `destroy()`. Pass the note's component as `owner` (`dv.component` in Dataview) so the chart goes when the note closes.
 
-A bad or unknown field throws an error naming it, such as `chartwork: series[0].values has 3 entries but labels has 4`; `update` checks the same way. The spec is copied, so changing it afterwards does nothing.
+A bad field throws an error naming it, such as `chartwork: series[0].values has 3 entries but labels has 4`; `update` checks the same way. Unknown fields are named all at once, with a guess for a near miss and the fields valid where each sits, such as `chartwork: unknown field valuelabels (did you mean valueLabels?). the spec takes kind, labels, ...`. A field the chart's kind does not use, such as `horizontal` on a pie, draws the chart and shows a line under it saying so. The spec is copied, so changing it afterwards does nothing.
 
 `window.chartwork.version` tells a script which fields it can use.
 

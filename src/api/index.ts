@@ -1,6 +1,7 @@
 import type { Component, Plugin } from "obsidian";
 import { drawConfig, registerItems, renderConfig, requireModule, renderSpec, showError, errorText } from "../engine/index.ts";
 import type { ChartHandle } from "../engine/index.ts";
+import { showHint } from "../engine/hint.ts";
 import { shouldInstallRenderChart, shouldRemoveRenderChart } from "./coexist.ts";
 import { unwrapRaw } from "./raw.ts";
 import { makeRender } from "./render.ts";
@@ -35,6 +36,7 @@ export function installApi(plugin: Plugin, seriesColors: () => string[]): void {
     render: makeRender({
       spec: (el, spec, owner) => renderSpec(el, spec, ctx(owner)),
       config: (el, config, owner, width) => drawConfig(el, config, ctx(owner), width),
+      hint: (el, message) => showHint(el, message),
     }, plugin),
   };
   window.chartwork = api;

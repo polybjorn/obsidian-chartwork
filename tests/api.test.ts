@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { validateSpec } from "../src/api/validate.ts";
+import { specHint, validateSpec } from "../src/api/validate.ts";
 import { shouldInstallRenderChart, shouldRemoveRenderChart } from "../src/api/coexist.ts";
 import { unwrapRaw } from "../src/api/raw.ts";
 import { makeRender } from "../src/api/render.ts";
@@ -194,4 +194,37 @@ void test("removes renderChart only when still ours", () => {
   assert.equal(shouldRemoveRenderChart(ours, ours), true);
   assert.equal(shouldRemoveRenderChart(() => 2, ours), false);
   assert.equal(shouldRemoveRenderChart(undefined, ours), false);
+});
+
+void test("every unknown field is named in one message, with the valid fields where each sits", () => {
+  const s: Record<string, unknown> = { ...good(), colour: "red", valuelabels: true, axes: { y: { minimum: 0 } } };
+  s.series = [{ name: "n", values: [1, 2], colour: "red" }];
+  assert.throws(() => validateSpec(s), (e: Error) => {
+    assert.match(e.message, /^chartwork: unknown fields colour, valuelabels \(did you mean valueLabels\?\), series\[0\]\.colour \(did you mean color\?\), axes\.y\.minimum\. /);
+    assert.match(e.message, /the spec takes kind, labels, series, /);
+    assert.match(e.message, /series\[n\] takes name, values, color, /);
+    assert.match(e.message, /axes\.y takes min, max, /);
+    return true;
+  });
+});
+
+void test("specHint names fields the chart kind does not use", () => {
+  assert.equal(specHint({ ...good(), kind: "pie", horizontal: true } as never), "A pie chart doesn't use horizontal.");
+  assert.equal(specHint({ ...good(), kind: "polarArea", stacked: true, tension: 0.3 } as never), "A polar area chart doesn't use stacked or tension.");
+  assert.equal(specHint({ ...good(), kind: "bar", horizontal: true, stacked: true } as never), undefined);
+});
+
+void test("render shows the hint under a spec chart and removes it with the chart", () => {
+  const calls: unknown[][] = [];
+  const drawers: Drawers = {
+    spec: () => ({ update: () => undefined, destroy: () => { calls.push(["destroy"]); } }),
+    config: () => ({ update: () => undefined, destroy: () => undefined }),
+    hint: (_el, message) => { calls.push(["hint", message]); return { remove: () => { calls.push(["remove"]); } }; },
+  };
+  const render = makeRender(drawers, "plugin" as never);
+  render({} as never, { ...good(), kind: "bar" } as never).destroy();
+  assert.deepEqual(calls, [["destroy"]]);
+  calls.length = 0;
+  render({} as never, { ...good(), kind: "pie", horizontal: true } as never).destroy();
+  assert.deepEqual(calls, [["hint", "A pie chart doesn't use horizontal."], ["remove"], ["destroy"]]);
 });

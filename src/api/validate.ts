@@ -2,6 +2,7 @@ import { isObj, isOneOf } from "../engine/guards.ts";
 import type { Obj } from "../engine/guards.ts";
 import { AXIS_IDS, CHART_KINDS, DATE_UNITS, ISO_DATE, LEGEND_SIDES, SORTS, STEPS } from "../engine/spec.ts";
 import type { AxisSpec, ChartSpec, Series } from "../engine/spec.ts";
+import { unknownKeyText } from "../engine/hint.ts";
 
 const SPEC_KEYS = [
   "kind", "labels", "series", "title", "horizontal", "stacked", "valueLabels", "sort", "order",
@@ -28,11 +29,40 @@ function fail(path: string, want: string, got: unknown): never {
   throw new Error(`chartwork: ${path} must be ${want}, got ${seen}`);
 }
 
-// A misspelt field would otherwise do nothing, silently
-function knownKeys(o: Obj, known: readonly string[], prefix: string): void {
-  for (const key of Object.keys(o)) {
-    if (!known.includes(key)) throw new Error(`chartwork: unknown field ${prefix}${key}`);
+interface Unknown {
+  path: string;
+  /** Where the field sits, as the message names it: "the spec", "series[n]", "axes.y". */
+  where: string;
+  known: readonly string[];
+}
+
+function unknownIn(v: unknown, known: readonly string[], prefix: string, where: string, into: Unknown[]): void {
+  if (!isObj(v)) return;
+  for (const key of Object.keys(v)) {
+    if (!known.includes(key)) into.push({ path: `${prefix}${key}`, where, known });
   }
+}
+
+// A misspelt field would otherwise do nothing, silently. Every one in the
+// spec is named in one message, with the fields valid where each sits, so a
+// script is not fixed one throw at a time.
+function knownFields(input: Obj): void {
+  const found: Unknown[] = [];
+  unknownIn(input, SPEC_KEYS, "", "the spec", found);
+  if (Array.isArray(input.series)) {
+    input.series.forEach((s, i) => unknownIn(s, SERIES_KEYS, `series[${i}].`, "series[n]", found));
+  }
+  unknownIn(input.axes, AXIS_IDS, "axes.", "axes", found);
+  if (isObj(input.axes)) {
+    for (const id of AXIS_IDS) unknownIn(input.axes[id], AXIS_KEYS, `axes.${id}.`, `axes.${id}`, found);
+  }
+  unknownIn(input.referenceLines, ["x", "y"], "referenceLines.", "referenceLines", found);
+  if (found.length === 0) return;
+  const names = found.map((u) => unknownKeyText(u.path.slice(u.path.lastIndexOf(".") + 1), u.known, u.path));
+  const valid = new Map<string, string>();
+  for (const u of found) valid.set(u.where, `${u.where} takes ${u.known.join(", ")}`);
+  const plural = found.length > 1 ? "s" : "";
+  throw new Error(`chartwork: unknown field${plural} ${names.join(", ")}. ${[...valid.values()].join("; ")}`);
 }
 
 function str(v: unknown, path: string): string {
@@ -62,7 +92,6 @@ function strList(v: unknown, path: string): string[] {
 
 function series(v: unknown, path: string, labelCount: number): Series {
   if (!isObj(v)) fail(path, "an object", v);
-  knownKeys(v, SERIES_KEYS, `${path}.`);
   const name = str(v.name, `${path}.name`);
   const values = v.values;
   if (!Array.isArray(values)) fail(`${path}.values`, "an array of numbers", values);
@@ -95,14 +124,12 @@ function series(v: unknown, path: string, labelCount: number): Series {
 
 function axes(v: unknown): Partial<Record<(typeof AXIS_IDS)[number], AxisSpec>> {
   if (!isObj(v)) fail("axes", "an object", v);
-  knownKeys(v, AXIS_IDS, "axes.");
   const out: Partial<Record<(typeof AXIS_IDS)[number], AxisSpec>> = {};
   for (const id of AXIS_IDS) {
     const a = v[id];
     if (a === undefined) continue;
     const path = `axes.${id}`;
     if (!isObj(a)) fail(path, "an object", a);
-    knownKeys(a, AXIS_KEYS, `${path}.`);
     for (const key of ["min", "max"]) {
       const b = a[key];
       if (b !== undefined && typeof b !== "string" && (typeof b !== "number" || !Number.isFinite(b))) {
@@ -121,7 +148,6 @@ function axes(v: unknown): Partial<Record<(typeof AXIS_IDS)[number], AxisSpec>> 
 
 function referenceLines(v: unknown): Partial<Record<"x" | "y", (number | string)[]>> {
   if (!isObj(v)) fail("referenceLines", "an object", v);
-  knownKeys(v, ["x", "y"], "referenceLines.");
   const out: Partial<Record<"x" | "y", (number | string)[]>> = {};
   for (const id of ["x", "y"] as const) {
     const list = v[id];
@@ -142,7 +168,7 @@ function referenceLines(v: unknown): Partial<Record<"x" | "y", (number | string)
  */
 export function validateSpec(input: unknown): ChartSpec {
   if (!isObj(input)) fail("spec", "an object", input);
-  knownKeys(input, SPEC_KEYS, "");
+  knownFields(input);
   if (!isOneOf(CHART_KINDS, input.kind)) {
     throw new Error(`chartwork: kind must be one of ${CHART_KINDS.join(", ")}, got ${JSON.stringify(input.kind)}`);
   }
@@ -202,4 +228,35 @@ export function validateSpec(input: unknown): ChartSpec {
   if (input.axes !== undefined) out.axes = axes(input.axes);
   if (input.referenceLines !== undefined) out.referenceLines = referenceLines(input.referenceLines);
   return out;
+}
+
+// Fields that do something only on some chart kinds. A few clear cases, not
+// every field: the rest apply to all kinds or say in their docs where they do.
+const ONLY_FOR: Partial<Record<(typeof SPEC_KEYS)[number], readonly string[]>> = {
+  horizontal: ["bar", "line"],
+  stacked: ["bar", "line"],
+  labelColors: ["bar"],
+  barThickness: ["bar"],
+  tension: ["line"],
+  bestFit: ["line"],
+  spanGaps: ["line", "radar"],
+  referenceLines: ["bar", "line"],
+  average: ["bar", "line"],
+  cumulative: ["bar", "line"],
+  dateUnit: ["bar", "line"],
+  valueLabels: ["bar", "line", "pie", "doughnut", "polarArea"],
+};
+
+/**
+ * The hint a script chart shows under itself for fields its kind does not
+ * use, as horizontal on a pie. Undefined when every field set applies.
+ */
+export function specHint(spec: ChartSpec): string | undefined {
+  const unused = Object.keys(ONLY_FOR).filter((key) => {
+    const kinds = ONLY_FOR[key as keyof typeof ONLY_FOR];
+    return spec[key as keyof ChartSpec] !== undefined && kinds !== undefined && !kinds.includes(spec.kind);
+  });
+  if (unused.length === 0) return undefined;
+  const fields = unused.length < 2 ? unused.join("") : `${unused.slice(0, -1).join(", ")} or ${unused[unused.length - 1]}`;
+  return `A ${spec.kind === "polarArea" ? "polar area" : spec.kind} chart doesn't use ${fields}.`;
 }

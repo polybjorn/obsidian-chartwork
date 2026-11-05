@@ -10,6 +10,7 @@ All notable changes to this project are documented here. Format based on [Keep a
 - A Value labels option in the Bases view, with Automatic, On and Off, the same as `valueLabels` in a `chart` block.
 - A Stacked option in the Bases view for bar and line charts, the same as `stacked: true` in a `chart` block.
 - Hovering a stacked bar or line chart shows the total of its series.
+- A chart block with a key neither Chartwork nor Charts knows, or a Chartwork key its chart type does not use, shows a line under the chart naming it, with a guess for a misspelt key. A script spec field the chart's kind does not use, such as `horizontal` on a pie, shows the same line.
 
 ### Changed
 
@@ -17,6 +18,7 @@ All notable changes to this project are documented here. Format based on [Keep a
 - A hidden series or slice is grayed out in the legend instead of struck through.
 - A bar chart's tooltip sits beside the bar, level with its middle, instead of at its top.
 - Line chart points are easier to hit, with a finger above all.
+- A script spec with unknown fields throws one error naming all of them, with the valid fields, instead of stopping at the first.
 
 ## [1.0.3] - 2026-11-03
 

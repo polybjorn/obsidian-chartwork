@@ -3,7 +3,7 @@ import type { ChartConfiguration } from "chart.js";
 import type { ChartSpec } from "../engine/spec.ts";
 import { shapeOf, unwrapRaw } from "./raw.ts";
 import type { ChartInput } from "./raw.ts";
-import { validateSpec } from "./validate.ts";
+import { specHint, validateSpec } from "./validate.ts";
 
 export interface RenderHandle {
   /** Takes the same shape the chart was made with: a spec for a spec, a config for a config. */
@@ -15,6 +15,8 @@ export interface RenderHandle {
 export interface Drawers {
   spec(el: HTMLElement, spec: ChartSpec, owner: Component): { update(next: ChartSpec): void; destroy(): void };
   config(el: HTMLElement, config: ChartConfiguration, owner: Component, width?: string): { update(next: ChartConfiguration): void; destroy(): void };
+  /** Shows a line under a drawn spec for fields its kind does not use; destroy removes it. */
+  hint?(el: HTMLElement, message: string): { remove(): void };
 }
 
 function wrongShape(made: string, got: string): Error {
@@ -24,13 +26,19 @@ function wrongShape(made: string, got: string): Error {
 export function makeRender(drawers: Drawers, defaultOwner: Component) {
   return (el: HTMLElement, input: ChartInput, owner: Component = defaultOwner): RenderHandle => {
     if (shapeOf(input) === "spec") {
-      const handle = drawers.spec(el, validateSpec(input), owner);
+      const spec = validateSpec(input);
+      const handle = drawers.spec(el, spec, owner);
+      const hint = specHint(spec);
+      const hintEl = hint ? drawers.hint?.(el, hint) : undefined;
       return {
         update: (next) => {
           if (shapeOf(next) !== "spec") throw wrongShape("spec", "a Chart.js config");
           handle.update(validateSpec(next));
         },
-        destroy: () => handle.destroy(),
+        destroy: () => {
+          hintEl?.remove();
+          handle.destroy();
+        },
       };
     }
     const raw = unwrapRaw(input);

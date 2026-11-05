@@ -2,7 +2,9 @@ import { MarkdownRenderChild, parseYaml } from "obsidian";
 import type { MarkdownPostProcessorContext, Plugin } from "obsidian";
 import { chartsEnabled } from "../compat/charts.ts";
 import { renderConfig, renderSpec, showError } from "../engine/index.ts";
+import { showHint } from "../engine/hint.ts";
 import type { ChartHandle, ChartSpec } from "../engine/index.ts";
+import { blockHint } from "./hints.ts";
 import { parseChartBlock, seriesFill, yamlError } from "./parse.ts";
 import type { ParsedBlock, TableRef } from "./parse.ts";
 import { findCsv, findTable } from "./table-source.ts";
@@ -19,6 +21,7 @@ function renderTableBlock(
   block: ParsedBlock & { table: TableRef },
   ctx: MarkdownPostProcessorContext,
   seriesColors: () => string[],
+  hint: string | undefined,
 ): void {
   const { table: ref } = block;
   const owner = new MarkdownRenderChild(el);
@@ -27,6 +30,7 @@ function renderTableBlock(
   let handle: ChartHandle | null = null;
   let host: HTMLElement | null = null;
   let error: HTMLElement | null = null;
+  const hintEl = hint ? showHint(el, hint) : null;
   let tablePath = "csv" in ref || ref.file ? "" : ctx.sourcePath;
   // Reads finish out of order when edits come fast; only the latest draws
   let latest = 0;
@@ -64,6 +68,8 @@ function renderTableBlock(
     clear();
     host = el.createDiv({ cls: "chartwork-block" });
     if (block.width) host.setCssProps({ width: block.width });
+    // The chart is made anew after an error, so the hint moves back under it
+    if (hintEl) el.appendChild(hintEl);
     try {
       handle = renderSpec(host, spec, { app, owner, seriesColors });
     } catch (e) {
@@ -108,8 +114,9 @@ export function registerChartBlock(plugin: Plugin, seriesColors: () => string[])
       showError(el, result.error);
       return;
     }
+    const hint = blockHint(data as Record<string, unknown>);
     if ("table" in result.value && result.value.table) {
-      renderTableBlock(plugin, el, { ...result.value, table: result.value.table }, ctx, seriesColors);
+      renderTableBlock(plugin, el, { ...result.value, table: result.value.table }, ctx, seriesColors, hint);
       return;
     }
     const owner = new MarkdownRenderChild(el);
@@ -124,5 +131,6 @@ export function registerChartBlock(plugin: Plugin, seriesColors: () => string[])
       host.remove();
       showError(el, e instanceof Error ? e.message : "The chart failed to render.");
     }
+    if (hint) showHint(el, hint);
   });
 }
