@@ -471,22 +471,30 @@ void test("scatter draws {x, y} points with linear axes and per-point radius", (
   assert.equal(at(config.options, "scales.y.beginAtZero"), false);
 });
 
-void test("scatter tooltip shows the note name and both values", () => {
+void test("scatter tooltip shows the note name and each value on its own line", () => {
   const callbacks = at(buildConfig(scatter, theme).options, "plugins.tooltip.callbacks") as {
     title(items: unknown[]): string;
-    label(item: unknown): string;
+    label(item: unknown): string[];
   };
   const raw = { x: 1, y: 2, name: "Alpha" };
   assert.equal(callbacks.title([{ raw }]), "Alpha");
-  assert.equal(callbacks.label({ raw }), "Hours: 1, Score: 2");
+  assert.deepEqual(callbacks.label({ raw }), ["Hours: 1", "Score: 2"]);
 });
 
-void test("scatter tooltip adds the size value on its own line, only for a point that has one", () => {
+void test("every tooltip keeps a gap after its color key, and a raw config can set its own", () => {
+  assert.equal(at(buildConfig(spec, theme).options, "plugins.tooltip.boxPadding"), 4);
+  assert.equal(at(buildConfig(scatter, theme).options, "plugins.tooltip.boxPadding"), 4);
+  const raw = (options: object) => at(fillThemeDefaults({ type: "bar", data: { datasets: [] }, options }, theme).options, "plugins.tooltip.boxPadding");
+  assert.equal(raw({}), 4);
+  assert.equal(raw({ plugins: { tooltip: { boxPadding: 9 } } }), 9);
+});
+
+void test("scatter tooltip adds the size value, only for a point that has one", () => {
   const sized: ChartSpec = { ...scatter, sizeTitle: "Rating" };
   const config = buildConfig(sized, theme);
-  const callbacks = at(config.options, "plugins.tooltip.callbacks") as { label(item: unknown): string | string[] };
-  assert.deepEqual(callbacks.label({ raw: { x: 1, y: 2, name: "Alpha", size: 4.5 } }), ["Hours: 1, Score: 2", "Rating: 4.5"]);
-  assert.equal(callbacks.label({ raw: { x: 1, y: 2, name: "Beta" } }), "Hours: 1, Score: 2");
+  const callbacks = at(config.options, "plugins.tooltip.callbacks") as { label(item: unknown): string[] };
+  assert.deepEqual(callbacks.label({ raw: { x: 1, y: 2, name: "Alpha", size: 4.5 } }), ["Hours: 1", "Score: 2", "Rating: 4.5"]);
+  assert.deepEqual(callbacks.label({ raw: { x: 1, y: 2, name: "Beta" } }), ["Hours: 1", "Score: 2"]);
 });
 
 void test("scatter carries a point's size value into the chart data", () => {

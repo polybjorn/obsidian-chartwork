@@ -19,6 +19,8 @@ function timeAxis(unit: DateUnit): Obj {
 }
 
 export const DEFAULT_BAR_THICKNESS = 28;
+// Chart.js draws the color key flush against the tooltip text
+const TOOLTIP_BOX_PADDING = 4;
 const DEFAULT_HEIGHT = 300;
 export const DEFAULT_TENSION = 0.2;
 export const DEFAULT_POINT_RADIUS = 4;
@@ -429,6 +431,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     ? horizontal ? { right: 12 + maxLabel * Math.ceil(smallSize(theme) * 0.65) } : { top: smallSize(theme) + 8 }
     : undefined;
 
+  const tooltip: Obj = { boxPadding: TOOLTIP_BOX_PADDING };
   const plugins: Obj = {
     legend: {
       display: legendShown(spec, datasets.length),
@@ -436,6 +439,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
       labels: legendLabels(theme),
     },
     title: { display: Boolean(spec.title), text: spec.title ?? "", color: theme.text, font: titleFont(theme) },
+    tooltip,
   };
 
   const options: Obj = {
@@ -499,15 +503,12 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     }, spec.axes?.[id]);
     options.scales = { x: axisOf(spec.xTitle, "x"), y: axisOf(spec.valueTitle, "y") };
     // The default tooltip prints bare coordinates; the note's name is the point of hovering
-    plugins.tooltip = {
-      callbacks: {
-        title: (items: { raw: unknown }[]) => String((items[0]?.raw as { name?: string } | undefined)?.name ?? ""),
-        label: (item: { raw: unknown }) => {
-          const p = item.raw as { x: number; y: number; size?: number };
-          const position = `${spec.xTitle ?? "x"}: ${formatLabel(p.x, undefined)}, ${spec.valueTitle ?? "y"}: ${formatLabel(p.y, undefined)}`;
-          // Its own line, since three values on one overflow a phone's width
-          return p.size === undefined ? position : [position, `${spec.sizeTitle ?? "Size"}: ${formatLabel(p.size, undefined)}`];
-        },
+    tooltip.callbacks = {
+      title: (items: { raw: unknown }[]) => String((items[0]?.raw as { name?: string } | undefined)?.name ?? ""),
+      label: (item: { raw: unknown }) => {
+        const p = item.raw as { x: number; y: number; size?: number };
+        const lines = [`${spec.xTitle ?? "x"}: ${formatLabel(p.x, undefined)}`, `${spec.valueTitle ?? "y"}: ${formatLabel(p.y, undefined)}`];
+        return p.size === undefined ? lines : [...lines, `${spec.sizeTitle ?? "Size"}: ${formatLabel(p.size, undefined)}`];
       },
     };
   }
@@ -628,6 +629,7 @@ export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): Cha
     plugins: {
       legend: { labels: legendLabels(theme) },
       title: { color: theme.text, font: titleFont(theme) },
+      tooltip: { boxPadding: TOOLTIP_BOX_PADDING },
     },
   };
   const options: Obj = config.options ?? {};
