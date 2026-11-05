@@ -23,6 +23,7 @@ import {
   scatterSpec,
   type Row,
   type ScatterEntry,
+  valueLabelsOption,
 } from "./aggregate.ts";
 
 export const CHART_VIEW_TYPE = "chartwork-chart";
@@ -69,6 +70,14 @@ function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
     },
     { type: "toggle", key: "horizontal", displayName: "Horizontal bars", default: false, shouldHide: scatter },
     { type: "toggle", key: "cumulative", displayName: "Running total", default: false, shouldHide: scatter },
+    {
+      type: "dropdown",
+      key: "valueLabels",
+      displayName: "Value labels",
+      default: "auto",
+      shouldHide: scatter,
+      options: { auto: "Automatic", on: "On", off: "Off" },
+    },
     { type: "text", key: "title", displayName: "Title" },
     {
       type: "group",
@@ -211,6 +220,7 @@ class ChartView extends BasesView {
       kind: isOneOf(CHART_KINDS, kindValue) ? kindValue : "bar",
       horizontal: this.config.get("horizontal") === true,
       cumulative: this.config.get("cumulative") === true,
+      valueLabels: valueLabelsOption(this.config.get("valueLabels")),
       title: text(this.config, "title") || undefined,
       sort: isOneOf(SORTS, sortValue) ? sortValue : "none",
       topN: Number.isFinite(topN) ? topN : 0,

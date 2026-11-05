@@ -29,6 +29,8 @@ export interface AggregateOptions {
   dateUnit?: DateUnit;
   /** Bar, line: draw each series as a running total. */
   cumulative?: boolean;
+  /** Left undefined, the engine decides by chart type. */
+  valueLabels?: boolean;
   /** Series in this order, the rest after them as found. */
   seriesOrder?: string[];
   /** Bounds of the value axis, which is x when horizontal. */
@@ -183,6 +185,13 @@ function applyValueScale(spec: ChartSpec, opts: AggregateOptions): void {
   if (spec.kind === "line" && opts.tension !== undefined) spec.tension = opts.tension;
 }
 
+// A hand-edited .base may carry the chart block's true and false
+export function valueLabelsOption(value: unknown): boolean | undefined {
+  if (value === "on" || value === true) return true;
+  if (value === "off" || value === false) return false;
+  return undefined;
+}
+
 export function aggregateRows(rows: Row[], opts: AggregateOptions): ChartSpec {
   const labelOrder: string[] = [];
   const seen = new Set<string>();
@@ -278,6 +287,7 @@ export function aggregateRows(rows: Row[], opts: AggregateOptions): ChartSpec {
   if (opts.valueTitle) spec.valueTitle = opts.valueTitle;
   if (opts.horizontal) spec.horizontal = true;
   if (opts.cumulative && (opts.kind === "bar" || opts.kind === "line")) spec.cumulative = true;
+  if (opts.valueLabels !== undefined) spec.valueLabels = opts.valueLabels;
   applyValueScale(spec, opts);
   if (onAxis) return spec;
   if (opts.sort) spec.sort = opts.sort;

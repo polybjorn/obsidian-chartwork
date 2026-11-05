@@ -17,6 +17,7 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 | Group dates by | `dateUnit` | `day` (the default), `week`, `month` or `year`, when the category is a date. |
 | Running total | `cumulative` | Bar and line charts: each series becomes its running sum, in the order drawn, after Sort and Largest categories to keep. On a time axis the total runs in date order. A category with no value adds nothing and leaves a gap. Pie and doughnut charts ignore it. |
 | Horizontal bars | `horizontal` | Bars run sideways, and the chart grows taller with each category so bars keep the same thickness. |
+| Value labels | `valueLabels` | Bar, line, pie and doughnut charts: `auto` (the default) prints each value on a single-series bar chart only, `on` prints them on every chart, `off` on none. A stacked segment too short for its text stays blank. `true` and `false` work too, as in a `chart` block. |
 | Title | `title` | Shown above the chart. |
 | Minimum, Maximum | `yMin`, `yMax` | Range of the value axis, which is the horizontal one when bars run sideways. Empty fits the data. Not for pie and doughnut. |
 | Start at zero | `beginAtZero` | On by default. Turn it off so a line such as weight over time fills the chart instead of hugging a zero axis. A minimum above zero still wins. |

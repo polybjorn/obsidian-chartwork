@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { aggregateRows, bucketLabel, dateOf, parseCategoryColors, propertyRows, scatterSpec, xLabels, type AggregateOptions } from "../src/bases/aggregate.ts";
+import { aggregateRows, valueLabelsOption, bucketLabel, dateOf, parseCategoryColors, propertyRows, scatterSpec, xLabels, type AggregateOptions } from "../src/bases/aggregate.ts";
 
 const base: AggregateOptions = { aggregation: "count", kind: "bar" };
 
@@ -221,4 +221,21 @@ void test("an average keeps one decimal more than its most precise input", () =>
   assert.deepEqual(aggregateRows(hours, { ...base, aggregation: "average" }).series[0]?.values, [1.417]);
   const sum = aggregateRows(pages, { ...base, aggregation: "sum" });
   assert.deepEqual(sum.series[0]?.values, [1355, 0.1 + 0.2]);
+});
+
+void test("the Value labels option reaches the spec, and Automatic leaves it to the engine", () => {
+  const rows = [{ x: "a" }, { x: "b" }];
+  const opts = { aggregation: "count", kind: "bar" } as const;
+  assert.equal(aggregateRows(rows, { ...opts, valueLabels: true }).valueLabels, true);
+  assert.equal(aggregateRows(rows, { ...opts, valueLabels: false }).valueLabels, false);
+  assert.equal("valueLabels" in aggregateRows(rows, opts), false);
+});
+
+void test("the Value labels option reads the dropdown and a chart block's booleans", () => {
+  assert.equal(valueLabelsOption("on"), true);
+  assert.equal(valueLabelsOption(true), true);
+  assert.equal(valueLabelsOption("off"), false);
+  assert.equal(valueLabelsOption(false), false);
+  assert.equal(valueLabelsOption("auto"), undefined);
+  assert.equal(valueLabelsOption(undefined), undefined);
 });

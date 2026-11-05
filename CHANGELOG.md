@@ -7,6 +7,7 @@ All notable changes to this project are documented here. Format based on [Keep a
 ### Added
 
 - Hovering a scatter point in the Bases view shows its point size value.
+- A Value labels option in the Bases view, with Automatic, On and Off, the same as `valueLabels` in a `chart` block.
 
 ### Changed
 
