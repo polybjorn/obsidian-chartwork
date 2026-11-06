@@ -1,11 +1,11 @@
 import { Component, Events } from "obsidian";
 import * as ChartJs from "chart.js";
 import * as helpers from "chart.js/helpers";
-import { Chart, registerables } from "chart.js";
+import { Chart, Tooltip, registerables } from "chart.js";
 import type { ChartComponentLike, ChartConfiguration } from "chart.js";
 import { Flow, SankeyController } from "chartjs-chart-sankey";
 import annotationPlugin from "chartjs-plugin-annotation";
-import { buildConfig, chartHeight, fillThemeDefaults } from "./config.ts";
+import { buildConfig, chartHeight, fillThemeDefaults, barSide } from "./config.ts";
 import { installDateAdapter } from "./date-adapter.ts";
 import { errorText, showError } from "./error.ts";
 import { isGone } from "./lifecycle.ts";
@@ -36,6 +36,7 @@ function registerOnce(): void {
   registered = true;
   // Every chart type and axis, since a config written for Charts may use any
   Chart.register(...registerables, annotationPlugin, SankeyController, Flow);
+  Tooltip.positioners.barSide = barSide;
   installDateAdapter();
 }
 

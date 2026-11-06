@@ -1,10 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { prepareData } from "../src/engine/data.ts";
-import { bestFitValues, buildConfig, chartHeight, fadeHiddenEntries, fillThemeDefaults, withAlpha, wrapTitle } from "../src/engine/config.ts";
+import { bestFitValues, buildConfig, chartHeight, fadeHiddenEntries, fillThemeDefaults, barSide, withAlpha, wrapTitle } from "../src/engine/config.ts";
 import type { Theme } from "../src/engine/theme.ts";
 import { parseVarRef, resolveConfigColors } from "../src/engine/theme.ts";
 import type { ChartSpec } from "../src/engine/spec.ts";
+import { BarElement } from "chart.js";
 import type { ChartConfiguration } from "chart.js";
 
 const theme: Theme = {
@@ -522,6 +523,38 @@ void test("stacked tooltip totals the series showing", () => {
   assert.equal(footer(hover(0, [1, 2])), "");
   assert.equal(footer(hover(1, [2])), "");
   assert.equal(footer(hover(0, [], 3)), "");
+});
+
+void test("every bar chart sets its tooltip beside the bar, and other kinds keep the default", () => {
+  const bar: ChartSpec = { kind: "bar", stacked: true, labels: ["a"], series: [{ name: "x", values: [1] }, { name: "y", values: [2] }] };
+  const position = (spec: ChartSpec) => at(buildConfig(spec, theme).options, "plugins.tooltip.position");
+  assert.equal(position(bar), "barSide");
+  assert.equal(position({ ...bar, horizontal: true }), "barSide");
+  assert.equal(position({ ...bar, stacked: false }), "barSide");
+  assert.equal(position({ ...bar, kind: "line" }), undefined);
+  assert.equal(position({ ...bar, kind: "pie" }), undefined);
+});
+
+void test("a line point takes a fingertip-sized hit area", () => {
+  const line: ChartSpec = { kind: "line", labels: ["a", "b"], series: [{ name: "x", values: [1, 2] }] };
+  const dataset = buildConfig(line, theme).data.datasets[0] as unknown as Record<string, unknown>;
+  assert.equal(dataset.pointHitRadius, 20);
+});
+
+void test("barSide sits beside the bar, level with its middle, on the roomier side", () => {
+  const model = { chart: { chartArea: { left: 0, right: 100, top: 0, bottom: 100 } } } as never;
+  const place = (props: object) => barSide.call(model, [{ element: new BarElement(props as never), datasetIndex: 0, index: 0 }]);
+  const upright = { horizontal: false, y: 20, base: 60, width: 10, height: 40 };
+  assert.deepEqual(place({ ...upright, x: 30 }), { x: 35, y: 40, xAlign: "left", yAlign: "center" });
+  assert.deepEqual(place({ ...upright, x: 70 }), { x: 65, y: 40, xAlign: "right", yAlign: "center" });
+  const lying = { horizontal: true, x: 60, base: 20, width: 40, height: 10 };
+  assert.deepEqual(place({ ...lying, y: 30 }), { x: 40, y: 35, xAlign: "center", yAlign: "top" });
+  assert.deepEqual(place({ ...lying, y: 70 }), { x: 40, y: 65, xAlign: "center", yAlign: "bottom" });
+});
+
+void test("barSide gives up with nothing hovered", () => {
+  const model = { chart: { chartArea: { left: 0, right: 100, top: 0, bottom: 100 } } } as never;
+  assert.equal(barSide.call(model, []), false);
 });
 
 void test("stacked tooltip totals a running total's sums, and an unstacked chart has none", () => {

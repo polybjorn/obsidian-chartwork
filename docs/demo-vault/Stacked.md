@@ -1,6 +1,6 @@
 Stacked Bases charts of the books in this vault: each genre split by status. A book with two genres counts in both. The line above each chart says what it should show. Every grouped chart has four series, dropped, read, reading and to read.
 
-Stacked bars. Each genre is one bar. classic is the tallest at 8, then adventure at 4, and the others at 3 or 2. Hovering a segment shows its own count and the total, so classic says Total: 8:
+Stacked bars. Each genre is one bar. classic is the tallest at 8, then adventure at 4, and the others at 3 or 2. Hovering a segment shows its own count and the total, so classic says Total: 8, and the popup sits beside the segment, level with its middle:
 
 ```base
 filters:

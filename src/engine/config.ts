@@ -1,5 +1,8 @@
 import { Chart } from "chart.js";
-import type { ArcElement, BarElement, ChartConfiguration, ChartDataset, LegendItem, Plugin } from "chart.js";
+import type {
+  ActiveElement, ArcElement, BarElement, ChartConfiguration, ChartDataset, ChartType, LegendItem, Plugin,
+  TooltipPosition, TooltipPositionerFunction,
+} from "chart.js";
 import { allIntegers, onTimeAxis, prepareData } from "./data.ts";
 import type { PreparedData, PreparedSeries } from "./data.ts";
 import { isPlain } from "./guards.ts";
@@ -20,6 +23,8 @@ function timeAxis(unit: DateUnit): Obj {
 }
 
 export const DEFAULT_BAR_THICKNESS = 28;
+// A fingertip covers far more than a line point's few pixels
+const LINE_HIT_RADIUS = 20;
 // A raw config keeps Chart.js's color key, drawn flush against the text
 const TOOLTIP_BOX_PADDING = 4;
 const DEFAULT_HEIGHT = 300;
@@ -406,6 +411,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
         // Chart.js' meaning, as Charts draws it
         ...(spec.tension === undefined ? { cubicInterpolationMode: "monotone" as const } : {}),
         spanGaps: spec.spanGaps === true,
+        pointHitRadius: LINE_HIT_RADIUS,
         ...lineExtras(s),
       };
     }
@@ -514,6 +520,9 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
   }
 
   if (stacked) tooltip.callbacks = { footer: (items: HoveredPoint[]) => stackTotal(data.series, items) };
+  // A stacked segment's top edge is also the bottom of the next one, so a
+  // tooltip aimed at that edge could mean either
+  if (spec.kind === "bar") tooltip.position = "barSide";
 
   if (spec.kind === "scatter") {
     const axisOf = (title: string | undefined, id: "x" | "y"): Obj => applyAxis({
@@ -558,6 +567,27 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
 type HoveredPoint = { chart: { isDatasetVisible(index: number): boolean }; dataIndex: number; datasetIndex: number };
 
 /** The hovered stack's total over the series showing; empty below two, where it would only repeat the value. */
+declare module "chart.js" {
+  interface TooltipPositionerMap {
+    barSide: TooltipPositionerFunction<ChartType>;
+  }
+}
+
+/** Sets the tooltip beside the hovered bar, level with its middle, on the roomier side. */
+export function barSide(this: { chart: Chart }, items: readonly ActiveElement[]): TooltipPosition | false {
+  const bar = items[0]?.element as unknown as BarElement | undefined;
+  if (!bar) return false;
+  const center = bar.getCenterPoint() as { x: number; y: number };
+  const { width, height, horizontal } = bar.getProps(["width", "height", "horizontal"]);
+  const { left, right, top, bottom } = this.chart.chartArea;
+  if (horizontal) {
+    const below = center.y <= (top + bottom) / 2;
+    return { x: center.x, y: center.y + (below ? height : -height) / 2, xAlign: "center", yAlign: below ? "top" : "bottom" };
+  }
+  const after = center.x <= (left + right) / 2;
+  return { x: center.x + (after ? width : -width) / 2, y: center.y, xAlign: after ? "left" : "right", yAlign: "center" };
+}
+
 function stackTotal(series: PreparedSeries[], items: HoveredPoint[]): string {
   const hovered = items[0];
   // Past the series sit the best-fit lines, which belong to no stack
