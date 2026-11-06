@@ -23,6 +23,10 @@ All notable changes to this project are documented here. Format based on [Keep a
 - Line chart points are easier to hit, with a finger above all.
 - A script spec with unknown fields throws one error naming all of them, with the valid fields, instead of stopping at the first.
 
+### Fixed
+
+- A pattern for reading table rows no longer risks stopping the plugin from loading on iOS before 16.4.
+
 ## [1.0.3] - 2026-11-03
 
 ### Fixed

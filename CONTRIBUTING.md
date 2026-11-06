@@ -53,6 +53,7 @@ With the symlink, `npm run preview` in a git worktree builds and copies `main.js
 
 - Branch from `main`, one concern per PR.
 - `npm run build`, `npm run lint` and `npm test` pass.
+- A `feat` or `fix` PR that changes `src/` or `styles.css` adds a line under `[Unreleased]` in `CHANGELOG.md`, which CI checks. The `no-changelog` label skips that check, for a fix to something no release has shipped yet.
 - Add tests for new or changed behavior. Tests live in `tests/` and run on `node --test`, with no framework.
 - A new `chart` block key goes in `BLOCK_KEYS` in `src/codeblock/parse.ts`, which the check command reads, plus `docs/code-block.md` and a parse test. A script API change goes in `docs/script-api.md`, a Bases view option in `docs/bases-view.md`, and anything that changes what the README promises in `README.md`.
 - Example data in docs and tests is made up.
