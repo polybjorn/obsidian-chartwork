@@ -1,6 +1,8 @@
 .chartwork-chart {
   position: relative;
-  width: 100%;
+  /* Set from the chart options at runtime; unset, a chart takes the full width and its own height */
+  width: var(--chartwork-chart-width, 100%);
+  height: var(--chartwork-chart-height, auto);
   /* Centers a chart given a narrower width; a full-width one keeps no margin */
   margin-inline: auto;
 }
@@ -21,6 +23,8 @@
 }
 
 .chartwork-block {
+  /* A block's width key, set at runtime */
+  width: var(--chartwork-block-width, auto);
   max-width: 100%;
   margin-inline: auto;
 }

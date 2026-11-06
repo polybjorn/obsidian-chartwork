@@ -67,7 +67,7 @@ function renderTableBlock(
     }
     clear();
     host = el.createDiv({ cls: "chartwork-block" });
-    if (block.width) host.setCssProps({ width: block.width });
+    if (block.width) host.setCssProps({ "--chartwork-block-width": block.width });
     // The chart is made anew after an error, so the hint moves back under it
     if (hintEl) el.appendChild(hintEl);
     try {
@@ -122,7 +122,7 @@ export function registerChartBlock(plugin: Plugin, seriesColors: () => string[])
     const owner = new MarkdownRenderChild(el);
     ctx.addChild(owner);
     const host = el.createDiv({ cls: "chartwork-block" });
-    if (result.value.width) host.setCssProps({ width: result.value.width });
+    if (result.value.width) host.setCssProps({ "--chartwork-block-width": result.value.width });
     try {
       const value = result.value;
       if ("config" in value) renderConfig(host, value.config, { app: plugin.app, owner, seriesColors });

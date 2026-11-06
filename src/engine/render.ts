@@ -104,7 +104,7 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
   registerOnce();
   sweepLoose();
   const wrapper = el.createDiv({ cls: "chartwork-chart" });
-  if (width) wrapper.setCssProps({ width });
+  if (width) wrapper.setCssProps({ "--chartwork-chart-width": width });
   const canvas = wrapper.createEl("canvas");
   let chart: Chart | null = null;
   let error: HTMLElement | null = null;
@@ -116,7 +116,7 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
     Chart.getChart(canvas)?.destroy();
     chart = null;
     canvas.hide();
-    wrapper.setCssProps({ height: "" });
+    wrapper.setCssProps({ "--chartwork-chart-height": "" });
     error?.remove();
     error = showError(wrapper, errorText(e));
   };
@@ -132,8 +132,8 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
       error?.remove();
       error = null;
       canvas.show();
-      if (height !== undefined) wrapper.setCssProps({ height: `${height}px` });
-      if (builtWidth !== undefined) wrapper.setCssProps({ width: builtWidth });
+      if (height !== undefined) wrapper.setCssProps({ "--chartwork-chart-height": `${height}px` });
+      if (builtWidth !== undefined) wrapper.setCssProps({ "--chartwork-chart-width": builtWidth });
       // Export to PDF draws the note into a print container and prints it
       // moments later, which would catch each chart part way through its
       // opening animation. A restyle skips it too: a theme switch can fire
