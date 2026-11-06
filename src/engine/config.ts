@@ -19,7 +19,7 @@ function timeAxis(unit: DateUnit): Obj {
 }
 
 export const DEFAULT_BAR_THICKNESS = 28;
-// Chart.js draws the color key flush against the tooltip text
+// A raw config keeps Chart.js's color key, drawn flush against the text
 const TOOLTIP_BOX_PADDING = 4;
 const DEFAULT_HEIGHT = 300;
 export const DEFAULT_TENSION = 0.2;
@@ -431,7 +431,9 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     ? horizontal ? { right: 12 + maxLabel * Math.ceil(smallSize(theme) * 0.65) } : { top: smallSize(theme) + 8 }
     : undefined;
 
-  const tooltip: Obj = { boxPadding: TOOLTIP_BOX_PADDING };
+  // Tooltips name their series or slice in text, and the color key would only
+  // indent the whole block to clear it
+  const tooltip: Obj = { displayColors: false };
   const plugins: Obj = {
     legend: {
       display: legendShown(spec, datasets.length),
@@ -512,9 +514,6 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
         return data.series.length > 1 ? [item.dataset.label ?? "", ...lines] : lines;
       },
     };
-    // Chart.js indents every line to clear the color key, which leaves a gap
-    // under it on a stack of lines, so the group is named in text instead
-    tooltip.displayColors = false;
   }
 
   const extra: Plugin[] = [];

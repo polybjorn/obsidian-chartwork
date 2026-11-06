@@ -10,7 +10,7 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ### Changed
 
-- Scatter tooltips name the group in text instead of showing a color key.
+- Tooltips no longer show a color key, and scatter tooltips name the group in text.
 
 ## [1.0.3] - 2026-11-03
 
