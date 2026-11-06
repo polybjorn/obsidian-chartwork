@@ -3,6 +3,8 @@
   /* Set from the chart options at runtime; unset, a chart takes the full width and its own height */
   width: var(--chartwork-chart-width, 100%);
   height: var(--chartwork-chart-height, auto);
+  /* Set while a chart is out of the page, so its section keeps its height */
+  min-height: var(--chartwork-chart-min-height, 0);
   /* Centers a chart given a narrower width; a full-width one keeps no margin */
   margin-inline: auto;
 }

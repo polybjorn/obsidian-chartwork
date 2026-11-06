@@ -2,7 +2,7 @@ import { Component, Events, Menu, Notice, Platform } from "obsidian";
 import * as ChartJs from "chart.js";
 import * as helpers from "chart.js/helpers";
 import { Chart, Tooltip, registerables } from "chart.js";
-import type { ChartComponentLike, ChartConfiguration } from "chart.js";
+import type { ChartComponentLike, ChartConfiguration, Plugin } from "chart.js";
 import { Flow, SankeyController } from "chartjs-chart-sankey";
 import annotationPlugin from "chartjs-plugin-annotation";
 import { buildConfig, chartHeight, fillThemeDefaults, barSide } from "./config.ts";
@@ -25,6 +25,14 @@ let registered = false;
 class GuardedChart extends Chart {
   onUpdateError?: (e: unknown) => void;
 
+  // A size Chart.js measured just before reading view took the canvas out of
+  // the page can land after it. The chart then returns already at that size,
+  // which Chart.js reads as nothing to redraw, and it stays blank with its
+  // datasets torn down. Its own startup sizing passes no size, and must run.
+  override resize(width?: number, height?: number): void {
+    if (this.attached || width === undefined) super.resize(width, height);
+  }
+
   override update(...args: Parameters<Chart["update"]>): void {
     try {
       super.update(...args);
@@ -34,11 +42,41 @@ class GuardedChart extends Chart {
     }
   }
 }
+
+// Chart.js holds a pointer event for the next frame, and it can land after
+// reading view took the canvas out of the page. The chart's datasets are torn
+// down by then, and its tooltip throws on them.
+const ignoreDetachedEvents: Plugin = {
+  id: "chartworkIgnoreDetachedEvents",
+  beforeEvent: (chart) => (chart.attached ? undefined : false),
+};
+
+const drawnHeights = new WeakMap<Chart, number>();
+
+// Chart.js shrinks a canvas to nothing when reading view takes it out of the
+// page, and a chart sized by its aspect ratio gets its height from that
+// canvas. Without a floor the section returns short, grows a frame later, and
+// reading view moves the note under the reader to make up for it.
+const holdHeightOffPage: Plugin = {
+  id: "chartworkHoldHeightOffPage",
+  resize: (chart, { size }) => {
+    const wrapper = chart.canvas.parentElement;
+    if (!wrapper?.classList.contains("chartwork-chart")) return;
+    if (size.height > 0) {
+      drawnHeights.set(chart, size.height);
+      wrapper.setCssProps({ "--chartwork-chart-min-height": "" });
+      return;
+    }
+    const drawn = drawnHeights.get(chart);
+    if (drawn) wrapper.setCssProps({ "--chartwork-chart-min-height": `${drawn}px` });
+  },
+};
+
 function registerOnce(): void {
   if (registered) return;
   registered = true;
   // Every chart type and axis, since a config written for Charts may use any
-  Chart.register(...registerables, annotationPlugin, SankeyController, Flow);
+  Chart.register(...registerables, annotationPlugin, SankeyController, Flow, ignoreDetachedEvents, holdHeightOffPage);
   Tooltip.positioners.barSide = barSide;
   installDateAdapter();
 }

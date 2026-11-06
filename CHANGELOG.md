@@ -25,6 +25,8 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ### Fixed
 
+- A chart scrolled past quickly in reading view no longer comes back blank, or logs an error when hovered.
+- Scrolling up past charts in reading view no longer makes the note jump.
 - A pattern for reading table rows no longer risks stopping the plugin from loading on iOS before 16.4.
 
 ## [1.0.3] - 2026-11-03
