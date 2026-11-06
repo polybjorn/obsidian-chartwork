@@ -481,6 +481,17 @@ void test("scatter tooltip shows the note name and each value on its own line", 
   assert.deepEqual(callbacks.label({ raw }), ["Hours: 1", "Score: 2"]);
 });
 
+void test("scatter tooltip has no color key and names the group only when there are several", () => {
+  const point = { raw: { x: 1, y: 2, name: "Alpha" }, dataset: { label: "Read" } };
+  type Label = { label(item: unknown): string[] };
+  const single = at(buildConfig(scatter, theme).options, "plugins.tooltip") as { displayColors: boolean; callbacks: Label };
+  assert.equal(single.displayColors, false);
+  assert.deepEqual(single.callbacks.label(point), ["Hours: 1", "Score: 2"]);
+  const grouped = { ...scatter, series: [...scatter.series, { ...scatter.series[0], name: "Dropped" }] } as typeof scatter;
+  const callbacks = at(buildConfig(grouped, theme).options, "plugins.tooltip.callbacks") as Label;
+  assert.deepEqual(callbacks.label(point), ["Read", "Hours: 1", "Score: 2"]);
+});
+
 void test("every tooltip keeps a gap after its color key, and a raw config can set its own", () => {
   assert.equal(at(buildConfig(spec, theme).options, "plugins.tooltip.boxPadding"), 4);
   assert.equal(at(buildConfig(scatter, theme).options, "plugins.tooltip.boxPadding"), 4);

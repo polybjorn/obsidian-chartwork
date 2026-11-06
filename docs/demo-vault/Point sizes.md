@@ -15,7 +15,7 @@ views:
     size: note.rating
 ```
 
-Grouped by status. Sizes compare across the series: Pride and Prejudice in read is still the largest and Moby-Dick in dropped the smallest. Everything in reading and to read is unrated, so those points share the middle size:
+Grouped by status. Sizes compare across the series: Pride and Prejudice in read is still the largest and Moby-Dick in dropped the smallest. Everything in reading and to read is unrated, so those points share the middle size. Each tooltip names the status on the line under the title, and no tooltip here has a color square:
 
 ```base
 filters:

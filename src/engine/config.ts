@@ -505,12 +505,16 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
     // The default tooltip prints bare coordinates; the note's name is the point of hovering
     tooltip.callbacks = {
       title: (items: { raw: unknown }[]) => String((items[0]?.raw as { name?: string } | undefined)?.name ?? ""),
-      label: (item: { raw: unknown }) => {
+      label: (item: { raw: unknown; dataset: { label?: string } }) => {
         const p = item.raw as { x: number; y: number; size?: number };
         const lines = [`${spec.xTitle ?? "x"}: ${formatLabel(p.x, undefined)}`, `${spec.valueTitle ?? "y"}: ${formatLabel(p.y, undefined)}`];
-        return p.size === undefined ? lines : [...lines, `${spec.sizeTitle ?? "Size"}: ${formatLabel(p.size, undefined)}`];
+        if (p.size !== undefined) lines.push(`${spec.sizeTitle ?? "Size"}: ${formatLabel(p.size, undefined)}`);
+        return data.series.length > 1 ? [item.dataset.label ?? "", ...lines] : lines;
       },
     };
+    // Chart.js indents every line to clear the color key, which leaves a gap
+    // under it on a stack of lines, so the group is named in text instead
+    tooltip.displayColors = false;
   }
 
   const extra: Plugin[] = [];

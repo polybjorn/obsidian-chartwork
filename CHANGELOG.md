@@ -8,6 +8,10 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 - Hovering a scatter point in the Bases view shows its point size value.
 
+### Changed
+
+- Scatter tooltips name the group in text instead of showing a color key.
+
 ## [1.0.3] - 2026-11-03
 
 ### Fixed
