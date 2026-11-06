@@ -25,6 +25,12 @@ function timeAxis(unit: DateUnit): Obj {
 export const DEFAULT_BAR_THICKNESS = 28;
 // A fingertip covers far more than a line point's few pixels
 const LINE_HIT_RADIUS = 20;
+// Chart.js's dark box melts into a dark note, so an outline in the theme's text
+// color marks its edge, and on a light note it stays out of sight
+function tooltipFrame(theme: Theme): Obj {
+  return { borderColor: withAlpha(theme.text, 0.4), borderWidth: 1 };
+}
+
 // A raw config keeps Chart.js's color key, drawn flush against the text
 const TOOLTIP_BOX_PADDING = 4;
 const DEFAULT_HEIGHT = 300;
@@ -459,7 +465,7 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
 
   // Tooltips name their series or slice in text, and the color key would only
   // indent the whole block to clear it
-  const tooltip: Obj = { displayColors: false };
+  const tooltip: Obj = { displayColors: false, ...tooltipFrame(theme) };
   const plugins: Obj = {
     legend: {
       display: legendShown(spec, datasets.length),
@@ -698,7 +704,7 @@ export function fillThemeDefaults(config: ChartConfiguration, theme: Theme): Cha
     plugins: {
       legend: { labels: legendLabels(theme) },
       title: { color: theme.text, font: titleFont(theme) },
-      tooltip: { boxPadding: TOOLTIP_BOX_PADDING },
+      tooltip: { boxPadding: TOOLTIP_BOX_PADDING, ...tooltipFrame(theme) },
     },
   };
   const options: Obj = config.options ?? {};

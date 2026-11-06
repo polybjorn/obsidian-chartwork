@@ -19,6 +19,7 @@ All notable changes to this project are documented here. Format based on [Keep a
 - Tooltips no longer show a color key, and scatter tooltips name the group in text.
 - A hidden series or slice is grayed out in the legend instead of struck through.
 - A bar chart's tooltip sits beside the bar, level with its middle, instead of at its top.
+- Tooltips have a thin outline, so they stand out on a dark note.
 - Line chart points are easier to hit, with a finger above all.
 - A script spec with unknown fields throws one error naming all of them, with the valid fields, instead of stopping at the first.
 

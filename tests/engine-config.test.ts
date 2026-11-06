@@ -500,6 +500,16 @@ void test("no chart tooltip has a color key, and a raw config keeps one with a g
   assert.equal(raw({ plugins: { tooltip: { boxPadding: 9 } } }), 9);
 });
 
+void test("every tooltip has an outline in the theme's text color, and a raw config can replace it", () => {
+  const outline = withAlpha(theme.text, 0.4);
+  assert.equal(at(buildConfig(spec, theme).options, "plugins.tooltip.borderColor"), outline);
+  assert.equal(at(buildConfig(scatter, theme).options, "plugins.tooltip.borderWidth"), 1);
+  const raw = (options: object) => fillThemeDefaults({ type: "bar", data: { datasets: [] }, options }, theme).options;
+  assert.equal(at(raw({}), "plugins.tooltip.borderColor"), outline);
+  assert.equal(at(raw({}), "plugins.tooltip.borderWidth"), 1);
+  assert.equal(at(raw({ plugins: { tooltip: { borderWidth: 0 } } }), "plugins.tooltip.borderWidth"), 0);
+});
+
 void test("scatter tooltip adds the size value, only for a point that has one", () => {
   const sized: ChartSpec = { ...scatter, sizeTitle: "Rating" };
   const config = buildConfig(sized, theme);
