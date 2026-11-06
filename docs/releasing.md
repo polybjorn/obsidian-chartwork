@@ -12,18 +12,25 @@ CI never runs Obsidian, so run these against the build about to be tagged:
    chart view, a `chart` block drawn from a table, one from a CSV file and one
    with inline data, and a script chart through both `chartwork.render` and
    `window.renderChart` all draw. The script charts need Dataview, in the demo
-   vault or in another vault holding the same charts.
+   vault or in another vault holding the same charts. Turning Dataview on there
+   changes the tracked `community-plugins.json`, so restore it afterwards.
+   Scrolling fast both ways through `Complex charts` in reading view leaves no
+   blank chart and no console error, and the note doesn't jump.
 3. Switching between light and dark recolors every chart without a reload,
-   and changing the text size resizes chart text.
-4. Editing the table or CSV file a chart reads redraws it.
+   and changing the text size resizes chart text. The rest of `Interactions`
+   behaves as its lines say.
+4. Editing the table or CSV file a chart reads redraws it: the messy table in
+   `Edge cases`, and `Edge cases.csv`. Restore both afterwards.
 5. "Check chart blocks and scripts" runs and reports the notes it should.
 6. Export a note with charts to PDF: every chart prints.
 7. On a phone, the plugin loads and a Bases chart view, a `chart` block and
-   a script chart draw.
-8. Switch a base from the chart view to a table view and back: the table
-   keeps its own layout, with no chart styling left behind.
-9. A base embedded in a canvas draws at a steady size, with no scrollbars
-   and no y axis that keeps growing.
+   a script chart draw. In `Opening notes` the first tap shows the tooltip and
+   the second opens the note, and the line chart in `Interactions` picks up a
+   tap near a point.
+8. In `Views.base`, switch from the chart view to the table view and back: the
+   table keeps its own layout, with no chart styling left behind.
+9. The base in `Canvas.canvas` draws at a steady size, with no scrollbars and
+   no y axis that keeps growing.
 10. When the change touches an Obsidian API, repeat 1 and 2 on the stable
     release and on the oldest release at or above `minAppVersion`, each in a
     separate profile (`--user-data-dir`) with `docs/demo-vault`. Before 1.13

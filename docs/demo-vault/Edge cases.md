@@ -199,7 +199,7 @@ Inside a callout. Fits the callout and takes its text color:
 >     data: [5, 2, 3]
 > ```
 
-A messy table: blank cells, decimal commas, a link as a label, a row of text. The text row is skipped and the blanks are gaps:
+A messy table: change a number in it and the chart redraws. Blank cells, decimal commas, a link as a label, a row of text. The text row is skipped and the blanks are gaps:
 
 |            | Mon | Tue | Wed  |
 | ---------- | --- | --- | ---- |
