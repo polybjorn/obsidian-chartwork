@@ -16,7 +16,15 @@ function cells(line: string): string[] {
   let body = line.trim();
   if (body.startsWith("|")) body = body.slice(1);
   if (body.endsWith("|") && !body.endsWith("\\|")) body = body.slice(0, -1);
-  return body.split(/(?<!\\)\|/).map((c) => c.replace(/\\\|/g, "|").trim());
+  // Split on every pipe, then glue back the pieces an escaped pipe cut. No
+  // lookbehind: iOS before 16.4 cannot parse one, and main.js would not load.
+  const out: string[] = [];
+  for (const piece of body.split("|")) {
+    const last = out.length - 1;
+    if (last >= 0 && out[last]?.endsWith("\\")) out[last] += `|${piece}`;
+    else out.push(piece);
+  }
+  return out.map((c) => c.replace(/\\\|/g, "|").trim());
 }
 
 const DELIMITER = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;

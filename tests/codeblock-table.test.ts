@@ -35,6 +35,11 @@ void test("parseTable handles a table without outer pipes, alignment colons and 
   assert.deepEqual(t?.rows, [["x|y", "5"]]);
 });
 
+void test("parseTable keeps an escaped pipe in a cell next to an unescaped one", () => {
+  const t = parseTable("| h | i |\n|-|-|\n| a\\|b | c |\na\\|b|c");
+  assert.deepEqual(t?.rows, [["a|b", "c"], ["a|b", "c"]]);
+});
+
 void test("parseTable returns nothing for text that is not a table", () => {
   assert.equal(parseTable("just a line\n^id"), undefined);
   assert.equal(parseTable("| a | b |\n| c | d |"), undefined);
