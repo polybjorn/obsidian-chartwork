@@ -20,7 +20,7 @@ export async function findTable(app: App, id: string, file: string | undefined, 
   if (!note) return { ok: false, error: `The note "${file ?? sourcePath}" was not found.` };
   const block = app.metadataCache.getFileCache(note)?.blocks?.[id.toLowerCase()];
   if (!block) return { ok: false, error: `No block with the id "${id}" in ${note.basename}. Put ^${id} on the line right after the table.` };
-  const text = await app.vault.read(note);
+  const text = await app.vault.cachedRead(note);
   const table = parseTable(text.slice(block.position.start.offset, block.position.end.offset));
   if (!table) return { ok: false, error: `The block "${id}" in ${note.basename} is not a table.` };
   return { ok: true, value: { path: note.path, table } };
@@ -34,7 +34,7 @@ export async function findCsv(app: App, csv: string, sourcePath: string): Promis
   const file = app.metadataCache.getFirstLinkpathDest(csv, sourcePath);
   if (!file) return { ok: false, error: `The file "${csv}" was not found.` };
   if (file.extension.toLowerCase() !== "csv") return { ok: false, error: `"${csv}" is not a .csv file.` };
-  const table = parseCsv(await app.vault.read(file));
+  const table = parseCsv(await app.vault.cachedRead(file));
   if (!table) return { ok: false, error: `${file.name} is empty.` };
   return { ok: true, value: { path: file.path, table } };
 }

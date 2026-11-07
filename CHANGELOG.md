@@ -7,6 +7,7 @@ All notable changes to this project are documented here. Format based on [Keep a
 ### Changed
 
 - The styles no longer use a `:has()` selector, which made the app recheck styles on every change to the page. The list of notes behind a Bases chart element still scrolls when it is longer than the window.
+- A chart drawn from a table or a CSV file reads it from Obsidian's file cache instead of from disk at each redraw.
 
 ## [1.2.0] - 2026-11-07
 
