@@ -44,9 +44,11 @@ CI never runs Obsidian, so run these against the build about to be tagged:
 The forge's `github-sync` job copies `main` and each tag to GitHub. A tag landing there starts `.github/workflows/release.yml`, which runs lint and tests, builds, attests the build and uploads `main.js`, `manifest.json` and `styles.css` to a GitHub release. The tag's section in `CHANGELOG.md` becomes the release notes. A stable tag has to be on `main` and equal the `manifest.json` version, with no `v`, or the workflow stops before building.
 
 1. Run the test plan above.
-2. Rename `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`. This section becomes the release notes. A tag with no notes in the changelog, beta or stable, fails the forge's `test` job and never reaches GitHub.
-3. `npm version X.Y.Z --git-tag-version=false` sets the version in `package.json`, `manifest.json` and `versions.json`.
-4. Commit, tag and push:
+2. `npm outdated eslint-plugin-obsidianmd` prints nothing. Renovate raises its updates weekly; merge a waiting one first, so lint runs the rules Obsidian's review uses.
+3. On [community.obsidian.md](https://community.obsidian.md), run Preview Branch Scan with the branch field blank, which scans `main`, and clear every error and warning. The scan has checks lint lacks, such as a warning on `:has()` selectors.
+4. Rename `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`. This section becomes the release notes. A tag with no notes in the changelog, beta or stable, fails the forge's `test` job and never reaches GitHub.
+5. `npm version X.Y.Z --git-tag-version=false` sets the version in `package.json`, `manifest.json` and `versions.json`.
+6. Commit, tag and push:
 
    ```sh
    git add CHANGELOG.md package.json package-lock.json manifest.json versions.json
