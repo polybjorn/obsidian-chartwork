@@ -295,3 +295,35 @@ void test("noteEntries sorts by name and shows the folder of a shared name", () 
     { path: "b/Zed.md", title: "Zed" },
   ]);
 });
+
+void test("group colors pin the named series and leave the rest to the palette", () => {
+  const rows = [{ x: "1990s", group: "Watched" }, { x: "1990s", group: "Not watched" }, { x: "2000s", group: "(none)" }];
+  const spec = aggregateRows(rows, { ...base, groupColors: { Watched: "var(--color-green)", "(none)": "gray", Missing: "red" } });
+  assert.deepEqual(spec.series.map((s) => s.color), ["var(--color-green)", undefined, "gray"]);
+  const line = aggregateRows(rows, { ...base, kind: "line", groupColors: { "Not watched": "blue" } });
+  assert.deepEqual(line.series.map((s) => s.color), [undefined, "blue", undefined]);
+});
+
+void test("group colors that match no series change nothing", () => {
+  const rows = [{ x: "a", group: "One" }, { x: "a", group: "Two" }];
+  assert.deepEqual(aggregateRows(rows, { ...base, groupColors: { Three: "red" } }), aggregateRows(rows, base));
+});
+
+void test("a single-series chart, or a pie, ignores group colors", () => {
+  const single = aggregateRows([{ x: "a" }], { ...base, seriesName: "Books", groupColors: { Books: "red" } });
+  assert.equal(single.series[0]?.color, undefined);
+  const oneGroup = aggregateRows([{ x: "a", group: "One" }], { ...base, groupColors: { One: "red" } });
+  assert.equal(oneGroup.series[0]?.color, undefined);
+  const pie = aggregateRows([{ x: "a", group: "One" }, { x: "a", group: "Two" }], { ...base, kind: "pie", groupColors: { One: "red" } });
+  assert.deepEqual(pie.series.map((s) => s.color), [undefined, undefined]);
+});
+
+void test("scatter groups take group colors", () => {
+  const spec = scatterSpec([
+    { name: "a", x: 1, y: 1, group: "Watched" },
+    { name: "b", x: 2, y: 2, group: "Not watched" },
+  ], { groupColors: { Watched: "green" } });
+  assert.deepEqual(spec.series.map((s) => s.color), ["green", undefined]);
+  const ungrouped = scatterSpec([{ name: "a", x: 1, y: 1 }], { groupColors: { Notes: "green" } });
+  assert.equal(ungrouped.series[0]?.color, undefined);
+});

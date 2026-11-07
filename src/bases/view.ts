@@ -90,6 +90,13 @@ function viewOptions(config: BasesViewConfig): BasesAllOptions[] {
     },
     { type: "text", key: "title", displayName: "Title" },
     {
+      type: "multitext",
+      key: "groupColors",
+      displayName: "Group colors",
+      default: [],
+      shouldHide: () => !["bar", "line", "scatter"].includes(text(config, "kind") || "bar"),
+    },
+    {
       type: "group",
       displayName: "Value axis",
       shouldHide: () => noValueAxis(config),
@@ -238,6 +245,7 @@ class ChartView extends BasesView {
       other: text(this.config, "other") || undefined,
       order: text(this.config, "categoryOrder").split(",").map((s) => s.trim()).filter(Boolean),
       categoryColors: parseCategoryColors(this.config.get("categoryColors")),
+      groupColors: parseCategoryColors(this.config.get("groupColors")),
       skipEmpty: this.config.get("skipEmpty") === true,
       dateUnit: isOneOf(DATE_UNITS, unitValue) ? unitValue : "day",
       seriesName: y ? this.config.getDisplayName(y) : undefined,
@@ -275,6 +283,7 @@ class ChartView extends BasesView {
       yTitle: this.config.getDisplayName(y),
       sizeTitle: size ? this.config.getDisplayName(size) : undefined,
       sized: size !== null,
+      groupColors: parseCategoryColors(this.config.get("groupColors")),
     });
     if (spec.series.every((s) => (s.points?.length ?? 0) === 0)) {
       return this.showMessage("No notes have a number in both the x and y properties.");

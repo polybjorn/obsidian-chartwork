@@ -7,6 +7,7 @@ All notable changes to this project are documented here. Format based on [Keep a
 ### Added
 
 - `time: month` in a `chart` block, as Charts writes it, draws dated labels on a date axis in steps of a day, week, month or year, the same as `dateUnit` in a script.
+- A Group colors option in the Bases view pins a grouped bar, line or scatter chart's series to colors by group name.
 
 ### Changed
 

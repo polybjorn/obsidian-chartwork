@@ -21,6 +21,8 @@ export interface AggregateOptions {
   order?: string[];
   sort?: Sort;
   categoryColors?: Record<string, string>;
+  /** Color per series name, for grouped bar and line charts. */
+  groupColors?: Record<string, string>;
   title?: string;
   valueTitle?: string;
   /** Drop rows without an x value instead of bucketing them under "(none)". */
@@ -296,6 +298,7 @@ export function aggregateRows(rows: Row[], opts: AggregateOptions): ChartSpec {
   if (opts.valueLabels !== undefined) spec.valueLabels = opts.valueLabels;
   if (opts.stacked && (opts.kind === "bar" || opts.kind === "line")) spec.stacked = true;
   applyValueScale(spec, opts);
+  applyGroupColors(spec, opts.groupColors);
   if (onAxis) return spec;
   if (opts.sort) spec.sort = opts.sort;
   if (opts.order && opts.order.length > 0) spec.order = opts.order;
@@ -326,6 +329,21 @@ const NAMES: Record<Aggregation, string> = {
 
 function defaultName(aggregation: Aggregation): string {
   return NAMES[aggregation];
+}
+
+/**
+ * Pin series to colors by the name they are drawn under. Only a chart with
+ * more than one series takes them, and only bar, line and scatter: a single
+ * series is colored per category instead. A series not named keeps its
+ * palette color, which follows its index.
+ */
+export function applyGroupColors(spec: ChartSpec, colors: Record<string, string> | undefined): void {
+  if (!colors || spec.series.length < 2) return;
+  if (spec.kind !== "bar" && spec.kind !== "line" && spec.kind !== "scatter") return;
+  spec.series = spec.series.map((s) => {
+    const color = Object.hasOwn(colors, s.name) ? colors[s.name] : undefined;
+    return color ? { ...s, color } : s;
+  });
 }
 
 /** Parse "label: colour" lines from a multitext option; malformed lines are ignored. */
@@ -371,6 +389,8 @@ export interface ScatterOptions {
   sizeTitle?: string;
   /** Whether a size property is chosen; without one every point has the default radius. */
   sized?: boolean;
+  /** Color per group name. */
+  groupColors?: Record<string, string>;
 }
 
 export const MIN_POINT_RADIUS = 3;
@@ -419,5 +439,6 @@ export function scatterSpec(entries: ScatterEntry[], opts: ScatterOptions = {}):
   if (opts.xTitle) spec.xTitle = opts.xTitle;
   if (opts.yTitle) spec.valueTitle = opts.yTitle;
   if (opts.sizeTitle) spec.sizeTitle = opts.sizeTitle;
+  applyGroupColors(spec, opts.groupColors);
   return spec;
 }

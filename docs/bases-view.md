@@ -29,9 +29,18 @@ Chartwork adds a view type called **Chart** to Bases. Pick it from the view menu
 | Label for the rest | `other` | With the option above, adds the dropped categories together under this label. Left empty, they are left out. |
 | Order first | `categoryOrder` | Comma-separated labels to place first, in this order. The rest follow by Sort. |
 | Category colors | `categoryColors` | One `label: color` line per category, for single-series bar, pie and doughnut charts. Any CSS color works, including `var(--color-green)`. |
+| Group colors | `groupColors` | One `group: color` line per series, for grouped bar, line and scatter charts. The name is the series name as the legend shows it, `(none)` included. A group not listed keeps its theme color, and a single-series chart ignores the option. |
 | Skip empty categories | `skipEmpty` | Leave out notes with no category value. Otherwise they are counted under `(none)`, placed last. |
 
 When the base is grouped, each group becomes its own series: one bar per group within each category, and a legend. With one series per property as well, each group and property pair is a series, named like `Gym: minutes`.
+
+A view grouped by a watched property can give its groups the same colors a status chart uses:
+
+```yaml
+groupColors:
+  - "Watched: var(--color-green)"
+  - "Not watched: var(--color-blue)"
+```
 
 Bases keeps `sort` and `order` for its own settings, which is why Chartwork's are named `categorySort` and `categoryOrder`.
 
