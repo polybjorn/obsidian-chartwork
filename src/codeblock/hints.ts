@@ -1,4 +1,6 @@
 import { unknownKeyText } from "../engine/hint.ts";
+import { DATE_UNITS } from "../engine/spec.ts";
+import { isOneOf } from "../engine/guards.ts";
 import { BLOCK_KEYS } from "./parse.ts";
 
 /**
@@ -55,6 +57,11 @@ export function blockHint(input: Record<string, unknown>): string | undefined {
   }
   if (unused.length > 0) {
     parts.push(`A ${KIND_NAMES[type] ?? type} chart doesn't use ${list(unused)}.`);
+  }
+  // Charts takes any Chart.js unit; Chartwork steps by the four a date axis reads
+  const time = input["time"];
+  if ((type === "bar" || type === "line") && typeof time === "string" && !isOneOf(DATE_UNITS, time.trim().toLowerCase())) {
+    parts.push(`time takes ${list([...DATE_UNITS])}, not ${JSON.stringify(time)}, so the labels draw as categories.`);
   }
   return parts.length > 0 ? parts.join(" ") : undefined;
 }

@@ -75,3 +75,13 @@ void test("a guess is offered only for a close key", () => {
   assert.equal(closestKey("colour", ["legend", "labels"]), undefined);
   assert.equal(closestKey("idd", ["id"]), undefined);
 });
+
+void test("a time unit the date axis does not step by is named, with the ones it takes", () => {
+  assert.equal(
+    blockHint({ ...bar, time: "quarter" }),
+    'time takes day, week, month or year, not "quarter", so the labels draw as categories.',
+  );
+  assert.equal(blockHint({ ...bar, type: "line", time: "Month" }), undefined);
+  // Charts' key on a chart with no date axis says nothing, as other Charts keys do
+  assert.equal(blockHint({ ...bar, type: "pie", time: "quarter" }), undefined);
+});

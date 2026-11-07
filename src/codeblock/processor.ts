@@ -5,7 +5,7 @@ import { renderConfig, renderSpec, showError } from "../engine/index.ts";
 import { showHint } from "../engine/hint.ts";
 import type { ChartHandle, ChartSpec } from "../engine/index.ts";
 import { blockHint } from "./hints.ts";
-import { parseChartBlock, seriesFill, yamlError } from "./parse.ts";
+import { dateAxis, parseChartBlock, seriesFill, yamlError } from "./parse.ts";
 import type { ParsedBlock, TableRef } from "./parse.ts";
 import { findCsv, findTable } from "./table-source.ts";
 import { tableToSeries } from "./table.ts";
@@ -30,7 +30,7 @@ function renderTableBlock(
   let handle: ChartHandle | null = null;
   let host: HTMLElement | null = null;
   let error: HTMLElement | null = null;
-  const hintEl = hint ? showHint(el, hint) : null;
+  let hintEl = hint ? showHint(el, hint) : null;
   let tablePath = "csv" in ref || ref.file ? "" : ctx.sourcePath;
   // Reads finish out of order when edits come fast; only the latest draws
   let latest = 0;
@@ -60,7 +60,16 @@ function renderTableBlock(
     if (!data.ok) return fail(data.error);
     const fill = seriesFill(block.spec.kind, ref.fill);
     const series = fill === undefined ? data.series : data.series.map((s) => ({ ...s, fill }));
-    const spec: ChartSpec = { ...block.spec, labels: data.labels, series };
+    const dated = dateAxis({ ...block.spec, labels: data.labels, series });
+    const spec: ChartSpec = dated.spec;
+    // Whether the labels are dates can change with each edit of the table
+    const text = [hint, dated.hint].filter(Boolean).join(" ");
+    if (text && hintEl) hintEl.setText(text);
+    else if (text) hintEl = showHint(el, text);
+    else {
+      hintEl?.remove();
+      hintEl = null;
+    }
     if (handle) {
       handle.update(spec);
       return;
@@ -114,7 +123,7 @@ export function registerChartBlock(plugin: Plugin, seriesColors: () => string[])
       showError(el, result.error);
       return;
     }
-    const hint = blockHint(data as Record<string, unknown>);
+    let hint = blockHint(data as Record<string, unknown>);
     if ("table" in result.value && result.value.table) {
       renderTableBlock(plugin, el, { ...result.value, table: result.value.table }, ctx, seriesColors, hint);
       return;
@@ -126,7 +135,11 @@ export function registerChartBlock(plugin: Plugin, seriesColors: () => string[])
     try {
       const value = result.value;
       if ("config" in value) renderConfig(host, value.config, { app: plugin.app, owner, seriesColors });
-      else renderSpec(host, value.spec, { app: plugin.app, owner, seriesColors });
+      else {
+        const dated = dateAxis(value.spec);
+        if (dated.hint) hint = hint ? `${hint} ${dated.hint}` : dated.hint;
+        renderSpec(host, dated.spec, { app: plugin.app, owner, seriesColors });
+      }
     } catch (e) {
       host.remove();
       showError(el, e instanceof Error ? e.message : "The chart failed to render.");

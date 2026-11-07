@@ -1,5 +1,5 @@
 import type { ChartConfiguration } from "chart.js";
-import { CHART_KINDS, LEGEND_SIDES, STEPS } from "../engine/spec.ts";
+import { CHART_KINDS, DATE_UNITS, ISO_DATE, LEGEND_SIDES, STEPS } from "../engine/spec.ts";
 import type { AxisId, AxisSpec, ChartKind, ChartSpec, Series } from "../engine/spec.ts";
 import { applyAxis } from "../engine/config.ts";
 import { isObj, isOneOf } from "../engine/guards.ts";
@@ -49,7 +49,7 @@ export const BLOCK_KEYS: readonly string[] = [
   "xMin", "xMax", "xReverse", "xDisplay", "xTickDisplay", "xTickPadding",
   "yMin", "yMax", "yReverse", "yDisplay", "yTickDisplay", "yTickPadding",
   "rMin", "rMax", "spanGaps", "title", "valueLabels", "xLine", "yLine", "average",
-  "bestFit", "bestFitTitle", "bestFitNumber", "cumulative",
+  "bestFit", "bestFitTitle", "bestFitNumber", "cumulative", "time",
 ];
 
 function fail(error: string): ParseResult {
@@ -338,6 +338,11 @@ export function parseChartBlock(input: unknown): ParseResult {
     }
     if (bool(input["average"]) === true) spec.average = true;
     if (bool(input["cumulative"]) === true) spec.cumulative = true;
+    // Charts hands time to Chart.js as the x axis' unit. Chartwork steps by
+    // day, week, month or year; any other unit leaves the labels as categories,
+    // which blockHint names.
+    const unit = typeof input["time"] === "string" ? input["time"].trim().toLowerCase() : "";
+    if (isOneOf(DATE_UNITS, unit)) spec.dateUnit = unit;
   }
   if (kind === "line" && bool(input["bestFit"]) === true) {
     spec.bestFit = true;
@@ -376,4 +381,18 @@ export function parseChartBlock(input: unknown): ParseResult {
   if (width) value.width = width;
   if (table) value.table = table;
   return { ok: true, value };
+}
+
+/**
+ * A block with time set whose labels are not all ISO dates draws them as
+ * categories instead of failing, with a hint saying why. Table labels are only
+ * known at draw time, so this runs on the spec about to be drawn.
+ */
+export function dateAxis(spec: ChartSpec): { spec: ChartSpec; hint?: string } {
+  if (spec.dateUnit === undefined) return { spec };
+  const bad = spec.labels.find((l) => !ISO_DATE.test(l));
+  if (bad === undefined) return { spec };
+  const out = { ...spec };
+  delete out.dateUnit;
+  return { spec: out, hint: `time needs labels that are dates like 2026-01-31, not ${JSON.stringify(bad)}, so the labels draw as categories.` };
 }

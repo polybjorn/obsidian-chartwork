@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { parseChartBlock, yamlError } from "../src/codeblock/parse.ts";
+import { dateAxis, parseChartBlock, yamlError } from "../src/codeblock/parse.ts";
 import type { ParsedBlock } from "../src/codeblock/parse.ts";
 
 function ok(input: unknown): ParsedBlock {
@@ -304,4 +304,32 @@ void test("a YAML error without a line or code still gives the general hint", ()
     "The block's formatting is broken. Look for an unclosed bracket, a missing space after a colon, or uneven indentation.",
   );
   assert.match(yamlError("thrown string"), /^The block's formatting is broken\. /);
+});
+
+void test("time on a bar or line block puts the labels on a date axis", () => {
+  const dated = { ...base, labels: ["2026-01-05", "2026-02-09"] };
+  assert.equal(ok({ ...dated, type: "line", time: "month" }).spec.dateUnit, "month");
+  assert.equal(ok({ ...dated, time: " Week " }).spec.dateUnit, "week");
+  // Units the date axis does not step by, and kinds without one, leave categories
+  assert.equal(ok({ ...dated, time: "quarter" }).spec.dateUnit, undefined);
+  assert.equal(ok({ ...dated, time: 1 }).spec.dateUnit, undefined);
+  assert.equal(ok({ ...dated, type: "pie", time: "month" }).spec.dateUnit, undefined);
+});
+
+void test("time on a table block waits for the table's labels", () => {
+  const { spec, table } = ok({ type: "line", csv: "reading.csv", time: "year" });
+  assert.ok(table);
+  assert.equal(spec.dateUnit, "year");
+});
+
+void test("dateAxis keeps date labels on the date axis and draws others as categories", () => {
+  const dated = ok({ ...base, labels: ["2026-01-05", "2026-02-09 10:30"], time: "day" }).spec;
+  assert.deepEqual(dateAxis(dated), { spec: dated });
+  const text = ok({ ...base, time: "day" }).spec;
+  const r = dateAxis(text);
+  assert.equal(r.spec.dateUnit, undefined);
+  assert.deepEqual(r.spec.labels, ["a", "b"]);
+  assert.match(r.hint ?? "", /time needs labels that are dates.*"a"/);
+  // No time, no hint
+  assert.deepEqual(dateAxis(ok(base).spec), { spec: ok(base).spec });
 });

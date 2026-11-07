@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `time: month` in a `chart` block, as Charts writes it, draws dated labels on a date axis in steps of a day, week, month or year, the same as `dateUnit` in a script.
+
 ## [1.1.0] - 2026-11-06
 
 ### Added
