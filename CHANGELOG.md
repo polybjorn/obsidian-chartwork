@@ -12,6 +12,7 @@ All notable changes to this project are documented here. Format based on [Keep a
 ### Changed
 
 - On a date axis, hovering a point dated partway through its unit, such as 2026-08-22 under `dateUnit: "month"`, shows the full date instead of only the month or year.
+- Charts in an exported PDF are drawn at 300 ppi or more instead of the screen's pixel ratio, so they stay sharp when the PDF is zoomed in.
 
 ## [1.1.0] - 2026-11-06
 

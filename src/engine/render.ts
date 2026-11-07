@@ -11,6 +11,7 @@ import { installDateAdapter } from "./date-adapter.ts";
 import { errorText, showError } from "./error.ts";
 import { chartImage } from "./image.ts";
 import { isGone } from "./lifecycle.ts";
+import { printPixelRatio } from "./print.ts";
 import { withNoteClicks } from "./notes.ts";
 import type { ChartHandle, ChartSpec, RenderContext } from "./spec.ts";
 import { readTheme, resolveColor, resolveConfigColors, resolveSpecColors } from "./theme.ts";
@@ -72,11 +73,41 @@ const holdHeightOffPage: Plugin = {
   },
 };
 
+// Charts drawn for a PDF, at a pixel ratio fitted to their size once it is known
+const printing = new WeakSet<Chart>();
+
+/** Sets a chart's pixel ratio, or with none hands it back to the screen's, and resizes it when that changed. */
+function setPixelRatio(chart: Chart, ratio: number | undefined): void {
+  const options = chart.config.options ?? (chart.config.options = {});
+  if (options.devicePixelRatio === ratio) return;
+  // The config keeps it through a later update, the resolved options carry it
+  // into the resize below
+  if (ratio === undefined) {
+    delete options.devicePixelRatio;
+    delete (chart.options as { devicePixelRatio?: number }).devicePixelRatio;
+  } else {
+    options.devicePixelRatio = ratio;
+    chart.options.devicePixelRatio = ratio;
+  }
+  chart.resize();
+}
+
+const printRatio = (chart: Chart): number => printPixelRatio(chart.canvas.win.devicePixelRatio, chart.width, chart.height);
+
+// A chart for a PDF starts at the full print ratio, since it has no size yet,
+// and is held to its pixel budget from its first measured size
+const fitPrintRatio: Plugin = {
+  id: "chartworkFitPrintRatio",
+  resize: (chart) => {
+    if (printing.has(chart)) setPixelRatio(chart, printRatio(chart));
+  },
+};
+
 function registerOnce(): void {
   if (registered) return;
   registered = true;
   // Every chart type and axis, since a config written for Charts may use any
-  Chart.register(...registerables, annotationPlugin, SankeyController, Flow, ignoreDetachedEvents, holdHeightOffPage);
+  Chart.register(...registerables, annotationPlugin, SankeyController, Flow, ignoreDetachedEvents, holdHeightOffPage, fitPrintRatio);
   Tooltip.positioners.barSide = barSide;
   installDateAdapter();
 }
@@ -147,6 +178,8 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
   let chart: Chart | null = null;
   let error: HTMLElement | null = null;
   let destroyed = false;
+  // Between beforeprint and afterprint, for a print of the note as it is on screen
+  let printNow = false;
 
   const fail = (e: unknown): void => {
     // Chart.js keeps a chart that threw while drawing, and refuses the
@@ -177,8 +210,14 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
       // opening animation. A restyle skips it too: a theme switch can fire
       // css-change twice (Style Settings re-fires it), and each replay of the
       // animation reads as the chart loading again
-      if (!animate || wrapper.closest(".print")) config.options = { ...config.options, animation: false };
+      const forPrint = printNow || wrapper.closest(".print") !== null;
+      if (!animate || forPrint) config.options = { ...config.options, animation: false };
+      // 300 ppi or more in the PDF rather than the screen's ratio, which a
+      // zoom into the page shows as soft. Obsidian's export shrinks the page
+      // to fit the paper, so a PDF measures above 300
+      if (forPrint) config.options = { ...config.options, devicePixelRatio: printPixelRatio(wrapper.win.devicePixelRatio, 0, 0) };
       const made = new GuardedChart(canvas, config);
+      if (forPrint) printing.add(made);
       made.onUpdateError = fail;
       chart = made;
     } catch (e) {
@@ -225,6 +264,20 @@ function mount(el: HTMLElement, ctx: RenderContext, build: Build, width?: string
         if (chart) void copyImage(chart, readTheme(wrapper, ctx.seriesColors?.()).background);
       }))
       .showAtMouseEvent(event);
+  });
+  // Whether Export to PDF prints a copy of the note or the note itself, the
+  // charts on screen are redrawn sharper for it and handed back after
+  life.registerDomEvent(wrapper.win, "beforeprint", () => {
+    printNow = true;
+    if (!chart || printing.has(chart)) return;
+    printing.add(chart);
+    setPixelRatio(chart, printRatio(chart));
+  });
+  life.registerDomEvent(wrapper.win, "afterprint", () => {
+    printNow = false;
+    if (!chart || wrapper.closest(".print")) return;
+    printing.delete(chart);
+    setPixelRatio(chart, undefined);
   });
   life.register(destroy);
   ctx.owner.addChild(life);
