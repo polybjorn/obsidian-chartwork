@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- The styles no longer use a `:has()` selector, which made the app recheck styles on every change to the page. The list of notes behind a Bases chart element still scrolls when it is longer than the window.
+
 ## [1.2.0] - 2026-11-07
 
 ### Added

@@ -14,7 +14,7 @@
 }
 
 /* Obsidian's desktop menu clips at the window, and a group can hold hundreds of notes */
-.menu:has(.chartwork-note-item) .menu-scroll {
+.chartwork-note-menu .menu-scroll {
   overflow-y: auto;
 }
 

@@ -309,11 +309,15 @@ class ChartView extends BasesView {
     const [first] = notes;
     if (first !== undefined && notes.length === 1) return this.openNote(first, event);
     const menu = new Menu();
+    const labels: HTMLElement[] = [];
     for (const { path, title } of noteEntries(notes)) {
-      const label = createFragment((f) => f.createSpan({ cls: "chartwork-note-item", text: title }));
+      const label = createFragment((f) => labels.push(f.createSpan({ text: title })));
       menu.addItem((item) => item.setTitle(label).onClick((e) => this.openNote(path, e)));
     }
     menu.showAtMouseEvent(event);
+    // Menu has no public element, so the class goes on through an item. A
+    // :has() selector would find it without one, at a cost on every DOM change
+    labels[0]?.closest(".menu")?.addClass("chartwork-note-menu");
   }
 
   private openNote(path: string, event: MouseEvent | KeyboardEvent): void {
