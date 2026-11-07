@@ -452,6 +452,38 @@ void test("dateUnit draws bar and line labels on a time axis in date order", () 
   assert.equal(at(opts({ ...dated, kind: "pie" }), "scales"), undefined);
 });
 
+// Stands in for the moment adapter, in UTC so the test reads the same anywhere
+const fakeAdapter = {
+  startOf(time: number, unit: string): number {
+    const d = new Date(time);
+    if (unit === "year") return Date.UTC(d.getUTCFullYear(), 0, 1);
+    if (unit === "month") return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
+    return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  },
+  format: (time: number, format: string) => `${format} ${new Date(time).toISOString().slice(0, 10)}`,
+};
+
+void test("a date off the start of its unit hovers as the full date, and a unit's first day keeps the unit's format", () => {
+  const dated: ChartSpec = { kind: "line", labels: ["2026-08-01", "2026-08-22"], series: [{ name: "n", values: [1, 2] }], dateUnit: "month" };
+  type Title = (items: unknown[]) => string;
+  const title = (spec: ChartSpec, date: string, axis = "x"): string => {
+    const fn = at(opts(spec), "plugins.tooltip.callbacks.title") as Title;
+    return fn([{ chart: { scales: { [axis]: { _adapter: fakeAdapter } } }, parsed: { [axis]: Date.parse(date) }, label: "unit label" }]);
+  };
+  assert.equal(title(dated, "2026-08-01"), "unit label");
+  assert.equal(title(dated, "2026-08-22"), "ll 2026-08-22");
+  const yearly: ChartSpec = { ...dated, dateUnit: "year" };
+  assert.equal(title(yearly, "2026-01-01"), "unit label");
+  assert.equal(title(yearly, "2026-08-01"), "ll 2026-08-01");
+  const weekly: ChartSpec = { ...dated, kind: "bar", horizontal: true, dateUnit: "week" };
+  assert.equal(title(weekly, "2026-08-17", "y"), "unit label");
+  assert.equal(title(weekly, "2026-08-19", "y"), "ll 2026-08-19");
+  const stacked: ChartSpec = { ...dated, kind: "bar", stacked: true, series: [{ name: "a", values: [1, 2] }, { name: "b", values: [3, 4] }] };
+  assert.equal(typeof at(opts(stacked), "plugins.tooltip.callbacks.footer"), "function");
+  assert.equal(title(stacked, "2026-08-22"), "ll 2026-08-22");
+  assert.equal(at(opts({ ...dated, dateUnit: "day" }), "plugins.tooltip.callbacks"), undefined);
+});
+
 const scatter: ChartSpec = {
   kind: "scatter",
   labels: [],

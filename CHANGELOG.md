@@ -8,6 +8,10 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 - `time: month` in a `chart` block, as Charts writes it, draws dated labels on a date axis in steps of a day, week, month or year, the same as `dateUnit` in a script.
 
+### Changed
+
+- On a date axis, hovering a point dated partway through its unit, such as 2026-08-22 under `dateUnit: "month"`, shows the full date instead of only the month or year.
+
 ## [1.1.0] - 2026-11-06
 
 ### Added

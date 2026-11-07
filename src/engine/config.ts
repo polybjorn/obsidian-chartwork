@@ -22,6 +22,26 @@ function timeAxis(unit: DateUnit): Obj {
   return { type: "time", time: { unit, isoWeekday: true, tooltipFormat: TOOLTIP_FORMATS[unit] } };
 }
 
+type DateAdapterLike = { startOf(time: number, unit: "isoWeek" | DateUnit, weekday?: number): number; format(time: number, format: string): string };
+type DatedPoint = { chart: { scales: Record<string, { _adapter?: DateAdapterLike } | undefined> }; parsed: Record<string, unknown>; label: string };
+
+/**
+ * The hover title on a time axis: the unit's own format for a date at the start
+ * of its unit, as a bucketed Bases label always is, and the full date for any
+ * other, so a daily point on month ticks still says which day it is.
+ */
+export function datedTitle(unit: DateUnit, axis: "x" | "y"): (items: DatedPoint[]) => string {
+  return (items) => {
+    const item = items[0];
+    if (!item) return "";
+    const adapter = item.chart.scales[axis]?._adapter;
+    const time = item.parsed[axis];
+    if (!adapter || typeof time !== "number") return item.label;
+    const start = unit === "week" ? adapter.startOf(time, "isoWeek", 1) : adapter.startOf(time, unit);
+    return start === time ? item.label : adapter.format(time, TOOLTIP_FORMATS.day);
+  };
+}
+
 export const DEFAULT_BAR_THICKNESS = 28;
 // A fingertip covers far more than a line point's few pixels
 const LINE_HIT_RADIUS = 20;
@@ -526,6 +546,10 @@ export function buildConfig(spec: ChartSpec, theme: Theme): ChartConfiguration {
   }
 
   if (stacked) tooltip.callbacks = { footer: (items: HoveredPoint[]) => stackTotal(data.series, items) };
+  // A day label already shows the full date
+  if (cartesian && spec.dateUnit && spec.dateUnit !== "day" && onTimeAxis(spec)) {
+    tooltip.callbacks = { ...(tooltip.callbacks as Obj | undefined), title: datedTitle(spec.dateUnit, horizontal ? "y" : "x") };
+  }
   // A stacked segment's top edge is also the bottom of the next one, so a
   // tooltip aimed at that edge could mean either
   if (spec.kind === "bar") tooltip.position = "barSide";
