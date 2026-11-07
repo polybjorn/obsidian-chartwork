@@ -29,7 +29,7 @@
   "devDependencies": {
     "@types/node": "26.6.6",
     "esbuild": "0.28.2",
-    "eslint-plugin-obsidianmd": "0.5.0",
+    "eslint-plugin-obsidianmd": "0.5.1",
     "globals": "17.14.0",
     "jiti": "2.7.0",
     "obsidian": "1.14.4",
