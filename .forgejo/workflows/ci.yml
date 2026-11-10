@@ -43,6 +43,25 @@ jobs:
           NO_FORGE_REFS: "true"
         run: GITHUB_ACTION_PATH="${RUNNER_TEMP:-/tmp}/ci-actions/attribution" bash "${RUNNER_TEMP:-/tmp}/ci-actions/attribution/run.sh"
 
+  prose:
+    runs-on: docker
+    timeout-minutes: 5
+    steps:
+      - name: Fetch ci-actions
+        run: git clone -q --depth 1 --branch v1 "$GITHUB_SERVER_URL/bjorn/ci-actions.git" "${RUNNER_TEMP:-/tmp}/ci-actions"
+      - name: Fetch the prose engine
+        run: bash "${RUNNER_TEMP:-/tmp}/ci-actions/prose/fetch-engine.sh"
+      - name: Self-test the engine and the check
+        run: bash "${RUNNER_TEMP:-/tmp}/ci-actions/prose/selftest.sh"
+      - name: Check the commits and the PR description
+        env:
+          TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_SHA: ${{ github.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BEFORE: ${{ github.event.before }}
+        run: GITHUB_ACTION_PATH="${RUNNER_TEMP:-/tmp}/ci-actions/prose" bash "${RUNNER_TEMP:-/tmp}/ci-actions/prose/run.sh"
+
   test:
     runs-on: docker
     timeout-minutes: 10
@@ -111,7 +130,7 @@ jobs:
 
   github-sync:
     if: github.event_name == 'push'
-    needs: [attribution, test]
+    needs: [attribution, prose, test]
     runs-on: docker
     timeout-minutes: 10
     steps:
