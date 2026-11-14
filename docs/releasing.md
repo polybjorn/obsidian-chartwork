@@ -66,4 +66,4 @@ A tag like `1.1.0-beta.1` publishes a GitHub pre-release that only [BRAT](https:
 
 A beta has no changelog section of its own. Its release notes are `[Unreleased]` at the tagged commit, so each one lists everything since the last stable release, and the compare link under them shows what changed since the beta before. The stable release needs nothing folded.
 
-BRAT moves testers to the stable version on its own, so once it is out, delete the GitHub releases of the betas it replaces and keep their tags: `gh release delete X.Y.Z-beta.N --yes`. Without `--cleanup-tag` the tag stays; deleting it on GitHub alone would not hold anyway, since the forge sync pushes it back.
+Once the stable release is out, the release workflow deletes the GitHub releases of every beta at or below it, since BRAT moves testers to the stable version on its own. Their tags stay.
